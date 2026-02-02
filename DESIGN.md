@@ -194,3 +194,22 @@ To ensure tenant isolation and secure automation, we use a 2-tier key architectu
     *   Agents provide it (likely injected via environment variables) alongside their `app_token`.
 *   **Token-Based Enforcement:** Upon successful authentication, the `tenant_id` is baked into the signed JWT.
 *   **Request Isolation:** All API endpoints extract the `tenant_id` from the JWT. The application layer enforces strict filtering (e.g., `WHERE tenant_id = ?`) on all database queries to prevent cross-tenant data leakage.
+
+## 11. Agent Integration Strategy
+
+To ensure agents utilize the "Missing Secret Flow" correctly, developers must include the following instructions in the agent's System Prompt:
+
+### 11.1 Standard System Prompt
+```text
+# Secure Credential Management
+You have access to a secure credential vault (AgentVault).
+1. **NEVER** ask the user for secrets (API keys, passwords) directly in the chat.
+2. **ALWAYS** search the vault first using the `search_secrets` tool with flexible metadata (e.g., domain, service name).
+3. **IF MISSING:** Do not fail. Instead, create a "Secret Request" using the `create_secret_request` tool.
+   - Suggest a clear, human-readable `name` for the secret.
+   - Define the `required_metadata` (e.g., target URL).
+   - Define the `required_fields_in_secret_value` (e.g., ["api_key"]).
+4. **NOTIFY:** The tool will return a `fulfillment_url`. Display this URL to the user:
+   "I need credentials for [Service]. Please provide them securely here: [URL]"
+5. **WAIT:** Pause execution or retry periodically until the request is fulfilled.
+```
