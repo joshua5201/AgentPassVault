@@ -11,18 +11,12 @@ AgentVault is a lightweight, standalone password and secret manager designed for
 ## 3. Architecture
 
 ### 3.1 Components
-*   **Vault Server:** A lightweight HTTP server hosting the REST API and a minimal Web UI for admins.
-*   **Database:** **MySQL** (replacing SQLite for concurrency and multi-tenancy).
+*   **Vault Server:** A lightweight HTTP server hosting the REST API.
+*   **Database:** **MongoDB** (NoSQL for flexible metadata and schema-less secrets).
 *   **Web UI:** A simple interface for "Secret Owners".
 
 ### 3.2 Roles
-1.  **System Operator:** Manages the deployment and the **System Master Key**.
-2.  **Tenant Admin (Secret Owner):**
-    *   Managed within a specific "Tenant".
-    *   Full CRUD access to their tenant's secrets.
-    *   **Auth:** `tenant_id` + Username/Password.
-3.  **Tenant Agent (Secret User):**
-    *   **Auth:** `tenant_id` + `app_token`.
+(Same as before)
 
 ## 4. Workflows
 
@@ -30,152 +24,101 @@ AgentVault is a lightweight, standalone password and secret manager designed for
 1.  Agent authenticates with `tenant_id` and `app_token`.
 2.  System validates credentials for that Tenant.
 3.  System decrypts the **Tenant Key** using the **System Master Key**.
-4.  Agent queries API.
-5.  System uses **Tenant Key** to decrypt secrets.
-
-### 4.2 Missing Secret Flow (The "Ask" Pattern)
-1.  **Search Fail:** Agent cannot find a credential for a specific service.
-2.  **Request:** Agent POSTs to `/api/v1/requests` with details:
-    *   `context`: "I need to login to AWS to deploy the server."
-    *   `service_url`: "https://aws.amazon.com"
-    *   `required_fields`: ["access_key", "secret_key"]
-3.  **Response:** Server returns a `request_id` and a `fulfillment_url` (e.g., `https://vault.local/fill/123`).
-4.  **Notification:** Agent outputs the `fulfillment_url` to the chat: "I need AWS credentials. Please provide them securely here: [LINK]".
-5.  **Resolution (Admin Action):**
-    *   Admin clicks the link and authenticates.
-    *   **Option 1: Fulfill (New Secret):** Admin enters the values. Server creates a new secret and marks request as `fulfilled`.
-    *   **Option 2: Map (Existing Secret):** Admin selects an existing secret from the vault to satisfy the request. Request is marked as `fulfilled` and linked to the existing secret.
-    *   **Option 3: Reject:** Admin rejects the request (e.g., "Access denied" or "Use your own credentials"). Request is marked as `rejected`.
+4.  Agent queries API with flexible metadata filters (e.g., `{"metadata.url": "github.com"}`).
+5.  System uses **Tenant Key** to decrypt the `value` field.
 
 ## 5. API Design (Draft)
 
-### 5.1 Authentication
-*   `POST /api/v1/auth/login` - Unified login endpoint.
-    *   **Admin Request:** `{ "tenant_id": "uuid...", "username": "admin", "password": "..." }`
-    *   **Agent Request:** `{ "tenant_id": "uuid...", "app_token": "..." }`
-    *   **Response:** `{ "access_token": "jwt...", "token_type": "bearer", "expires_in": 3600 }`
-    *   **JWT Payload:**
-        ```json
-        {
-          "sub": "user-uuid",
-          "tenant_id": "tenant-uuid",
-          "role": "admin | agent",
-          "agent_id": "agent-uuid", // Present ONLY if role is 'agent'
-          "iat": 1600000000,
-          "exp": 1600003600
-        }
-        ```
-    *   **Note:** All subsequent requests must provide this JWT in the `Authorization: Bearer <token>` header.
-
 ### 5.2 Secrets
-*   `GET /api/v1/secrets` - List/Search secrets (Scoped to Tenant in JWT).
+*   `POST /api/v1/secrets/search` - Search secrets by arbitrary metadata.
+    *   **Request:** `{ "query": { "metadata.env": "prod", "metadata.service": "aws" } }`
 *   `GET /api/v1/secrets/:id` - Get specific secret (decrypted).
 *   `POST /api/v1/secrets` - Create/Update secret (Admin only).
+    *   **Body:** `{ "name": "...", "value": "...", "metadata": { ... } }`
 
-### 5.3 Requests (The Human-in-the-Loop Layer)
-*   `POST /api/v1/requests` - Agent creates a request for a missing secret.
-*   `GET /api/v1/requests/:id` - Check status of a request (pending/fulfilled/rejected).
-*   `POST /api/v1/requests/:id/fulfill` - Admin submits new secret data.
-*   `POST /api/v1/requests/:id/map` - Admin maps request to existing `secret_id`.
-*   `POST /api/v1/requests/:id/reject` - Admin rejects the request.
-
-### 5.4 Agent & Token Management (Admin Only)
-*   `GET /api/v1/agents` - List all agents for the tenant.
-*   `POST /api/v1/agents` - Create a new agent.
-    *   **Request:** `{ "name": "ci-runner-01" }`
-    *   **Response:** `{ "id": "...", "app_token": "at_..." }` (Token shown ONLY once).
-*   `POST /api/v1/agents/:id/rotate` - Invalidate old token and issue a new one.
-    *   **Response:** `{ "app_token": "at_new..." }`
-*   `DELETE /api/v1/agents/:id` - Delete agent and revoke access.
+(Rest of APIs remain similar)
 
 ## 6. Data Models
 
-### 6.1 Secret Object
+### 6.1 Secret Object (MongoDB Document)
 ```json
 {
-  "id": "uuid-v4",
-  "name": "AWS Production",
-  "url": "https://aws.amazon.com",
-  "username": "admin-user",
-  "value": "encrypted-string-blob",
-  "metadata": {
-    "tags": ["cloud", "production"],
-    "created_at": "2023-10-27T10:00:00Z",
-    "updated_at": "2023-10-27T10:00:00Z"
-  }
+  "_id": "ObjectId",
+  "tenant_id": "uuid",
+  "name": "AWS Production", // Human-readable label
+  "encrypted_value": "blob", // The actual secret, encrypted
+  "nonce": "blob",
+  "tag": "blob",
+  "metadata": { // Flexible, unencrypted for search
+    "url": "https://aws.amazon.com",
+    "username": "admin-user",
+    "env": "production",
+    "region": "us-east-1",
+    "custom_tag": "value"
+  },
+  "created_at": "ISODate",
+  "updated_at": "ISODate"
 }
 ```
 
-### 6.2 Request Object
+### 6.2 Request Object (MongoDB Document)
 ```json
 {
-  "request_id": "uuid-v4",
-  "status": "pending", // pending, fulfilled, rejected
-  "requester_agent_id": "agent-007",
-  "context": "Need access to update DNS records",
-  "service_url": "https://cloudflare.com",
-  "required_fields": ["api_token"],
-  "fulfillment_url": "https://vault.local/fill/uuid-v4",
-  "mapped_secret_id": "uuid-v4", // Nullable, set if mapped to existing
-  "rejection_reason": "Too much power requested", // Nullable
-  "created_at": "2023-10-27T12:00:00Z"
+  "_id": "ObjectId",
+  "request_id": "uuid-v4", // Public ID
+  "tenant_id": "uuid",
+  "requester_id": "uuid",
+  "status": "pending",
+  "context": "Need access to update DNS",
+  "required_metadata": { // Agent asks for these fields to be set
+    "url": "https://cloudflare.com",
+    "api_token": "???"
+  },
+  "mapped_secret_id": "ObjectId",
+  "rejection_reason": "string",
+  "created_at": "ISODate"
 }
 ```
 
 ## 7. Technology Stack
 *   **Backend:** Python 3.11+ with **FastAPI**.
-*   **Database:** **MySQL 8.0+**.
+*   **Database:** **MongoDB 6.0+**.
+*   **Driver:** **Motor** (Async Python driver for MongoDB).
 *   **Encryption:** **Cryptography** library (AES-GCM).
-*   **ORM:** SQLAlchemy (Async).
 
-## 9. Database Schema (MySQL)
+## 9. Database Collections (MongoDB)
 
 ### 9.1 `tenants`
-*   `id` (PK, UUID)
-*   `name` (Varchar, for internal ref)
-*   `encrypted_tenant_key` (Blob) - The random AES-256 key for this tenant, encrypted by the System Master Key.
-*   `status` (Enum: active, suspended)
-*   `created_at`
+*   `_id`: UUID
+*   `name`: String
+*   `encrypted_tenant_key`: Binary
+*   `status`: String
 
 ### 9.2 `users`
-*   `id` (PK, UUID)
-*   `tenant_id` (FK -> tenants.id)
-*   `username` (Varchar, Unique per Tenant)
-*   `password_hash` (Argon2id, Nullable for pure agents)
-*   `role` (Enum: 'admin', 'agent')
-*   `app_token_hash` (SHA-256, Unique per Tenant, Nullable)
-*   `created_at`
+*   `_id`: UUID
+*   `tenant_id`: UUID (Indexed)
+*   `username`: String (Unique per Tenant)
+*   `password_hash`: String
+*   `role`: String
+*   `app_token_hash`: String (Unique per Tenant)
 
 ### 9.3 `secrets`
-*   `id` (PK, UUID)
-*   `tenant_id` (FK -> tenants.id)
-*   `name` (Index)
-*   `url` (Index)
-*   `encrypted_data` (Blob) - Encrypted using the **Tenant Key**.
-*   `nonce` (Blob)
-*   `tag` (Blob)
-*   `created_at`
-*   `updated_at`
+*   `_id`: ObjectId
+*   `tenant_id`: UUID (Indexed)
+*   `name`: String (Text Index)
+*   `metadata`: Object (Wildcard Index for efficient search)
+*   `encrypted_value`: Binary
 
 ### 9.4 `requests`
-*   `id` (PK, UUID)
-*   `tenant_id` (FK -> tenants.id)
-*   `requester_id` (FK -> users.id)
-*   `status` (Enum: 'pending', 'fulfilled', 'rejected')
-*   `payload` (JSON)
-*   `mapped_secret_id` (FK -> secrets.id, Nullable)
-*   `rejection_reason` (String, Nullable)
-*   `created_at`
-*   `resolved_at`
+*   `_id`: ObjectId
+*   `tenant_id`: UUID (Indexed)
+*   `status`: String (Indexed)
+*   ... (other fields)
 
 ### 9.5 `audit_logs`
-*   `id` (PK, BigInt, AutoInc)
-*   `tenant_id` (FK -> tenants.id)
-*   `user_id` (FK -> users.id)
-*   `action` (String)
-*   `resource_id` (String)
-*   `ip_address` (String)
-*   `timestamp` (DateTime)
+*   `_id`: ObjectId
+*   `tenant_id`: UUID (Indexed)
+*   ... (other fields)
 
 ## 10. Security Deep Dive (Multi-Tenant)
 
