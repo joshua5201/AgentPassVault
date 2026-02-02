@@ -56,6 +56,15 @@ AgentVault is a lightweight, standalone password and secret manager designed for
 *   `POST /api/v1/requests/:id/map` - Admin maps request to existing `secret_id`.
 *   `POST /api/v1/requests/:id/reject` - Admin rejects the request.
 
+### 5.4 Agent & Token Management
+*   `GET /api/v1/agents` - List all agents for the tenant.
+*   `POST /api/v1/agents` - Create a new agent.
+    *   **Request:** `{ "name": "ci-runner-01" }`
+    *   **Response:** `{ "id": "...", "app_token": "at_..." }` (Token shown ONLY once).
+*   `POST /api/v1/agents/:id/rotate` - Invalidate old token and issue a new one.
+    *   **Response:** `{ "app_token": "at_new..." }`
+*   `DELETE /api/v1/agents/:id` - Delete agent and revoke access.
+
 ## 6. Data Models
 
 ### 6.1 Secret Object
