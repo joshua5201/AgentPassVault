@@ -54,7 +54,18 @@ AgentVault is a lightweight, standalone password and secret manager designed for
     *   **Admin Request:** `{ "tenant_id": "uuid...", "username": "admin", "password": "..." }`
     *   **Agent Request:** `{ "tenant_id": "uuid...", "app_token": "..." }`
     *   **Response:** `{ "access_token": "jwt...", "token_type": "bearer", "expires_in": 3600 }`
-    *   **Note:** The issued JWT payload will contain the `tenant_id` (sub), `user_id`, and `role`. All subsequent requests use this token.
+    *   **JWT Payload:**
+        ```json
+        {
+          "sub": "user-uuid",
+          "tenant_id": "tenant-uuid",
+          "role": "admin | agent",
+          "agent_id": "agent-uuid", // Present ONLY if role is 'agent'
+          "iat": 1600000000,
+          "exp": 1600003600
+        }
+        ```
+    *   **Note:** All subsequent requests must provide this JWT in the `Authorization: Bearer <token>` header.
 
 ### 5.2 Secrets
 *   `GET /api/v1/secrets` - List/Search secrets (Scoped to Tenant in JWT).
