@@ -12,51 +12,40 @@ AgentVault is a lightweight, standalone password and secret manager designed for
 
 ### 3.1 Components
 *   **Vault Server:** A lightweight HTTP server hosting the REST API and a minimal Web UI for admins.
-*   **Storage:** Encrypted local storage (e.g., SQLite + AES-GCM or BoltDB).
-*   **Web UI:** A simple interface for "Secret Owners" to approve requests and enter secrets.
+*   **Database:** **MySQL** (replacing SQLite for concurrency and multi-tenancy).
+*   **Web UI:** A simple interface for "Secret Owners".
 
 ### 3.2 Roles
-1.  **Secret User (Agent):**
-    *   Can list and search secrets (by name, URL, etc.).
-    *   Can retrieve secret values.
-    *   Can create "Secret Requests" (ask the admin to fill a missing credential).
-    *   **Auth:** `app_token` exchanged for JWT (Bearer Token).
-2.  **Secret Owner (Admin):**
-    *   Full CRUD access to secrets.
-    *   Can view and fulfill pending "Secret Requests".
-    *   **Auth:** Username/Password exchanged for JWT + Master Password (for unlocking the vault).
+1.  **System Operator:** Manages the deployment and the **System Master Key**.
+2.  **Tenant Admin (Secret Owner):**
+    *   Managed within a specific "Tenant".
+    *   Full CRUD access to their tenant's secrets.
+    *   **Auth:** `tenant_id` + Username/Password.
+3.  **Tenant Agent (Secret User):**
+    *   **Auth:** `tenant_id` + `app_token`.
 
 ## 4. Workflows
 
 ### 4.1 Secret Retrieval (Standard)
-1.  Agent authenticates to get a JWT.
-2.  Agent queries the API (e.g., `GET /api/v1/secrets?domain=github.com`).
-3.  If found, the agent retrieves the ID and fetches the decrypted value.
+1.  Agent authenticates with `tenant_id` and `app_token`.
+2.  System validates credentials for that Tenant.
+3.  System decrypts the **Tenant Key** using the **System Master Key**.
+4.  Agent queries API.
+5.  System uses **Tenant Key** to decrypt secrets.
 
-### 4.2 Missing Secret Flow (The "Ask" Pattern)
-1.  **Search Fail:** Agent cannot find a credential for a specific service.
-2.  **Request:** Agent POSTs to `/api/v1/requests` with details:
-    *   `context`: "I need to login to AWS to deploy the server."
-    *   `service_url`: "https://aws.amazon.com"
-    *   `required_fields`: ["access_key", "secret_key"]
-3.  **Response:** Server returns a `request_id` and a `fulfillment_url` (e.g., `https://vault.local/fill/123`).
-4.  **Notification:** Agent outputs the `fulfillment_url` to the chat: "I need AWS credentials. Please provide them securely here: [LINK]".
-5.  **Resolution (Admin Action):**
-    *   Admin clicks the link and authenticates.
-    *   **Option 1: Fulfill (New Secret):** Admin enters the values. Server creates a new secret and marks request as `fulfilled`.
-    *   **Option 2: Map (Existing Secret):** Admin selects an existing secret from the vault to satisfy the request. Request is marked as `fulfilled` and linked to the existing secret.
-    *   **Option 3: Reject:** Admin rejects the request (e.g., "Access denied" or "Use your own credentials"). Request is marked as `rejected`.
+(Rest of workflows 4.2 remain the same, just scoped to Tenant)
 
 ## 5. API Design (Draft)
 
 ### 5.1 Authentication
 *   `POST /api/v1/auth/login` - Unified login endpoint.
-    *   **Admin Request:** `{ "username": "admin", "password": "..." }`
-    *   **Agent Request:** `{ "app_token": "..." }`
+    *   **Admin Request:** `{ "tenant_id": "uuid...", "username": "admin", "password": "..." }`
+    *   **Agent Request:** `{ "tenant_id": "uuid...", "app_token": "..." }`
     *   **Response:** `{ "access_token": "jwt...", "token_type": "bearer", "expires_in": 3600 }`
+    *   **Note:** The issued JWT payload will contain the `tenant_id` (sub), `user_id`, and `role`. All subsequent requests use this token.
 
 ### 5.2 Secrets
-*   `GET /api/v1/secrets` - List/Search secrets.
+*   `GET /api/v1/secrets` - List/Search secrets (Scoped to Tenant in JWT).
 *   `GET /api/v1/secrets/:id` - Get specific secret (decrypted).
 *   `POST /api/v1/secrets` - Create/Update secret (Admin only).
 
@@ -101,65 +90,78 @@ AgentVault is a lightweight, standalone password and secret manager designed for
 }
 ```
 
-## 7. Technology Stack (Proposed)
+## 7. Technology Stack
 *   **Backend:** Python 3.11+ with **FastAPI**.
-*   **Database:** **SQLite**.
-*   **Encryption:** **Cryptography** library (Fernet/AES-CBC or AES-GCM).
-*   **Frontend (Admin UI):** **Vue.js** or **React** (Single Page App).
+*   **Database:** **MySQL 8.0+**.
+*   **Encryption:** **Cryptography** library (AES-GCM).
+*   **ORM:** SQLAlchemy (Async).
 
-## 8. Configuration
-The application will be configured via a `.env` file or environment variables:
-*   `VAULT_PORT`: Port to listen on (default: 8000).
-*   `VAULT_SECRET_KEY`: Used for session signing.
-*   `VAULT_DB_PATH`: Path to the SQLite DB file.
-*   `ALLOW_REGISTRATION`: Boolean (default: false) - If true, allows the first user to set up the Master Password.
+## 9. Database Schema (MySQL)
 
-## 9. Database Schema (SQLite)
-
-### 9.1 `users`
-*   `id` (PK)
-*   `username` (Unique, Nullable for pure agents)
-*   `password_hash` (Argon2id, Nullable for pure agents)
-*   `role` (Enum: 'admin', 'agent')
-*   `app_token_hash` (SHA-256, Nullable for admins)
+### 9.1 `tenants`
+*   `id` (PK, UUID)
+*   `name` (Varchar, for internal ref)
+*   `encrypted_tenant_key` (Blob) - The random AES-256 key for this tenant, encrypted by the System Master Key.
+*   `status` (Enum: active, suspended)
 *   `created_at`
 
-### 9.2 `secrets`
+### 9.2 `users`
 *   `id` (PK, UUID)
+*   `tenant_id` (FK -> tenants.id)
+*   `username` (Varchar, Unique per Tenant)
+*   `password_hash` (Argon2id, Nullable for pure agents)
+*   `role` (Enum: 'admin', 'agent')
+*   `app_token_hash` (SHA-256, Unique per Tenant, Nullable)
+*   `created_at`
+
+### 9.3 `secrets`
+*   `id` (PK, UUID)
+*   `tenant_id` (FK -> tenants.id)
 *   `name` (Index)
 *   `url` (Index)
-*   `encrypted_data` (The full secret object blob, encrypted)
-*   `nonce` (AES-GCM Nonce)
-*   `tag` (AES-GCM Auth Tag)
+*   `encrypted_data` (Blob) - Encrypted using the **Tenant Key**.
+*   `nonce` (Blob)
+*   `tag` (Blob)
 *   `created_at`
 *   `updated_at`
 
-### 9.3 `requests`
+### 9.4 `requests`
 *   `id` (PK, UUID)
+*   `tenant_id` (FK -> tenants.id)
 *   `requester_id` (FK -> users.id)
 *   `status` (Enum: 'pending', 'fulfilled', 'rejected')
-*   `payload` (JSON: context, service_url, required_fields)
+*   `payload` (JSON)
 *   `mapped_secret_id` (FK -> secrets.id, Nullable)
 *   `rejection_reason` (String, Nullable)
 *   `created_at`
 *   `resolved_at`
 
-### 9.4 `audit_logs`
-*   `id` (PK)
-*   `user_id` (FK -> users.id, nullable for system events)
-*   `action` (e.g., LOGIN_SUCCESS, READ_SECRET, CREATE_REQUEST, FULFILL_REQUEST)
-*   `resource_id` (Target secret or request ID)
-*   `ip_address`
-*   `timestamp`
+### 9.5 `audit_logs`
+*   `id` (PK, BigInt, AutoInc)
+*   `tenant_id` (FK -> tenants.id)
+*   `user_id` (FK -> users.id)
+*   `action` (String)
+*   `resource_id` (String)
+*   `ip_address` (String)
+*   `timestamp` (DateTime)
 
-## 10. Security Deep Dive
+## 10. Security Deep Dive (Multi-Tenant)
 
-### 10.1 Master Key Management
-*   **Master Password:** The Admin must provide a master password to "unlock" the vault upon server start.
-*   **KDF:** **Argon2id** is used to derive the 256-bit `Encryption Key` from the Master Password + a global Salt.
-*   **Volatile Storage:** The `Encryption Key` is held in memory **only** while the process is running. It is never written to disk.
-*   **Locking:** If the server process restarts, the vault is effectively "locked" until the API receives the Master Password again via a specific unlock endpoint (or CLI arg, though env var/API is safer).
+### 10.1 Key Hierarchy
+To ensure tenant isolation and secure automation, we use a 2-tier key architecture:
 
-### 10.2 Audit & Compliance
-*   All access to secrets (decryption events) is logged to `audit_logs`.
-*   The `encrypted_data` in the `secrets` table includes the secret's value *and* its metadata to prevent metadata leakage, though `name` and `url` are kept as plaintext columns for efficient searching.
+1.  **System Master Key (SMK):**
+    *   **Source:** Provided to the server process via a secure environment variable (`AGENTVAULT_SYSTEM_KEY`) or a secrets manager at startup.
+    *   **Usage:** Never stored in the DB. Used *only* to encrypt/decrypt the `encrypted_tenant_key` column in the `tenants` table.
+
+2.  **Tenant Key (TK):**
+    *   **Creation:** Generated randomly (AES-256) when a new Tenant is created.
+    *   **Storage:** Stored in `tenants.encrypted_tenant_key` (Encrypted by SMK).
+    *   **Usage:** Loaded into memory scope during a request to encrypt/decrypt that specific tenant's `secrets`.
+
+### 10.2 Tenant Context
+*   **Explicit Identification:** The `tenant_id` must be provided explicitly during the initial login/authentication phase.
+    *   Admins provide it alongside credentials.
+    *   Agents provide it (likely injected via environment variables) alongside their `app_token`.
+*   **Token-Based Enforcement:** Upon successful authentication, the `tenant_id` is baked into the signed JWT.
+*   **Request Isolation:** All API endpoints extract the `tenant_id` from the JWT. The application layer enforces strict filtering (e.g., `WHERE tenant_id = ?`) on all database queries to prevent cross-tenant data leakage.
