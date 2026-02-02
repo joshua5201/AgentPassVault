@@ -33,7 +33,19 @@ AgentVault is a lightweight, standalone password and secret manager designed for
 4.  Agent queries API.
 5.  System uses **Tenant Key** to decrypt secrets.
 
-(Rest of workflows 4.2 remain the same, just scoped to Tenant)
+### 4.2 Missing Secret Flow (The "Ask" Pattern)
+1.  **Search Fail:** Agent cannot find a credential for a specific service.
+2.  **Request:** Agent POSTs to `/api/v1/requests` with details:
+    *   `context`: "I need to login to AWS to deploy the server."
+    *   `service_url`: "https://aws.amazon.com"
+    *   `required_fields`: ["access_key", "secret_key"]
+3.  **Response:** Server returns a `request_id` and a `fulfillment_url` (e.g., `https://vault.local/fill/123`).
+4.  **Notification:** Agent outputs the `fulfillment_url` to the chat: "I need AWS credentials. Please provide them securely here: [LINK]".
+5.  **Resolution (Admin Action):**
+    *   Admin clicks the link and authenticates.
+    *   **Option 1: Fulfill (New Secret):** Admin enters the values. Server creates a new secret and marks request as `fulfilled`.
+    *   **Option 2: Map (Existing Secret):** Admin selects an existing secret from the vault to satisfy the request. Request is marked as `fulfilled` and linked to the existing secret.
+    *   **Option 3: Reject:** Admin rejects the request (e.g., "Access denied" or "Use your own credentials"). Request is marked as `rejected`.
 
 ## 5. API Design (Draft)
 
@@ -56,7 +68,7 @@ AgentVault is a lightweight, standalone password and secret manager designed for
 *   `POST /api/v1/requests/:id/map` - Admin maps request to existing `secret_id`.
 *   `POST /api/v1/requests/:id/reject` - Admin rejects the request.
 
-### 5.4 Agent & Token Management
+### 5.4 Agent & Token Management (Admin Only)
 *   `GET /api/v1/agents` - List all agents for the tenant.
 *   `POST /api/v1/agents` - Create a new agent.
     *   **Request:** `{ "name": "ci-runner-01" }`
