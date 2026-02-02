@@ -36,6 +36,7 @@ AgentVault is a lightweight, standalone password and secret manager designed for
 ### 4.2 Missing Secret Flow (The "Ask" Pattern)
 1.  **Search Fail:** Agent cannot find a credential for a specific service.
 2.  **Request:** Agent POSTs to `/api/v1/requests` with details:
+    *   `name`: "AWS Production Credentials" (Suggested Name)
     *   `context`: "I need to login to AWS to deploy the server."
     *   `required_metadata`: {"url": "https://aws.amazon.com", "service": "aws"}
     *   `required_fields_in_secret_value`: ["access_key", "secret_key"]
@@ -121,6 +122,7 @@ AgentVault is a lightweight, standalone password and secret manager designed for
   "tenant_id": "uuid",
   "requester_id": "uuid",
   "status": "pending",
+  "name": "AWS Production Credentials", // Suggested name from agent
   "context": "Need access to update DNS",
   "required_metadata": { // Agent asks for these fields to be set in secret's metadata
     "url": "https://cloudflare.com"
