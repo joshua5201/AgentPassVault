@@ -38,6 +38,7 @@ AgentVault is a lightweight, standalone password and secret manager designed for
 2.  **Request:** Agent POSTs to `/api/v1/requests` with details:
     *   `context`: "I need to login to AWS to deploy the server."
     *   `required_metadata`: {"url": "https://aws.amazon.com", "service": "aws"}
+    *   `required_fields_in_secret_value`: ["access_key", "secret_key"]
 3.  **Response:** Server returns a `request_id` and a `fulfillment_url` (e.g., `https://vault.local/fill/123`).
 4.  **Notification:** Agent outputs the `fulfillment_url` to the chat: "I need AWS credentials. Please provide them securely here: [LINK]".
 5.  **Resolution (Admin Action):**
@@ -121,10 +122,10 @@ AgentVault is a lightweight, standalone password and secret manager designed for
   "requester_id": "uuid",
   "status": "pending",
   "context": "Need access to update DNS",
-  "required_metadata": { // Agent asks for these fields to be set
-    "url": "https://cloudflare.com",
-    "api_token": "???"
+  "required_metadata": { // Agent asks for these fields to be set in secret's metadata
+    "url": "https://cloudflare.com"
   },
+  "required_fields_in_secret_value": ["api_token"], // Agent asks for these keys to be in the encrypted secret value
   "mapped_secret_id": "ObjectId",
   "rejection_reason": "string",
   "created_at": "ISODate"
