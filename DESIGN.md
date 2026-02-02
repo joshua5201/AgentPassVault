@@ -135,10 +135,10 @@ AgentVault is a lightweight, standalone password and secret manager designed for
 ```
 
 ## 7. Technology Stack
-*   **Backend:** Python 3.11+ with **FastAPI**.
+*   **Backend:** Node.js with **TypeScript** and **Express**.
 *   **Database:** **MongoDB 6.0+**.
-*   **Driver:** **Motor** (Async Python driver for MongoDB).
-*   **Encryption:** **Cryptography** library (AES-GCM).
+*   **ODM:** **Mongoose** (Schema validation and modeling).
+*   **Encryption:** **Node.js Crypto** module (AES-GCM).
 
 ## 9. Database Collections (MongoDB)
 
