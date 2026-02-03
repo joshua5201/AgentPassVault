@@ -48,8 +48,7 @@ public class DataSeeder implements CommandLineRunner {
         String rawPassword = System.getenv("AGENTVAULT_DEV_PASSWORD");
         
         if (rawPassword == null || rawPassword.isBlank()) {
-            log.warn("AGENTVAULT_DEV_PASSWORD not set. Generating a random password.");
-            rawPassword = UUID.randomUUID().toString().substring(0, 16);
+            throw new IllegalStateException("AGENTVAULT_DEV_PASSWORD environment variable is required for data seeding in dev profile.");
         }
 
         User user = new User();
@@ -60,7 +59,6 @@ public class DataSeeder implements CommandLineRunner {
         user.setRole("admin");
         userRepository.save(user);
 
-        log.info("Created Admin User: username={}, password={}", username, rawPassword);
-        log.info("!!! PLEASE SAVE THESE CREDENTIALS !!!");
+        log.info("Created Admin User: username={}", username);
     }
 }
