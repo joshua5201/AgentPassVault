@@ -59,20 +59,20 @@ class RequestControllerTest extends BaseIntegrationTest {
         new CreateRequestDTO(
             "AWS Creds", "Need for deploy", Map.of("service", "aws"), List.of("key", "secret"));
 
-            String reqResponse =
-                mockMvc
-                    .perform(
-                        post("/api/v1/requests")
-                            .header("Authorization", "Bearer " + token)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(createReq)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value("pending"))
-                    .andExpect(jsonPath("$.fulfillmentUrl").exists())
-                    .andExpect(jsonPath("$.fulfillmentUrl", startsWith("https://vault.local/requests/")))
-                    .andReturn()
-                    .getResponse()
-                    .getContentAsString();
+    String reqResponse =
+        mockMvc
+            .perform(
+                post("/api/v1/requests")
+                    .header("Authorization", "Bearer " + token)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(createReq)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("pending"))
+            .andExpect(jsonPath("$.fulfillmentUrl").exists())
+            .andExpect(jsonPath("$.fulfillmentUrl", startsWith("https://vault.local/requests/")))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
     String requestId = objectMapper.readTree(reqResponse).get("id").asText();
 
     // 2. Fulfill Request

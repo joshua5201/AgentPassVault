@@ -37,10 +37,9 @@ public class Request extends BaseEntity {
 
   private List<String> requiredFieldsInSecretValue;
 
-    private String mappedSecretId; // ObjectId of the secret fulfilling this request
+  private String mappedSecretId; // ObjectId of the secret fulfilling this request
 
-    private String rejectionReason;
+  private String rejectionReason;
 
-    private String fulfillmentUrl;
-
-  }
+  private String fulfillmentUrl;
+}

@@ -9,10 +9,10 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class FulfillmentUrlService {
 
-    private final VaultUiProperties uiProperties;
+  private final VaultUiProperties uiProperties;
 
-    public String generate(Request request) {
-        // e.g., https://vault.local/requests/uuid...
-        return uiProperties.baseUrl() + uiProperties.fulfillmentPath() + request.getRequestId();
-    }
+  public String generate(Request request) {
+    // e.g., https://vault.local/requests/uuid...
+    return uiProperties.baseUrl() + uiProperties.fulfillmentPath() + request.getRequestId();
+  }
 }
