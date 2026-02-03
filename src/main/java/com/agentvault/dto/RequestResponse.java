@@ -16,5 +16,6 @@ public record RequestResponse(
     List<String> requiredFieldsInSecretValue,
     String mappedSecretId,
     String rejectionReason,
+    String fulfillmentUrl,
     LocalDateTime createdAt,
     LocalDateTime updatedAt) {}

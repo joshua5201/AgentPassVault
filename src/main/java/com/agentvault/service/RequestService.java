@@ -17,6 +17,7 @@ public class RequestService {
   private final RequestRepository requestRepository;
   private final SecretRepository secretRepository;
   private final SecretService secretService;
+  private final FulfillmentUrlService fulfillmentUrlService;
 
   public RequestResponse createRequest(UUID tenantId, UUID requesterId, CreateRequestDTO dto) {
     Request request = new Request();
@@ -28,6 +29,9 @@ public class RequestService {
     request.setContext(dto.context());
     request.setRequiredMetadata(dto.requiredMetadata());
     request.setRequiredFieldsInSecretValue(dto.requiredFieldsInSecretValue());
+
+    // Generate and set the URL
+    request.setFulfillmentUrl(fulfillmentUrlService.generate(request));
 
     return mapToResponse(requestRepository.save(request));
   }
@@ -104,6 +108,7 @@ public class RequestService {
         request.getRequiredFieldsInSecretValue(),
         request.getMappedSecretId(),
         request.getRejectionReason(),
+        request.getFulfillmentUrl(),
         request.getCreatedAt(),
         request.getUpdatedAt());
   }

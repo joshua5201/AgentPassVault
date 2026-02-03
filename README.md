@@ -2,6 +2,14 @@
 
 AgentVault is a lightweight, standalone password and secret manager designed for automated agents. It bridges the gap between autonomous agents and secure credential management by allowing agents to retrieve secrets and request new ones from human admins asynchronously.
 
+## 🤔 Why AgentVault?
+
+In modern development, secrets are often needed during interactive sessions with AI agents or in collaborative chat environments (like Slack, Telegram, or Discord). Sharing these secrets poses a significant security risk:
+- **Never share secrets directly in chat:** Pasting an API key or password into a chat window creates a permanent, searchable, and often insecure record of that secret.
+- **Avoid insecure cloud password managers for agents:** Granting an automated agent direct access to a personal or team-wide password manager is often overly permissive and lacks granular audit trails for agent-specific access.
+
+AgentVault solves this by creating a secure, auditable "air gap." When an agent needs a secret, it doesn't ask for the secret itself. Instead, it creates a **secure request** and provides a **one-time fulfillment URL**. A human admin can then click this link, authenticate, and provide the secret directly into the vault. The agent never sees the secret in transit; it only gains the ability to use it after it has been securely stored.
+
 ## 🚀 Features
 - **Agent-Centric API**: Designed for machine consumption.
 - **Secure by Default**: Secrets are encrypted at rest (AES-256 GCM) with tenant isolation.
