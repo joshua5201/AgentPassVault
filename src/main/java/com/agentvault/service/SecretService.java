@@ -1,6 +1,7 @@
 package com.agentvault.service;
 
 import com.agentvault.dto.CreateSecretRequest;
+import com.agentvault.dto.SecretMetadataResponse;
 import com.agentvault.dto.SecretResponse;
 import com.agentvault.model.Secret;
 import com.agentvault.model.Tenant;
@@ -31,7 +32,7 @@ public class SecretService {
     private final EncryptionService encryptionService;
     private final MongoTemplate mongoTemplate; // For dynamic search queries
 
-    public SecretResponse createSecret(UUID tenantId, CreateSecretRequest request) {
+    public SecretMetadataResponse createSecret(UUID tenantId, CreateSecretRequest request) {
         byte[] tenantKey = getTenantKey(tenantId);
         
         byte[] encryptedValue = encryptionService.encrypt(
@@ -49,10 +50,7 @@ public class SecretService {
 
         Secret saved = secretRepository.save(secret);
         
-        // Return decrypted response (or should create return the ID only? API usually returns resource)
-        // For security, maybe just ID? But often users want to see what they created.
-        // Let's return the full response for now.
-        return mapToResponse(saved, request.value());
+        return mapToMetadataResponse(saved);
     }
 
     public SecretResponse getSecret(UUID tenantId, String secretId) {
@@ -75,7 +73,7 @@ public class SecretService {
         secretRepository.delete(secret);
     }
 
-    public List<SecretResponse> searchSecrets(UUID tenantId, Map<String, Object> metadataQuery) {
+    public List<SecretMetadataResponse> searchSecrets(UUID tenantId, Map<String, Object> metadataQuery) {
         Query query = new Query();
         query.addCriteria(Criteria.where("tenantId").is(tenantId));
 
@@ -87,17 +85,10 @@ public class SecretService {
         }
 
         List<Secret> secrets = mongoTemplate.find(query, Secret.class);
-        byte[] tenantKey = getTenantKey(tenantId);
-
-        return secrets.stream().map(s -> {
-            // Decrypting ALL secrets in a search result might be heavy and sensitive.
-            // Usually list/search endpoints return metadata only, and explicit GET retrieves value.
-            // But implementation-plan implies "searchSecrets" finds them.
-            // Let's decrypt for now, but in prod we might mask the value in list views.
-            byte[] decryptedBytes = encryptionService.decrypt(s.getEncryptedValue(), tenantKey);
-            String value = new String(decryptedBytes, StandardCharsets.UTF_8);
-            return mapToResponse(s, value);
-        }).collect(Collectors.toList());
+        
+        return secrets.stream()
+                .map(this::mapToMetadataResponse)
+                .collect(Collectors.toList());
     }
 
     private byte[] getTenantKey(UUID tenantId) {
@@ -111,6 +102,16 @@ public class SecretService {
             secret.getId(),
             secret.getName(),
             decryptedValue,
+            secret.getMetadata(),
+            secret.getCreatedAt(),
+            secret.getUpdatedAt()
+        );
+    }
+
+    private SecretMetadataResponse mapToMetadataResponse(Secret secret) {
+        return new SecretMetadataResponse(
+            secret.getId(),
+            secret.getName(),
             secret.getMetadata(),
             secret.getCreatedAt(),
             secret.getUpdatedAt()

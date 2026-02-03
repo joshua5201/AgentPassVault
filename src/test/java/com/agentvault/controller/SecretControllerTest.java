@@ -59,7 +59,7 @@ class SecretControllerTest extends BaseIntegrationTest {
                 .content(objectMapper.writeValueAsString(createReq)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").exists())
-                .andExpect(jsonPath("$.value").value("secret123")) // Should return decrypted
+                .andExpect(jsonPath("$.value").doesNotExist()) // Verify value is NOT returned
                 .andReturn().getResponse().getContentAsString();
         
         String secretId = objectMapper.readTree(createResponse).get("id").asText();
@@ -123,7 +123,8 @@ class SecretControllerTest extends BaseIntegrationTest {
                 .content(objectMapper.writeValueAsString(searchProd)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].name").value("S1"));
+                .andExpect(jsonPath("$[0].name").value("S1"))
+                .andExpect(jsonPath("$[0].value").doesNotExist()); // Verify value is NOT returned
 
         // Search for app=web
         SearchSecretRequest searchWeb = new SearchSecretRequest(Map.of("app", "web"));

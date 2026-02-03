@@ -2,6 +2,7 @@ package com.agentvault.controller;
 
 import com.agentvault.dto.CreateSecretRequest;
 import com.agentvault.dto.SearchSecretRequest;
+import com.agentvault.dto.SecretMetadataResponse;
 import com.agentvault.dto.SecretResponse;
 import com.agentvault.security.AgentVaultAuthentication;
 import com.agentvault.service.SecretService;
@@ -9,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/secrets")
@@ -19,7 +19,7 @@ public class SecretController {
     private final SecretService secretService;
 
     @PostMapping
-    public SecretResponse createSecret(
+    public SecretMetadataResponse createSecret(
             AgentVaultAuthentication authentication,
             @RequestBody CreateSecretRequest request) {
         return secretService.createSecret(authentication.getTenantId(), request);
@@ -40,7 +40,7 @@ public class SecretController {
     }
 
     @PostMapping("/search")
-    public List<SecretResponse> searchSecrets(
+    public List<SecretMetadataResponse> searchSecrets(
             AgentVaultAuthentication authentication,
             @RequestBody SearchSecretRequest request) {
         return secretService.searchSecrets(authentication.getTenantId(), request.metadata());
