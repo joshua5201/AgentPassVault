@@ -8,5 +8,4 @@ public record SecretMetadataResponse(
     String name,
     Map<String, Object> metadata,
     LocalDateTime createdAt,
-    LocalDateTime updatedAt
-) {}
+    LocalDateTime updatedAt) {}

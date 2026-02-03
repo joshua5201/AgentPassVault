@@ -9,5 +9,4 @@ public record SecretResponse(
     String value, // Decrypted value
     Map<String, Object> metadata,
     LocalDateTime createdAt,
-    LocalDateTime updatedAt
-) {}
+    LocalDateTime updatedAt) {}
