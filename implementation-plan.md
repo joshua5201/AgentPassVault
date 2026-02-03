@@ -47,8 +47,13 @@ This is the core security layer.
     - [ ] `POST /api/v1/secrets`
     - [ ] `GET /api/v1/secrets/:id`
     - [ ] `POST /api/v1/secrets/search`
+    - 
+### 5.3 Agent Management
+- [ ] **AgentService**: Create agents, generate/rotate tokens.
+- [ ] **AgentController**: `/api/v1/agents` endpoints.
 
-### 5.3 Request Management (The "Ask" Pattern)
+
+### 5.4 Request Management (The "Ask" Pattern)
 - [ ] **RequestService**:
     - [ ] Create new requests.
     - [ ] Fulfill request (encrypt new secret, link, update status).
@@ -58,10 +63,6 @@ This is the core security layer.
     - [ ] `GET /api/v1/requests/:id`
     - [ ] `POST /api/v1/requests/:id/fulfill`
     - [ ] `POST /api/v1/requests/:id/reject`
-
-### 5.4 Agent Management
-- [ ] **AgentService**: Create agents, generate/rotate tokens.
-- [ ] **AgentController**: `/api/v1/agents` endpoints.
 
 ## Phase 6: Testing & Validation
 - [ ] **Unit Tests**: Test crypto logic and services extensively.
