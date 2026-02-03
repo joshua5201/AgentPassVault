@@ -27,10 +27,10 @@ public class AuthService {
         if (request.username() != null && request.password() != null) {
             // Admin/User Login
             user = userRepository.findByTenantIdAndUsername(request.tenantId(), request.username())
-                    .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
+                    .orElseThrow(() -> new BadCredentialsException("User not found for tenant: " + request.tenantId()));
 
             if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-                throw new BadCredentialsException("Invalid credentials");
+                throw new BadCredentialsException("Invalid password");
             }
         } else if (request.appToken() != null) {
             // Agent Login
