@@ -3,6 +3,7 @@ package com.agentvault.service;
 import com.agentvault.dto.LoginRequest;
 import com.agentvault.dto.LoginResponse;
 import com.agentvault.model.User;
+import com.agentvault.repository.TenantRepository;
 import com.agentvault.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -19,18 +20,24 @@ import java.util.Base64;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final TenantRepository tenantRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
 
     public LoginResponse login(LoginRequest request) {
+        // Validate Tenant First
+        if (!tenantRepository.existsById(request.tenantId())) {
+            throw new BadCredentialsException("Tenant not found");
+        }
+
         User user;
         if (request.username() != null && request.password() != null) {
             // Admin/User Login
             user = userRepository.findByTenantIdAndUsername(request.tenantId(), request.username())
-                    .orElseThrow(() -> new BadCredentialsException("User not found for tenant: " + request.tenantId()));
+                    .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
 
             if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-                throw new BadCredentialsException("Invalid password");
+                throw new BadCredentialsException("Invalid credentials");
             }
         } else if (request.appToken() != null) {
             // Agent Login
