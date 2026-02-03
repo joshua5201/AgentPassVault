@@ -48,8 +48,8 @@ public class DataSeeder implements CommandLineRunner {
         String rawPassword = System.getenv("AGENTVAULT_DEV_PASSWORD");
         
         if (rawPassword == null || rawPassword.isBlank()) {
-            log.warn("AGENTVAULT_DEV_PASSWORD not set. Generating a random password.");
-            rawPassword = UUID.randomUUID().toString().substring(0, 16);
+            log.warn("AGENTVAULT_DEV_PASSWORD not set. Using default fallback password.");
+            rawPassword = "2E8DwW45lBRrb4";
         }
 
         User user = new User();
