@@ -4,12 +4,12 @@ import com.agentvault.model.Tenant;
 import com.agentvault.model.User;
 import com.agentvault.repository.TenantRepository;
 import com.agentvault.repository.UserRepository;
+import com.agentvault.service.UserService;
 import com.agentvault.service.crypto.KeyManagementService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
@@ -21,9 +21,8 @@ import java.util.UUID;
 public class DataSeeder implements CommandLineRunner {
 
     private final TenantRepository tenantRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final KeyManagementService keyManagementService;
-    private final PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) {
@@ -57,13 +56,7 @@ public class DataSeeder implements CommandLineRunner {
         log.info("Password start char code: {}", (int) rawPassword.charAt(0));
         log.info("Password end char code: {}", (int) rawPassword.charAt(rawPassword.length() - 1));
 
-        User user = new User();
-        user.setId(UUID.randomUUID());
-        user.setTenantId(tenant.getId());
-        user.setUsername(username);
-        user.setPasswordHash(passwordEncoder.encode(rawPassword));
-        user.setRole("admin");
-        userRepository.save(user);
+        userService.createAdminUser(tenant.getId(), username, rawPassword);
 
         log.info("Created Admin User: username={}", username);
     }

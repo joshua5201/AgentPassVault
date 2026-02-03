@@ -4,10 +4,10 @@ import com.agentvault.BaseIntegrationTest;
 import com.agentvault.dto.LoginRequest;
 import com.agentvault.model.User;
 import com.agentvault.model.Tenant;
+import com.agentvault.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -21,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AuthControllerTest extends BaseIntegrationTest {
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private UserService userService;
 
     private void createTenant(UUID id) {
         Tenant tenant = new Tenant();
@@ -42,13 +42,7 @@ class AuthControllerTest extends BaseIntegrationTest {
         UUID tenantId = UUID.randomUUID();
         createTenant(tenantId);
         
-        User user = new User();
-        user.setId(UUID.randomUUID());
-        user.setTenantId(tenantId);
-        user.setUsername("testuser");
-        user.setPasswordHash(passwordEncoder.encode("password"));
-        user.setRole("admin");
-        userRepository.save(user);
+        userService.createAdminUser(tenantId, "testuser", "password");
 
         // Login to get token
         String loginResponse = mockMvc.perform(post("/api/v1/auth/login")
@@ -70,13 +64,7 @@ class AuthControllerTest extends BaseIntegrationTest {
         UUID tenantId = UUID.randomUUID();
         createTenant(tenantId);
 
-        User user = new User();
-        user.setId(UUID.randomUUID());
-        user.setTenantId(tenantId);
-        user.setUsername("admin");
-        user.setPasswordHash(passwordEncoder.encode("password"));
-        user.setRole("admin");
-        userRepository.save(user);
+        userService.createAdminUser(tenantId, "admin", "password");
 
         LoginRequest request = new LoginRequest(tenantId, "admin", "password", null);
 
@@ -99,12 +87,7 @@ class AuthControllerTest extends BaseIntegrationTest {
         byte[] hash = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));
         String tokenHash = Base64.getEncoder().encodeToString(hash);
 
-        User agent = new User();
-        agent.setId(UUID.randomUUID());
-        agent.setTenantId(tenantId);
-        agent.setRole("agent");
-        agent.setAppTokenHash(tokenHash);
-        userRepository.save(agent);
+        userService.createAgentUser(tenantId, tokenHash);
 
         LoginRequest request = new LoginRequest(tenantId, null, null, rawToken);
 
