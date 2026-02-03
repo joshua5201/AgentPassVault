@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 @Component
+@Profile("dev")
 @RequiredArgsConstructor
 @Slf4j
 public class DataSeeder implements CommandLineRunner {
