@@ -61,7 +61,8 @@ class AuthControllerTest extends BaseIntegrationTest {
         mockMvc.perform(get("/api/v1/auth/ping")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("pong"));
+                .andExpect(jsonPath("$.message").value("pong"))
+                .andExpect(jsonPath("$.tenantId").value(tenantId.toString()));
     }
 
     @Test
