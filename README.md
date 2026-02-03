@@ -4,11 +4,9 @@ AgentVault is a lightweight, standalone password and secret manager designed for
 
 ## 🤔 Why AgentVault?
 
-In modern development, secrets are often needed during interactive sessions with AI agents or in collaborative chat environments (like Slack, Telegram, or Discord). Sharing these secrets poses a significant security risk:
-- **Never share secrets directly in chat:** Pasting an API key or password into a chat window creates a permanent, searchable, and often insecure record of that secret.
-- **Avoid insecure cloud password managers for agents:** Granting an automated agent direct access to a personal or team-wide password manager is often overly permissive and lacks granular audit trails for agent-specific access.
+Bots and automated agents, such as OpenClaw (formerly Moltbot, Clawdbot), often require access to sensitive information like API keys or login credentials to interact with external websites and services. Currently, there isn't an easy or secure method to provide these secrets to automated agents. Directly embedding secrets in code or configuration files is insecure, and manually inputting them for each use is impractical for automated workflows.
 
-AgentVault solves this by creating a secure, auditable "air gap." When an agent needs a secret, it doesn't ask for the secret itself. Instead, it creates a **secure request** and provides a **one-time fulfillment URL**. A human admin can then click this link, authenticate, and provide the secret directly into the vault. The agent never sees the secret in transit; it only gains the ability to use it after it has been securely stored.
+AgentVault addresses this critical gap by providing a secure and auditable mechanism for agents to request and receive secrets from human administrators. Instead of directly handling sensitive credentials, agents initiate a **secure request** for a secret, which a human admin can then fulfill through a **one-time fulfillment URL**. This ensures that secrets are never exposed to the agent in transit and are only accessible through a controlled, auditable process after secure storage within the vault.
 
 ## 🚀 Features
 - **Agent-Centric API**: Designed for machine consumption.
