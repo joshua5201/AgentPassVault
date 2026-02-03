@@ -141,6 +141,13 @@ AgentVault is a lightweight, standalone password and secret manager designed for
 *   **Data Access:** **Spring Data MongoDB** (Repository pattern and object mapping).
 *   **Encryption:** **Java Cryptography Architecture (JCA)** (AES-GCM).
 
+## 8. Flexible Metadata Implementation
+To support agent-provided metadata while maintaining performance and control, the system uses:
+*   **Mapping:** The `metadata` field in `Secret` and `Request` objects is mapped as `Map<String, Object>` or `org.bson.Document`.
+*   **Indexing:** **Predefined Keys Only.** We will strictly index specific, high-value keys (e.g., `metadata.service`, `metadata.env`, `metadata.url`) rather than using a wildcard index.
+*   **Deferral:** Full `@WildcardIndexed` support is deferred until advanced, arbitrary search capabilities are explicitly required.
+*   **Search:** Queries use Spring Data MongoDB's `Criteria` to match against these known keys (e.g., `where("metadata.service").is("aws")`).
+
 ## 9. Database Collections (MongoDB)
 
 ### 9.1 `tenants`
@@ -161,7 +168,7 @@ AgentVault is a lightweight, standalone password and secret manager designed for
 *   `_id`: ObjectId
 *   `tenant_id`: UUID (Indexed)
 *   `name`: String (Text Index)
-*   `metadata`: Object (Wildcard Index for efficient search)
+*   `metadata`: Object (Specific named keys indexed; Wildcard index deferred)
 *   `encrypted_value`: Binary
 
 ### 9.4 `requests`
