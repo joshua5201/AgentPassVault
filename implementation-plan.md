@@ -3,7 +3,7 @@
 This document outlines the step-by-step implementation plan for the AgentVault system, based on the specifications in `DESIGN.md`.
 
 ## Phase 1: Foundation & Configuration
-- [ ] **Project Structure**: Verify package layout (`com.agentvault`).
+- [x] **Project Structure**: Verify package layout (`com.agentvault`).
 - [ ] **Database Config**: Configure MongoDB connection details in `application.properties`.
 - [ ] **Security Config Stub**: Create a basic `SecurityConfig` to allow development (initially permissive, then locked down).
 - [ ] **Global Exception Handling**: Set up `GlobalExceptionHandler` for consistent API error responses.
