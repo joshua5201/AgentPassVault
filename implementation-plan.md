@@ -35,8 +35,8 @@ This is the core security layer.
 ## Phase 5: Core Services & API Implementation
 
 ### 5.1 User & Auth Management
-- [ ] **AuthService**: Login logic for Admins (Username/Password) and Agents (App Token).
-- [ ] **AuthController**: `POST /api/v1/auth/login`.
+- [x] **AuthService**: Login logic for Admins (Username/Password) and Agents (App Token).
+- [x] **AuthController**: `POST /api/v1/auth/login`.
 
 ### 5.2 Secret Management
 - [ ] **SecretService**:
