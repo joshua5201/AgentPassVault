@@ -221,3 +221,21 @@ You have access to a secure credential vault (AgentVault).
    "I need credentials for [Service]. Please provide them securely here: [URL]"
 5. **WAIT:** Pause execution or retry periodically until the request is fulfilled.
 ```
+
+## 12. Future Scaling & Sharding Strategy
+
+As the system grows, we anticipate the need to scale beyond a single replica set. The data model is designed to support **MongoDB Sharding** with minimal refactoring.
+
+### 12.1 Shard Key Strategy
+*   **Recommendation:** Use `tenant_id` as the primary component of the shard key (e.g., `{ "tenant_id": 1, "_id": 1 }` or hashed `{ "tenant_id": "hashed" }`).
+*   **Why `tenant_id`?**
+    *   **Data Locality:** Keeps all data for a single tenant on the same shard, facilitating "Zone Sharding".
+    *   **Query Efficiency:** Since almost all application queries are scoped by `tenant_id`, the `mongos` router can target a single shard instead of broadcasting to all shards.
+    *   **Isolation:** Allows physically isolating high-value or high-volume tenants onto dedicated hardware shards using MongoDB Zones.
+
+### 12.2 Versus "ID Prefix"
+*   While strictly prefixing the `_id` with a tenant identifier (e.g., `tenantA_doc123`) is a valid strategy, we prefer an explicit `tenant_id` field because:
+    *   **Flexibility:** It allows changing the shard key definition without migrating data (which requires re-inserting documents).
+    *   **Immutability:** MongoDB `_id` fields are immutable. If we needed to move a document or change a tenant association, an ID prefix would make this difficult.
+    *   **Standardization:** The separate `tenant_id` field is a standard pattern supported by Spring Data MongoDB and simplifies object mapping.
+
