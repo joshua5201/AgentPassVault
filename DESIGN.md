@@ -135,10 +135,11 @@ AgentVault is a lightweight, standalone password and secret manager designed for
 ```
 
 ## 7. Technology Stack
-*   **Backend:** Node.js with **TypeScript** and **Express**.
+*   **Backend:** Java 21 with **Spring Boot 3**.
+*   **Security:** **Spring Security** with **Spring Boot Starter OAuth2 Resource Server** for JWT and Bearer token management.
 *   **Database:** **MongoDB 6.0+**.
-*   **ODM:** **Mongoose** (Schema validation and modeling).
-*   **Encryption:** **Node.js Crypto** module (AES-GCM).
+*   **Data Access:** **Spring Data MongoDB** (Repository pattern and object mapping).
+*   **Encryption:** **Java Cryptography Architecture (JCA)** (AES-GCM).
 
 ## 9. Database Collections (MongoDB)
 
