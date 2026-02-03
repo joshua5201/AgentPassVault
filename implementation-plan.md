@@ -27,10 +27,10 @@ This is the core security layer.
     - [x] Methods: `encrypt(data, key)`, `decrypt(data, key)`.
 
 ## Phase 4: Authentication & Tenant Context
-- [ ] **Token Service**: Implement JWT generation (signing) and validation.
-- [ ] **Security Filter Chain**: Configure Spring Security Resource Server.
-- [ ] **Custom Authentication Converter**: Extract `tenant_id`, `role`, and `agent_id` from JWT claims into a custom `Authentication` principal.
-- [ ] **Tenant Context**: Implement a mechanism (e.g., `ThreadLocal` or scoped bean) to pass the authenticated `tenant_id` to services/repositories safely.
+- [x] **Token Service**: Implement JWT generation (signing) and validation.
+- [x] **Security Filter Chain**: Configure Spring Security Resource Server.
+- [x] **Custom Authentication Converter**: Extract `tenant_id`, `role`, and `agent_id` from JWT claims into a custom `Authentication` principal.
+- [x] **Tenant Context**: Implement a mechanism (e.g., `ThreadLocal` or scoped bean) to pass the authenticated `tenant_id` to services/repositories safely.
 
 ## Phase 5: Core Services & API Implementation
 
@@ -47,8 +47,13 @@ This is the core security layer.
     - [ ] `POST /api/v1/secrets`
     - [ ] `GET /api/v1/secrets/:id`
     - [ ] `POST /api/v1/secrets/search`
+    - 
+### 5.3 Agent Management
+- [ ] **AgentService**: Create agents, generate/rotate tokens.
+- [ ] **AgentController**: `/api/v1/agents` endpoints.
 
-### 5.3 Request Management (The "Ask" Pattern)
+
+### 5.4 Request Management (The "Ask" Pattern)
 - [ ] **RequestService**:
     - [ ] Create new requests.
     - [ ] Fulfill request (encrypt new secret, link, update status).
@@ -58,10 +63,6 @@ This is the core security layer.
     - [ ] `GET /api/v1/requests/:id`
     - [ ] `POST /api/v1/requests/:id/fulfill`
     - [ ] `POST /api/v1/requests/:id/reject`
-
-### 5.4 Agent Management
-- [ ] **AgentService**: Create agents, generate/rotate tokens.
-- [ ] **AgentController**: `/api/v1/agents` endpoints.
 
 ## Phase 6: Testing & Validation
 - [ ] **Unit Tests**: Test crypto logic and services extensively.
