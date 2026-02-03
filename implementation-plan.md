@@ -27,10 +27,10 @@ This is the core security layer.
     - [x] Methods: `encrypt(data, key)`, `decrypt(data, key)`.
 
 ## Phase 4: Authentication & Tenant Context
-- [ ] **Token Service**: Implement JWT generation (signing) and validation.
-- [ ] **Security Filter Chain**: Configure Spring Security Resource Server.
-- [ ] **Custom Authentication Converter**: Extract `tenant_id`, `role`, and `agent_id` from JWT claims into a custom `Authentication` principal.
-- [ ] **Tenant Context**: Implement a mechanism (e.g., `ThreadLocal` or scoped bean) to pass the authenticated `tenant_id` to services/repositories safely.
+- [x] **Token Service**: Implement JWT generation (signing) and validation.
+- [x] **Security Filter Chain**: Configure Spring Security Resource Server.
+- [x] **Custom Authentication Converter**: Extract `tenant_id`, `role`, and `agent_id` from JWT claims into a custom `Authentication` principal.
+- [x] **Tenant Context**: Implement a mechanism (e.g., `ThreadLocal` or scoped bean) to pass the authenticated `tenant_id` to services/repositories safely.
 
 ## Phase 5: Core Services & API Implementation
 
