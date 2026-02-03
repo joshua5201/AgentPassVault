@@ -31,8 +31,6 @@ public class Secret {
     private String name;
 
     private byte[] encryptedValue;
-    private byte[] nonce;
-    private byte[] tag;
 
     // Flexible metadata map, specific keys indexed via @CompoundIndexes above
     private Map<String, Object> metadata;
