@@ -50,6 +50,12 @@ public class DataSeeder implements CommandLineRunner {
         if (rawPassword == null || rawPassword.isBlank()) {
             throw new IllegalStateException("AGENTVAULT_DEV_PASSWORD environment variable is required for data seeding in dev profile.");
         }
+        
+        rawPassword = rawPassword.trim();
+
+        log.info("Password length: {}", rawPassword.length());
+        log.info("Password start char code: {}", (int) rawPassword.charAt(0));
+        log.info("Password end char code: {}", (int) rawPassword.charAt(rawPassword.length() - 1));
 
         User user = new User();
         user.setId(UUID.randomUUID());
