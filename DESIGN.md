@@ -188,13 +188,16 @@ To support agent-provided metadata while maintaining performance and control, th
 To ensure tenant isolation and secure automation, we use a 2-tier key architecture:
 
 1.  **System Master Key (SMK):**
-    *   **Source:** Provided to the server process via a secure environment variable (`AGENTVAULT_SYSTEM_KEY`) or a secrets manager at startup.
+    *   **Provider Pattern:** To support future integrations with external key management systems (e.g., AWS KMS, Google Cloud KMS, HashiCorp Vault), access to the SMK is abstracted behind a `MasterKeyProvider` interface.
+    *   **Default Implementation:** The initial implementation (`EnvVarMasterKeyProvider`) loads the key from a secure environment variable (`AGENTVAULT_SYSTEM_KEY`) at startup.
     *   **Usage:** Never stored in the DB. Used *only* to encrypt/decrypt the `encrypted_tenant_key` column in the `tenants` table.
+    *   **Memory Safety:** The SMK must be kept in memory only for the duration of the cryptographic operation and should be cleared (zeroed out) if possible, though Java's immutable Strings/Byte arrays make this challenging. At minimum, it must **never** be logged or serialized.
 
 2.  **Tenant Key (TK):**
     *   **Creation:** Generated randomly (AES-256) when a new Tenant is created.
     *   **Storage:** Stored in `tenants.encrypted_tenant_key` (Encrypted by SMK).
     *   **Usage:** Loaded into memory scope during a request to encrypt/decrypt that specific tenant's `secrets`.
+    *   **Memory Safety:** Similar to the SMK, the cleartext TK exists only in memory during the request lifecycle and is never persisted to disk or logs.
 
 ### 10.2 Tenant Context
 *   **Explicit Identification:** The `tenant_id` must be provided explicitly during the initial login/authentication phase.
