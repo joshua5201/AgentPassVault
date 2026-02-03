@@ -28,7 +28,8 @@ public class RequestController {
 
   @GetMapping("/{id}")
   @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
-  public RequestResponse getRequest(AgentVaultAuthentication authentication, @PathVariable String id) {
+  public RequestResponse getRequest(
+      AgentVaultAuthentication authentication, @PathVariable String id) {
     return requestService.getRequest(authentication.getTenantId(), id);
   }
 

@@ -52,28 +52,15 @@ AgentVault is a lightweight, standalone password and secret manager designed for
 
 ### 5.1 Authentication
 *   `POST /api/v1/auth/login` - Unified login endpoint.
-    *   **Admin Request:** `{ "tenant_id": "uuid...", "username": "admin", "password": "..." }`
-    *   **Agent Request:** `{ "tenant_id": "uuid...", "app_token": "..." }`
-    *   **Response:** `{ "access_token": "jwt...", "token_type": "bearer", "expires_in": 3600 }`
-    *   **JWT Payload:**
-        ```json
-        {
-          "sub": "user-uuid",
-          "tenant_id": "tenant-uuid",
-          "role": "admin | agent",
-          "agent_id": "agent-uuid", // Present ONLY if role is 'agent'
-          "iat": 1600000000,
-          "exp": 1600003600
-        }
-        ```
-    *   **Note:** All subsequent requests must provide this JWT in the `Authorization: Bearer <token>` header.
+*   `POST /api/v1/auth/change-password` - Change password.
+*   `POST /api/v1/auth/forgot-password` - Initiate password reset flow.
+*   `POST /api/v1/auth/reset-password` - Complete password reset.
 
 ### 5.2 Secrets
 *   `POST /api/v1/secrets/search` - Search secrets by arbitrary metadata.
-    *   **Request:** `{ "query": { "metadata.env": "prod", "metadata.service": "aws" } }`
 *   `GET /api/v1/secrets/:id` - Get specific secret (decrypted).
-*   `POST /api/v1/secrets` - Create/Update secret (Admin only).
-    *   **Body:** `{ "name": "...", "value": "...", "metadata": { ... } }`
+*   `POST /api/v1/secrets` - Create secret (Admin only).
+*   `DELETE /api/v1/secrets/:id` - Delete a secret (Admin only).
 
 ### 5.3 Requests (The Human-in-the-Loop Layer)
 *   `POST /api/v1/requests` - Agent creates a request for a missing secret.
@@ -85,55 +72,33 @@ AgentVault is a lightweight, standalone password and secret manager designed for
 ### 5.4 Agent & Token Management (Admin Only)
 *   `GET /api/v1/agents` - List all agents for the tenant.
 *   `POST /api/v1/agents` - Create a new agent.
-    *   **Request:** `{ "name": "ci-runner-01" }`
-    *   **Response:** `{ "id": "...", "app_token": "at_..." }` (Token shown ONLY once).
 *   `POST /api/v1/agents/:id/rotate` - Invalidate old token and issue a new one.
-    *   **Response:** `{ "app_token": "at_new..." }`
 *   `DELETE /api/v1/agents/:id` - Delete agent and revoke access.
 
 ## 6. Data Models
 
 ### 6.1 Secret Object (MongoDB Document)
-```json
-{
-  "_id": "ObjectId",
-  "tenant_id": "uuid",
-  "name": "AWS Production", // Human-readable label
-  "encrypted_value": "blob", // The actual secret, encrypted
-  "nonce": "blob",
-  "tag": "blob",
-  "metadata": { // Flexible, unencrypted for search
-    "url": "https://aws.amazon.com",
-    "username": "admin-user",
-    "env": "production",
-    "region": "us-east-1",
-    "custom_tag": "value"
-  },
-  "created_at": "ISODate",
-  "updated_at": "ISODate"
-}
-```
+- `_id`: ObjectId
+- `tenant_id`: UUID
+- `name`: String (Human-readable label)
+- `encrypted_value`: Binary (The actual secret, encrypted)
+- `metadata`: Object (Flexible, unencrypted for search)
+- `created_at`: ISODate
+- `updated_at`: ISODate
 
 ### 6.2 Request Object (MongoDB Document)
-```json
-{
-  "_id": "ObjectId",
-  "request_id": "uuid-v4", // Public ID
-  "tenant_id": "uuid",
-  "requester_id": "uuid",
-  "status": "pending",
-  "name": "AWS Production Credentials", // Suggested name from agent
-  "context": "Need access to update DNS",
-  "required_metadata": { // Agent asks for these fields to be set in secret's metadata
-    "url": "https://cloudflare.com"
-  },
-  "required_fields_in_secret_value": ["api_token"], // Agent asks for these keys to be in the encrypted secret value
-  "mapped_secret_id": "ObjectId",
-  "rejection_reason": "string",
-  "created_at": "ISODate"
-}
-```
-
+- `_id`: ObjectId
+- `request_id`: UUID-v4 (Public ID)
+- `tenant_id`: UUID
+- `requester_id`: UUID
+- `status`: String (pending, fulfilled, rejected)
+- `name`: String (Suggested name from agent)
+- `context`: String (Need access to update DNS)
+- `required_metadata`: Object (Agent asks for these fields to be set in secret's metadata)
+- `required_fields_in_secret_value`: Array of Strings (Agent asks for these keys to be in the encrypted secret value)
+- `mapped_secret_id`: ObjectId
+- `rejection_reason`: String
+- `created_at`: ISODate
 ## 7. Technology Stack
 *   **Backend:** Java 21 with **Spring Boot 3**.
 *   **Security:** **Spring Security** with **Spring Boot Starter OAuth2 Resource Server** for JWT and Bearer token management.

@@ -5,7 +5,6 @@ import com.agentvault.model.Request;
 import com.agentvault.model.RequestStatus;
 import com.agentvault.repository.RequestRepository;
 import com.agentvault.repository.SecretRepository;
-import com.agentvault.service.SecretService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

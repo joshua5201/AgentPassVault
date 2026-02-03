@@ -30,7 +30,8 @@ public class SecretController {
 
   @GetMapping("/{id}")
   @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
-  public SecretResponse getSecret(AgentVaultAuthentication authentication, @PathVariable String id) {
+  public SecretResponse getSecret(
+      AgentVaultAuthentication authentication, @PathVariable String id) {
     return secretService.getSecret(authentication.getTenantId(), id);
   }
 

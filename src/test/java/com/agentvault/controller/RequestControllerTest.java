@@ -57,54 +57,68 @@ class RequestControllerTest extends BaseIntegrationTest {
         new CreateRequestDTO(
             "AWS Creds", "Need for deploy", Map.of("service", "aws"), List.of("key", "secret"));
 
-        
-        String reqResponse = mockMvc.perform(post("/api/v1/requests")
-                .header("Authorization", "Bearer " + token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createReq)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("pending"))
-                .andReturn().getResponse().getContentAsString();
-        
-        String requestId = objectMapper.readTree(reqResponse).get("id").asText();
+    String reqResponse =
+        mockMvc
+            .perform(
+                post("/api/v1/requests")
+                    .header("Authorization", "Bearer " + token)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(createReq)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("pending"))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
 
-        // 2. Fulfill Request
-        FulfillRequestDTO fulfillReq = new FulfillRequestDTO("AWS Secret", "secretVal", Map.of("env", "prod"));
-        
-        mockMvc.perform(post("/api/v1/requests/" + requestId + "/fulfill")
+    String requestId = objectMapper.readTree(reqResponse).get("id").asText();
+
+    // 2. Fulfill Request
+    FulfillRequestDTO fulfillReq =
+        new FulfillRequestDTO("AWS Secret", "secretVal", Map.of("env", "prod"));
+
+    mockMvc
+        .perform(
+            post("/api/v1/requests/" + requestId + "/fulfill")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(fulfillReq)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("fulfilled"))
-                .andExpect(jsonPath("$.mappedSecretId").exists());
-        
-        // Verify secret was created
-        // We can't verify secret content easily without getting it, but mappedSecretId proves link.
-    }
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("fulfilled"))
+        .andExpect(jsonPath("$.mappedSecretId").exists());
 
-    @Test
-    void rejectRequest_Success() throws Exception {
-        UUID tenantId = createTenant();
-        userService.createAdminUser(tenantId, "admin", "password");
-        String token = getAuthToken(tenantId, "admin", "password");
+    // Verify secret was created
+    // We can't verify secret content easily without getting it, but mappedSecretId proves link.
+  }
 
-        CreateRequestDTO createReq = new CreateRequestDTO("Bad Req", "Context", null, null);
-        String reqResponse = mockMvc.perform(post("/api/v1/requests")
-                .header("Authorization", "Bearer " + token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createReq)))
-                .andReturn().getResponse().getContentAsString();
-        String requestId = objectMapper.readTree(reqResponse).get("id").asText();
+  @Test
+  void rejectRequest_Success() throws Exception {
+    UUID tenantId = createTenant();
+    userService.createAdminUser(tenantId, "admin", "password");
+    String token = getAuthToken(tenantId, "admin", "password");
 
-        RejectRequestDTO rejectReq = new RejectRequestDTO("Denied");
-        
-        mockMvc.perform(post("/api/v1/requests/" + requestId + "/reject")
+    CreateRequestDTO createReq = new CreateRequestDTO("Bad Req", "Context", null, null);
+    String reqResponse =
+        mockMvc
+            .perform(
+                post("/api/v1/requests")
+                    .header("Authorization", "Bearer " + token)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(createReq)))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    String requestId = objectMapper.readTree(reqResponse).get("id").asText();
+
+    RejectRequestDTO rejectReq = new RejectRequestDTO("Denied");
+
+    mockMvc
+        .perform(
+            post("/api/v1/requests/" + requestId + "/reject")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(rejectReq)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("rejected"))
-                .andExpect(jsonPath("$.rejectionReason").value("Denied"));
-    }
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("rejected"))
+        .andExpect(jsonPath("$.rejectionReason").value("Denied"));
+  }
 }
