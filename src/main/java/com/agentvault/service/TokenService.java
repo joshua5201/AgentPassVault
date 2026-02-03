@@ -29,7 +29,6 @@ public class TokenService {
             .subject(user.getId().toString())
             .claim("tenant_id", user.getTenantId().toString())
             .claim("role", user.getRole())
-            // .claim("agent_id", ...) // TODO: Add agent_id logic when Agent model is ready
             .build();
 
     JwsHeader jwsHeader = JwsHeader.with(MacAlgorithm.HS256).build();
