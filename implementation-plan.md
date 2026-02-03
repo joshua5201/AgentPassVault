@@ -10,11 +10,11 @@ This document outlines the step-by-step implementation plan for the AgentVault s
 
 ## Phase 2: Domain Models (Data Layer)
 Define MongoDB documents with Lombok annotations.
-- [ ] **Tenant**: `_id`, `name`, `encrypted_tenant_key`, `status`.
-- [ ] **User**: `_id`, `tenant_id`, `username`, `password_hash`, `role`.
-- [ ] **Secret**: `_id`, `tenant_id`, `name`, `encrypted_value`, `nonce`, `tag`, `metadata` (flexible).
-- [ ] **Request**: `_id`, `request_id`, `tenant_id`, `status`, `name`, `required_metadata`, `rejection_reason`.
-- [ ] **Repositories**: Create `MongoRepository` interfaces for each document.
+- [x] **Tenant**: `_id`, `name`, `encrypted_tenant_key`, `status`.
+- [x] **User**: `_id`, `tenant_id`, `username`, `password_hash`, `role`.
+- [x] **Secret**: `_id`, `tenant_id`, `name`, `encrypted_value`, `nonce`, `tag`, `metadata` (flexible).
+- [x] **Request**: `_id`, `request_id`, `tenant_id`, `status`, `name`, `required_metadata`, `rejection_reason`.
+- [x] **Repositories**: Create `MongoRepository` interfaces for each document.
 
 ## Phase 3: Cryptography & Key Management
 This is the core security layer.
