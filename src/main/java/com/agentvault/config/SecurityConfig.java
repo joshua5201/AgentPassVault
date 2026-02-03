@@ -23,7 +23,13 @@ public class SecurityConfig {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/auth/login", "/actuator/health", "/error").permitAll()
+                .requestMatchers(
+                    "/api/v1/auth/login", 
+                    "/api/v1/auth/forgot-password", 
+                    "/api/v1/auth/reset-password",
+                    "/actuator/health", 
+                    "/error"
+                ).permitAll()
                 .anyRequest().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2

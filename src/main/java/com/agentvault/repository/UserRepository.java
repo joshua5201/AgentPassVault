@@ -11,4 +11,5 @@ import java.util.UUID;
 public interface UserRepository extends MongoRepository<User, UUID> {
     Optional<User> findByTenantIdAndUsername(UUID tenantId, String username);
     Optional<User> findByTenantIdAndAppTokenHash(UUID tenantId, String appTokenHash);
+    Optional<User> findByResetPasswordToken(String resetPasswordToken);
 }

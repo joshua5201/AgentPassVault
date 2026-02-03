@@ -3,7 +3,12 @@ package com.agentvault.controller;
 import com.agentvault.BaseIntegrationTest;
 import com.agentvault.dto.LoginRequest;
 import com.agentvault.model.User;
+import com.agentvault.dto.ChangePasswordRequest;
+import com.agentvault.dto.ForgotPasswordRequest;
+import com.agentvault.dto.LoginRequest;
+import com.agentvault.dto.ResetPasswordRequest;
 import com.agentvault.model.Tenant;
+import com.agentvault.model.User;
 import com.agentvault.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +19,7 @@ import java.security.MessageDigest;
 import java.util.Base64;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -29,6 +35,71 @@ class AuthControllerTest extends BaseIntegrationTest {
         tenant.setName("Test Tenant");
         tenant.setStatus("active");
         tenantRepository.save(tenant);
+    }
+
+    @Test
+    void changePassword_WithValidCredentials_Success() throws Exception {
+        UUID tenantId = UUID.randomUUID();
+        createTenant(tenantId);
+        
+        // Create user with known password
+        userService.createAdminUser(tenantId, "change_pass_user", "oldPass123");
+        
+        // Login to get token
+        String loginResponse = mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new LoginRequest(tenantId, "change_pass_user", "oldPass123", null))))
+                .andReturn().getResponse().getContentAsString();
+        
+        String token = objectMapper.readTree(loginResponse).get("accessToken").asText();
+
+        // Change password
+        ChangePasswordRequest request = new ChangePasswordRequest("oldPass123", "newPass456");
+        
+        mockMvc.perform(post("/api/v1/auth/change-password")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+
+        // Verify new password by logging in
+        mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new LoginRequest(tenantId, "change_pass_user", "newPass456", null))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void forgotAndResetPassword_Flow_Success() throws Exception {
+        UUID tenantId = UUID.randomUUID();
+        createTenant(tenantId);
+        userService.createAdminUser(tenantId, "reset_user", "oldPass");
+
+        // 1. Forgot Password
+        ForgotPasswordRequest forgotReq = new ForgotPasswordRequest(tenantId, "reset_user");
+        
+        String response = mockMvc.perform(post("/api/v1/auth/forgot-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(forgotReq)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.resetToken").exists())
+                .andReturn().getResponse().getContentAsString();
+        
+        String resetToken = objectMapper.readTree(response).get("resetToken").asText();
+
+        // 2. Reset Password
+        ResetPasswordRequest resetReq = new ResetPasswordRequest(resetToken, "newPass789");
+        
+        mockMvc.perform(post("/api/v1/auth/reset-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(resetReq)))
+                .andExpect(status().isOk());
+
+        // 3. Login with new password
+        mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new LoginRequest(tenantId, "reset_user", "newPass789", null))))
+                .andExpect(status().isOk());
     }
 
     @Test
