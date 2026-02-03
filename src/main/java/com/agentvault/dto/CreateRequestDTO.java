@@ -7,5 +7,4 @@ public record CreateRequestDTO(
     String name,
     String context,
     Map<String, Object> requiredMetadata,
-    List<String> requiredFieldsInSecretValue
-) {}
+    List<String> requiredFieldsInSecretValue) {}

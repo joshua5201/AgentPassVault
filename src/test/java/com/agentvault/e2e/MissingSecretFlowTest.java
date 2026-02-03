@@ -1,131 +1,154 @@
 package com.agentvault.e2e;
 
+import static org.hamcrest.Matchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 import com.agentvault.BaseIntegrationTest;
 import com.agentvault.dto.*;
 import com.agentvault.model.Tenant;
 import com.agentvault.service.AgentService;
 import com.agentvault.service.UserService;
 import com.agentvault.service.crypto.KeyManagementService;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.hamcrest.Matchers.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
 class MissingSecretFlowTest extends BaseIntegrationTest {
 
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private AgentService agentService;
-    @Autowired
-    private KeyManagementService keyManagementService;
+  @Autowired private UserService userService;
+  @Autowired private AgentService agentService;
+  @Autowired private KeyManagementService keyManagementService;
 
-    @Test
-    void completeMissingSecretFlow() throws Exception {
-        // 1. Setup Tenant
-        UUID tenantId = UUID.randomUUID();
-        Tenant tenant = new Tenant();
-        tenant.setId(tenantId);
-        tenant.setName("E2E Tenant");
-        tenant.setStatus("active");
-        tenant.setEncryptedTenantKey(keyManagementService.generateEncryptedTenantKey());
-        tenantRepository.save(tenant);
+  @Test
+  void completeMissingSecretFlow() throws Exception {
+    // 1. Setup Tenant
+    UUID tenantId = UUID.randomUUID();
+    Tenant tenant = new Tenant();
+    tenant.setId(tenantId);
+    tenant.setName("E2E Tenant");
+    tenant.setStatus("active");
+    tenant.setEncryptedTenantKey(keyManagementService.generateEncryptedTenantKey());
+    tenantRepository.save(tenant);
 
-        // Setup Admin
-        userService.createAdminUser(tenantId, "admin", "password");
-        String adminToken = getAuthToken(tenantId, "admin", "password");
+    // Setup Admin
+    userService.createAdminUser(tenantId, "admin", "password");
+    String adminToken = getAuthToken(tenantId, "admin", "password");
 
-        // Setup Agent
-        AgentTokenResponse agentResp = agentService.createAgent(tenantId, "deploy-agent");
-        String agentAppToken = agentResp.appToken();
-        
-        // Agent Login to get JWT
-        String agentLoginResp = mockMvc.perform(post("/api/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(new LoginRequest(tenantId, null, null, agentAppToken))))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        
-        String agentJwt = objectMapper.readTree(agentLoginResp).get("accessToken").asText();
+    // Setup Agent
+    AgentTokenResponse agentResp = agentService.createAgent(tenantId, "deploy-agent");
+    String agentAppToken = agentResp.appToken();
 
-        // 2. Agent Searches for "Prod DB" (and finds nothing)
-        SearchSecretRequest searchReq = new SearchSecretRequest(Map.of("service", "db", "env", "prod"));
-        mockMvc.perform(post("/api/v1/secrets/search")
+    // Agent Login to get JWT
+    String agentLoginResp =
+        mockMvc
+            .perform(
+                post("/api/v1/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        objectMapper.writeValueAsString(
+                            new LoginRequest(tenantId, null, null, agentAppToken))))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    String agentJwt = objectMapper.readTree(agentLoginResp).get("accessToken").asText();
+
+    // 2. Agent Searches for "Prod DB" (and finds nothing)
+    SearchSecretRequest searchReq = new SearchSecretRequest(Map.of("service", "db", "env", "prod"));
+    mockMvc
+        .perform(
+            post("/api/v1/secrets/search")
                 .header("Authorization", "Bearer " + agentJwt)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(searchReq)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(0)));
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$", hasSize(0)));
 
-        // 3. Agent Creates Request
-        CreateRequestDTO createReq = new CreateRequestDTO(
-            "Prod DB Credentials", 
-            "Need to run migration", 
-            Map.of("service", "db", "env", "prod"), 
-            List.of("username", "password")
-        );
-        
-        String reqResp = mockMvc.perform(post("/api/v1/requests")
-                .header("Authorization", "Bearer " + agentJwt)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createReq)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("pending"))
-                .andReturn().getResponse().getContentAsString();
-        
-        String requestId = objectMapper.readTree(reqResp).get("id").asText();
+    // 3. Agent Creates Request
+    CreateRequestDTO createReq =
+        new CreateRequestDTO(
+            "Prod DB Credentials",
+            "Need to run migration",
+            Map.of("service", "db", "env", "prod"),
+            List.of("username", "password"));
 
-        // 4. Admin Checks Request (Verification step, maybe admin lists pending requests)
-        mockMvc.perform(get("/api/v1/requests/" + requestId)
-                .header("Authorization", "Bearer " + adminToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("pending"))
-                .andExpect(jsonPath("$.name").value("Prod DB Credentials"));
+    String reqResp =
+        mockMvc
+            .perform(
+                post("/api/v1/requests")
+                    .header("Authorization", "Bearer " + agentJwt)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(createReq)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("pending"))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
 
-        // 5. Admin Fulfills Request
-        FulfillRequestDTO fulfillReq = new FulfillRequestDTO(
-            "Prod DB Credentials", 
-            "super-secret-password", 
-            Map.of("service", "db", "env", "prod")
-        );
-        
-        mockMvc.perform(post("/api/v1/requests/" + requestId + "/fulfill")
+    String requestId = objectMapper.readTree(reqResp).get("id").asText();
+
+    // 4. Admin Checks Request (Verification step, maybe admin lists pending requests)
+    mockMvc
+        .perform(
+            get("/api/v1/requests/" + requestId).header("Authorization", "Bearer " + adminToken))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("pending"))
+        .andExpect(jsonPath("$.name").value("Prod DB Credentials"));
+
+    // 5. Admin Fulfills Request
+    FulfillRequestDTO fulfillReq =
+        new FulfillRequestDTO(
+            "Prod DB Credentials", "super-secret-password", Map.of("service", "db", "env", "prod"));
+
+    mockMvc
+        .perform(
+            post("/api/v1/requests/" + requestId + "/fulfill")
                 .header("Authorization", "Bearer " + adminToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(fulfillReq)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("fulfilled"));
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("fulfilled"));
 
-        // 6. Agent Searches again (Should find it now)
-        String searchResp = mockMvc.perform(post("/api/v1/secrets/search")
-                .header("Authorization", "Bearer " + agentJwt)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(searchReq)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andReturn().getResponse().getContentAsString();
-        
-        String secretId = objectMapper.readTree(searchResp).get(0).get("id").asText();
+    // 6. Agent Searches again (Should find it now)
+    String searchResp =
+        mockMvc
+            .perform(
+                post("/api/v1/secrets/search")
+                    .header("Authorization", "Bearer " + agentJwt)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(searchReq)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$", hasSize(1)))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
 
-        // 7. Agent Gets Secret (Decrypts)
-        mockMvc.perform(get("/api/v1/secrets/" + secretId)
-                .header("Authorization", "Bearer " + agentJwt))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.value").value("super-secret-password"));
-    }
+    String secretId = objectMapper.readTree(searchResp).get(0).get("id").asText();
 
-    private String getAuthToken(UUID tenantId, String username, String password) throws Exception {
-        String loginResponse = mockMvc.perform(post("/api/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(new LoginRequest(tenantId, username, password, null))))
-                .andReturn().getResponse().getContentAsString();
-        return objectMapper.readTree(loginResponse).get("accessToken").asText();
-    }
+    // 7. Agent Gets Secret (Decrypts)
+    mockMvc
+        .perform(get("/api/v1/secrets/" + secretId).header("Authorization", "Bearer " + agentJwt))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.value").value("super-secret-password"));
+  }
+
+  private String getAuthToken(UUID tenantId, String username, String password) throws Exception {
+    String loginResponse =
+        mockMvc
+            .perform(
+                post("/api/v1/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        objectMapper.writeValueAsString(
+                            new LoginRequest(tenantId, username, password, null))))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readTree(loginResponse).get("accessToken").asText();
+  }
 }

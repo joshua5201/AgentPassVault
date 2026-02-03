@@ -1,181 +1,211 @@
 package com.agentvault.controller;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 import com.agentvault.BaseIntegrationTest;
-import com.agentvault.dto.LoginRequest;
-import com.agentvault.model.User;
 import com.agentvault.dto.ChangePasswordRequest;
 import com.agentvault.dto.ForgotPasswordRequest;
 import com.agentvault.dto.LoginRequest;
 import com.agentvault.dto.ResetPasswordRequest;
 import com.agentvault.model.Tenant;
-import com.agentvault.model.User;
 import com.agentvault.service.UserService;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Base64;
 import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 
 class AuthControllerTest extends BaseIntegrationTest {
 
-    @Autowired
-    private UserService userService;
+  @Autowired private UserService userService;
 
-    private void createTenant(UUID id) {
-        Tenant tenant = new Tenant();
-        tenant.setId(id);
-        tenant.setName("Test Tenant");
-        tenant.setStatus("active");
-        tenantRepository.save(tenant);
-    }
+  private void createTenant(UUID id) {
+    Tenant tenant = new Tenant();
+    tenant.setId(id);
+    tenant.setName("Test Tenant");
+    tenant.setStatus("active");
+    tenantRepository.save(tenant);
+  }
 
-    @Test
-    void changePassword_WithValidCredentials_Success() throws Exception {
-        UUID tenantId = UUID.randomUUID();
-        createTenant(tenantId);
-        
-        // Create user with known password
-        userService.createAdminUser(tenantId, "change_pass_user", "oldPass123");
-        
-        // Login to get token
-        String loginResponse = mockMvc.perform(post("/api/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(new LoginRequest(tenantId, "change_pass_user", "oldPass123", null))))
-                .andReturn().getResponse().getContentAsString();
-        
-        String token = objectMapper.readTree(loginResponse).get("accessToken").asText();
+  @Test
+  void changePassword_WithValidCredentials_Success() throws Exception {
+    UUID tenantId = UUID.randomUUID();
+    createTenant(tenantId);
 
-        // Change password
-        ChangePasswordRequest request = new ChangePasswordRequest("oldPass123", "newPass456");
-        
-        mockMvc.perform(post("/api/v1/auth/change-password")
+    // Create user with known password
+    userService.createAdminUser(tenantId, "change_pass_user", "oldPass123");
+
+    // Login to get token
+    String loginResponse =
+        mockMvc
+            .perform(
+                post("/api/v1/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        objectMapper.writeValueAsString(
+                            new LoginRequest(tenantId, "change_pass_user", "oldPass123", null))))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    String token = objectMapper.readTree(loginResponse).get("accessToken").asText();
+
+    // Change password
+    ChangePasswordRequest request = new ChangePasswordRequest("oldPass123", "newPass456");
+
+    mockMvc
+        .perform(
+            post("/api/v1/auth/change-password")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk());
+        .andExpect(status().isOk());
 
-        // Verify new password by logging in
-        mockMvc.perform(post("/api/v1/auth/login")
+    // Verify new password by logging in
+    mockMvc
+        .perform(
+            post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(new LoginRequest(tenantId, "change_pass_user", "newPass456", null))))
-                .andExpect(status().isOk());
-    }
+                .content(
+                    objectMapper.writeValueAsString(
+                        new LoginRequest(tenantId, "change_pass_user", "newPass456", null))))
+        .andExpect(status().isOk());
+  }
 
-    @Test
-    void forgotAndResetPassword_Flow_Success() throws Exception {
-        UUID tenantId = UUID.randomUUID();
-        createTenant(tenantId);
-        userService.createAdminUser(tenantId, "reset_user", "oldPass");
+  @Test
+  void forgotAndResetPassword_Flow_Success() throws Exception {
+    UUID tenantId = UUID.randomUUID();
+    createTenant(tenantId);
+    userService.createAdminUser(tenantId, "reset_user", "oldPass");
 
-        // 1. Forgot Password
-        ForgotPasswordRequest forgotReq = new ForgotPasswordRequest(tenantId, "reset_user");
-        
-        String response = mockMvc.perform(post("/api/v1/auth/forgot-password")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(forgotReq)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.resetToken").exists())
-                .andReturn().getResponse().getContentAsString();
-        
-        String resetToken = objectMapper.readTree(response).get("resetToken").asText();
+    // 1. Forgot Password
+    ForgotPasswordRequest forgotReq = new ForgotPasswordRequest(tenantId, "reset_user");
 
-        // 2. Reset Password
-        ResetPasswordRequest resetReq = new ResetPasswordRequest(resetToken, "newPass789");
-        
-        mockMvc.perform(post("/api/v1/auth/reset-password")
+    String response =
+        mockMvc
+            .perform(
+                post("/api/v1/auth/forgot-password")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(forgotReq)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.resetToken").exists())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    String resetToken = objectMapper.readTree(response).get("resetToken").asText();
+
+    // 2. Reset Password
+    ResetPasswordRequest resetReq = new ResetPasswordRequest(resetToken, "newPass789");
+
+    mockMvc
+        .perform(
+            post("/api/v1/auth/reset-password")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(resetReq)))
-                .andExpect(status().isOk());
+        .andExpect(status().isOk());
 
-        // 3. Login with new password
-        mockMvc.perform(post("/api/v1/auth/login")
+    // 3. Login with new password
+    mockMvc
+        .perform(
+            post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(new LoginRequest(tenantId, "reset_user", "newPass789", null))))
-                .andExpect(status().isOk());
-    }
+                .content(
+                    objectMapper.writeValueAsString(
+                        new LoginRequest(tenantId, "reset_user", "newPass789", null))))
+        .andExpect(status().isOk());
+  }
 
-    @Test
-    void ping_WithoutToken_Returns401() throws Exception {
-        mockMvc.perform(get("/api/v1/auth/ping"))
-                .andExpect(status().isUnauthorized());
-    }
+  @Test
+  void ping_WithoutToken_Returns401() throws Exception {
+    mockMvc.perform(get("/api/v1/auth/ping")).andExpect(status().isUnauthorized());
+  }
 
-    @Test
-    void ping_WithValidToken_ReturnsPong() throws Exception {
-        UUID tenantId = UUID.randomUUID();
-        createTenant(tenantId);
-        
-        userService.createAdminUser(tenantId, "testuser", "password");
+  @Test
+  void ping_WithValidToken_ReturnsPong() throws Exception {
+    UUID tenantId = UUID.randomUUID();
+    createTenant(tenantId);
 
-        // Login to get token
-        String loginResponse = mockMvc.perform(post("/api/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(new LoginRequest(tenantId, "testuser", "password", null))))
-                .andReturn().getResponse().getContentAsString();
-        
-        String token = objectMapper.readTree(loginResponse).get("accessToken").asText();
+    userService.createAdminUser(tenantId, "testuser", "password");
 
-        mockMvc.perform(get("/api/v1/auth/ping")
-                .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("pong"))
-                .andExpect(jsonPath("$.tenantId").value(tenantId.toString()));
-    }
+    // Login to get token
+    String loginResponse =
+        mockMvc
+            .perform(
+                post("/api/v1/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        objectMapper.writeValueAsString(
+                            new LoginRequest(tenantId, "testuser", "password", null))))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
 
-    @Test
-    void login_WithValidAdminCredentials_ReturnsToken() throws Exception {
-        UUID tenantId = UUID.randomUUID();
-        createTenant(tenantId);
+    String token = objectMapper.readTree(loginResponse).get("accessToken").asText();
 
-        userService.createAdminUser(tenantId, "admin", "password");
+    mockMvc
+        .perform(get("/api/v1/auth/ping").header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.message").value("pong"))
+        .andExpect(jsonPath("$.tenantId").value(tenantId.toString()));
+  }
 
-        LoginRequest request = new LoginRequest(tenantId, "admin", "password", null);
+  @Test
+  void login_WithValidAdminCredentials_ReturnsToken() throws Exception {
+    UUID tenantId = UUID.randomUUID();
+    createTenant(tenantId);
 
-        mockMvc.perform(post("/api/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").exists())
-                .andExpect(jsonPath("$.tokenType").value("Bearer"));
-    }
+    userService.createAdminUser(tenantId, "admin", "password");
 
-    @Test
-    void login_WithValidAgentToken_ReturnsToken() throws Exception {
-        UUID tenantId = UUID.randomUUID();
-        createTenant(tenantId);
+    LoginRequest request = new LoginRequest(tenantId, "admin", "password", null);
 
-        String rawToken = "agent-token-123";
-        
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        byte[] hash = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));
-        String tokenHash = Base64.getEncoder().encodeToString(hash);
-
-        userService.createAgentUser(tenantId, tokenHash);
-
-        LoginRequest request = new LoginRequest(tenantId, null, null, rawToken);
-
-        mockMvc.perform(post("/api/v1/auth/login")
+    mockMvc
+        .perform(
+            post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").exists());
-    }
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.accessToken").exists())
+        .andExpect(jsonPath("$.tokenType").value("Bearer"));
+  }
 
-    @Test
-    void login_WithInvalidCredentials_Returns401() throws Exception {
-        LoginRequest request = new LoginRequest(UUID.randomUUID(), "wrong", "wrong", null);
+  @Test
+  void login_WithValidAgentToken_ReturnsToken() throws Exception {
+    UUID tenantId = UUID.randomUUID();
+    createTenant(tenantId);
 
-        mockMvc.perform(post("/api/v1/auth/login")
+    String rawToken = "agent-token-123";
+
+    MessageDigest digest = MessageDigest.getInstance("SHA-256");
+    byte[] hash = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));
+    String tokenHash = Base64.getEncoder().encodeToString(hash);
+
+    userService.createAgentUser(tenantId, tokenHash);
+
+    LoginRequest request = new LoginRequest(tenantId, null, null, rawToken);
+
+    mockMvc
+        .perform(
+            post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isUnauthorized());
-    }
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.accessToken").exists());
+  }
+
+  @Test
+  void login_WithInvalidCredentials_Returns401() throws Exception {
+    LoginRequest request = new LoginRequest(UUID.randomUUID(), "wrong", "wrong", null);
+
+    mockMvc
+        .perform(
+            post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isUnauthorized());
+  }
 }

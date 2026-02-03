@@ -16,5 +16,4 @@ public record RequestResponse(
     String mappedSecretId,
     String rejectionReason,
     LocalDateTime createdAt,
-    LocalDateTime updatedAt
-) {}
+    LocalDateTime updatedAt) {}

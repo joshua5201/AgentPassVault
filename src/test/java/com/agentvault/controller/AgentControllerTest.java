@@ -1,118 +1,136 @@
 package com.agentvault.controller;
 
+import static org.hamcrest.Matchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 import com.agentvault.BaseIntegrationTest;
 import com.agentvault.dto.CreateAgentRequest;
 import com.agentvault.dto.LoginRequest;
 import com.agentvault.model.Tenant;
 import com.agentvault.service.UserService;
 import com.agentvault.service.crypto.KeyManagementService;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
-import java.util.UUID;
-
-import static org.hamcrest.Matchers.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
 class AgentControllerTest extends BaseIntegrationTest {
 
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private KeyManagementService keyManagementService;
+  @Autowired private UserService userService;
+  @Autowired private KeyManagementService keyManagementService;
 
-    private String getAuthToken(UUID tenantId, String username, String password) throws Exception {
-        String loginResponse = mockMvc.perform(post("/api/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(new LoginRequest(tenantId, username, password, null))))
-                .andReturn().getResponse().getContentAsString();
-        return objectMapper.readTree(loginResponse).get("accessToken").asText();
-    }
+  private String getAuthToken(UUID tenantId, String username, String password) throws Exception {
+    String loginResponse =
+        mockMvc
+            .perform(
+                post("/api/v1/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        objectMapper.writeValueAsString(
+                            new LoginRequest(tenantId, username, password, null))))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readTree(loginResponse).get("accessToken").asText();
+  }
 
-    private UUID createTenant() {
-        UUID tenantId = UUID.randomUUID();
-        Tenant tenant = new Tenant();
-        tenant.setId(tenantId);
-        tenant.setName("Test Tenant");
-        tenant.setStatus("active");
-        tenant.setEncryptedTenantKey(keyManagementService.generateEncryptedTenantKey());
-        tenantRepository.save(tenant);
-        return tenantId;
-    }
+  private UUID createTenant() {
+    UUID tenantId = UUID.randomUUID();
+    Tenant tenant = new Tenant();
+    tenant.setId(tenantId);
+    tenant.setName("Test Tenant");
+    tenant.setStatus("active");
+    tenant.setEncryptedTenantKey(keyManagementService.generateEncryptedTenantKey());
+    tenantRepository.save(tenant);
+    return tenantId;
+  }
 
-    @Test
-    void createAndListAgent_Success() throws Exception {
-        UUID tenantId = createTenant();
-        userService.createAdminUser(tenantId, "admin", "password");
-        String token = getAuthToken(tenantId, "admin", "password");
+  @Test
+  void createAndListAgent_Success() throws Exception {
+    UUID tenantId = createTenant();
+    userService.createAdminUser(tenantId, "admin", "password");
+    String token = getAuthToken(tenantId, "admin", "password");
 
-        // Create Agent
-        CreateAgentRequest createReq = new CreateAgentRequest("CI Runner");
-        mockMvc.perform(post("/api/v1/agents")
+    // Create Agent
+    CreateAgentRequest createReq = new CreateAgentRequest("CI Runner");
+    mockMvc
+        .perform(
+            post("/api/v1/agents")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createReq)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").exists())
-                .andExpect(jsonPath("$.appToken").exists());
-        
-        // List Agents
-        mockMvc.perform(get("/api/v1/agents")
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").exists())
+        .andExpect(jsonPath("$.appToken").exists());
+
+    // List Agents
+    mockMvc
+        .perform(get("/api/v1/agents").header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$", hasSize(1)))
+        .andExpect(jsonPath("$[0].name").value("CI Runner"));
+  }
+
+  @Test
+  void rotateToken_Success() throws Exception {
+    UUID tenantId = createTenant();
+    userService.createAdminUser(tenantId, "admin", "password");
+    String token = getAuthToken(tenantId, "admin", "password");
+
+    // Create Agent
+    CreateAgentRequest createReq = new CreateAgentRequest("Agent 1");
+    String createResponse =
+        mockMvc
+            .perform(
+                post("/api/v1/agents")
+                    .header("Authorization", "Bearer " + token)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(createReq)))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    String agentId = objectMapper.readTree(createResponse).get("id").asText();
+    String oldToken = objectMapper.readTree(createResponse).get("appToken").asText();
+
+    // Rotate
+    mockMvc
+        .perform(
+            post("/api/v1/agents/" + agentId + "/rotate")
                 .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].name").value("CI Runner"));
-    }
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.appToken").value(not(oldToken)));
+  }
 
-    @Test
-    void rotateToken_Success() throws Exception {
-        UUID tenantId = createTenant();
-        userService.createAdminUser(tenantId, "admin", "password");
-        String token = getAuthToken(tenantId, "admin", "password");
+  @Test
+  void deleteAgent_Success() throws Exception {
+    UUID tenantId = createTenant();
+    userService.createAdminUser(tenantId, "admin", "password");
+    String token = getAuthToken(tenantId, "admin", "password");
 
-        // Create Agent
-        CreateAgentRequest createReq = new CreateAgentRequest("Agent 1");
-        String createResponse = mockMvc.perform(post("/api/v1/agents")
-                .header("Authorization", "Bearer " + token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createReq)))
-                .andReturn().getResponse().getContentAsString();
-        String agentId = objectMapper.readTree(createResponse).get("id").asText();
-        String oldToken = objectMapper.readTree(createResponse).get("appToken").asText();
+    // Create Agent
+    CreateAgentRequest createReq = new CreateAgentRequest("Agent 1");
+    String createResponse =
+        mockMvc
+            .perform(
+                post("/api/v1/agents")
+                    .header("Authorization", "Bearer " + token)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(createReq)))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    String agentId = objectMapper.readTree(createResponse).get("id").asText();
 
-        // Rotate
-        mockMvc.perform(post("/api/v1/agents/" + agentId + "/rotate")
-                .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.appToken").value(not(oldToken)));
-    }
+    // Delete
+    mockMvc
+        .perform(delete("/api/v1/agents/" + agentId).header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk());
 
-    @Test
-    void deleteAgent_Success() throws Exception {
-        UUID tenantId = createTenant();
-        userService.createAdminUser(tenantId, "admin", "password");
-        String token = getAuthToken(tenantId, "admin", "password");
-
-        // Create Agent
-        CreateAgentRequest createReq = new CreateAgentRequest("Agent 1");
-        String createResponse = mockMvc.perform(post("/api/v1/agents")
-                .header("Authorization", "Bearer " + token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createReq)))
-                .andReturn().getResponse().getContentAsString();
-        String agentId = objectMapper.readTree(createResponse).get("id").asText();
-
-        // Delete
-        mockMvc.perform(delete("/api/v1/agents/" + agentId)
-                .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk());
-
-        // List should be empty
-        mockMvc.perform(get("/api/v1/agents")
-                .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(0)));
-    }
+    // List should be empty
+    mockMvc
+        .perform(get("/api/v1/agents").header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$", hasSize(0)));
+  }
 }
