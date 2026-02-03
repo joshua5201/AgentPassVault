@@ -37,38 +37,45 @@ This is the core security layer.
 ### 5.1 User & Auth Management
 - [x] **AuthService**: Login logic for Admins (Username/Password) and Agents (App Token).
 - [x] **AuthController**: `POST /api/v1/auth/login`.
+- [x] **Change Password**:
+    - [x] `POST /api/v1/auth/change-password` (Authenticated)
+- [x] **Forgot Password Flow** (Email integration deferred):
+    - [x] `POST /api/v1/auth/forgot-password` (Generate reset token with expiry)
+    - [x] `POST /api/v1/auth/reset-password` (Verify token and update password)
 
 ### 5.2 Secret Management
-- [ ] **SecretService**:
-    - [ ] `createSecret`: Encrypt value with TK, save to DB.
-    - [ ] `getSecret`: Retrieve, decrypt with TK.
-    - [ ] `searchSecrets`: Query by metadata.
-- [ ] **SecretController**:
-    - [ ] `POST /api/v1/secrets`
-    - [ ] `GET /api/v1/secrets/:id`
-    - [ ] `POST /api/v1/secrets/search`
+- [x] **SecretService**:
+    - [x] `createSecret`: Encrypt value with TK, save to DB.
+    - [x] `getSecret`: Retrieve, decrypt with TK.
+    - [x] `searchSecrets`: Query by metadata.
+    - [x] `deleteSecret`: Soft/Hard delete secret.
+- [x] **SecretController**:
+    - [x] `POST /api/v1/secrets`
+    - [x] `GET /api/v1/secrets/:id`
+    - [x] `DELETE /api/v1/secrets/:id`
+    - [x] `POST /api/v1/secrets/search`
     - 
 ### 5.3 Agent Management
-- [ ] **AgentService**: Create agents, generate/rotate tokens.
-- [ ] **AgentController**: `/api/v1/agents` endpoints.
+- [x] **AgentService**: Create agents, generate/rotate tokens.
+- [x] **AgentController**: `/api/v1/agents` endpoints.
 
 
 ### 5.4 Request Management (The "Ask" Pattern)
-- [ ] **RequestService**:
-    - [ ] Create new requests.
-    - [ ] Fulfill request (encrypt new secret, link, update status).
-    - [ ] Reject request.
-- [ ] **RequestController**:
-    - [ ] `POST /api/v1/requests`
-    - [ ] `GET /api/v1/requests/:id`
-    - [ ] `POST /api/v1/requests/:id/fulfill`
-    - [ ] `POST /api/v1/requests/:id/reject`
+- [x] **RequestService**:
+    - [x] Create new requests.
+    - [x] Fulfill request (encrypt new secret, link, update status).
+    - [x] Reject request.
+- [x] **RequestController**:
+    - [x] `POST /api/v1/requests`
+    - [x] `GET /api/v1/requests/:id`
+    - [x] `POST /api/v1/requests/:id/fulfill`
+    - [x] `POST /api/v1/requests/:id/reject`
 
 ## Phase 6: Testing & Validation
-- [ ] **Unit Tests**: Test crypto logic and services extensively.
-- [ ] **Integration Tests**: `MockMvc` tests for controllers, validating security restrictions (e.g., ensuring Tenant A cannot access Tenant B's secrets).
-- [ ] **End-to-End**: Verify the "Missing Secret Flow" manually.
+- [x] **Unit Tests**: Test crypto logic and services extensively.
+- [x] **Integration Tests**: `MockMvc` tests for controllers, validating security restrictions (e.g., ensuring Tenant A cannot access Tenant B's secrets).
+- [x] **End-to-End**: Verify the "Missing Secret Flow" manually (and via automated test).
 
 ## Phase 7: Polish
-- [ ] API Documentation (Swagger/OpenAPI if needed).
-- [ ] Finalize `README.md`.
+- [x] API Documentation (Swagger/OpenAPI if needed).
+- [x] Finalize `README.md`.

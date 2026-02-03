@@ -1,52 +1,86 @@
 # AgentVault
 
-AgentVault is a lightweight, standalone password and secret manager designed for automated agents.
+AgentVault is a lightweight, standalone password and secret manager designed for automated agents. It bridges the gap between autonomous agents and secure credential management by allowing agents to retrieve secrets and request new ones from human admins asynchronously.
 
-## 🔑 Security Setup
+## 🚀 Features
+- **Agent-Centric API**: Designed for machine consumption.
+- **Secure by Default**: Secrets are encrypted at rest (AES-256 GCM) with tenant isolation.
+- **Request-Response Workflow**: Agents "ask" for secrets; Admins fulfill them securely.
+- **Audit Ready**: Tracks secret creation and access.
 
-AgentVault uses a 2-tier key hierarchy (SMK + TK) with AES-256 GCM encryption.
+## 🛠️ Development Setup
+
+### Prerequisites
+- Java 21
+- Docker & Docker Compose
+
+### Quick Start
+1.  **Start Infrastructure (MongoDB):**
+    ```bash
+    docker-compose up -d
+    ```
+2.  **Run the Application (Dev Profile):**
+    ```bash
+    ./gradlew bootRun
+    ```
+    *This will auto-seed a "Dev Tenant" and "devadmin" user.*
+
+3.  **Get Credentials:**
+    ```bash
+    ./get-dev-tenant.sh
+    # Outputs: Tenant ID and Username
+    ```
+
+## 🔑 Security Setup (Production)
+
+AgentVault uses a 2-tier key hierarchy (SMK + TK).
 
 ### 1. Generate the System Master Key (SMK)
-
-For production, you must generate a cryptographically secure 32-byte key and encode it in Base64. 
-
-**Using OpenSSL:**
+Generate a 32-byte Base64 key:
 ```bash
 openssl rand -base64 32
 ```
 
-**Using Python:**
+### 2. Generate JWT Secret
+Generate a strong secret for signing JWTs:
 ```bash
-python3 -c "import os, base64; print(base64.b64encode(os.urandom(32)).decode())"
+openssl rand -base64 64
 ```
 
-### 2. Configure the Environment
-
-Set the generated key as an environment variable:
-
+### 3. Environment Configuration
+Set these environment variables (or use `.env` file):
 ```bash
-export AGENTVAULT_SYSTEM_KEY="your-generated-base64-key"
+export AGENTVAULT_SYSTEM_KEY="your-smk..."
+export AGENTVAULT_JWT_SECRET="your-jwt-secret..."
 ```
 
-In `application.properties` (or as an environment variable `AGENTVAULT_SYSTEM_KEY` which Spring maps to the property):
+## 📚 API Overview
 
-```properties
-agentvault.system.key=${AGENTVAULT_SYSTEM_KEY}
+### Authentication
+- `POST /api/v1/auth/login`: Admin (user/pass) or Agent (app_token) login. Returns JWT.
+- `POST /api/v1/auth/change-password`: Change password.
+- `POST /api/v1/auth/forgot-password`: Initiate reset flow.
+
+### Secrets (Encrypted)
+- `POST /api/v1/secrets/search`: Search by metadata (e.g., `{"metadata.env": "prod"}`). Returns metadata only.
+- `GET /api/v1/secrets/{id}`: Retrieve decrypted secret value.
+- `POST /api/v1/secrets`: Create a secret.
+- `DELETE /api/v1/secrets/{id}`: Delete a secret.
+
+### Requests (The "Ask" Pattern)
+- `POST /api/v1/requests`: Agent creates a request for a missing secret.
+- `GET /api/v1/requests/{id}`: Check status.
+- `POST /api/v1/requests/{id}/fulfill`: Admin provides the secret.
+- `POST /api/v1/requests/{id}/reject`: Admin denies request.
+
+### Agents
+- `POST /api/v1/agents`: Create a new agent (returns app_token).
+- `GET /api/v1/agents`: List agents.
+- `POST /api/v1/agents/{id}/rotate`: Rotate app_token.
+
+## 🧪 Testing
+Run unit and integration tests:
+```bash
+./gradlew test
 ```
-
-## 🚀 Running the Application
-
-1. **Prerequisites:**
-   - Java 21
-   - MongoDB 6.0+
-
-2. **Build:**
-   ```bash
-   ./gradlew build
-   ```
-
-3. **Run:**
-   ```bash
-   export AGENTVAULT_SYSTEM_KEY="..."
-   java -jar build/libs/agentvault-0.0.1-SNAPSHOT.jar
-   ```
+Includes an End-to-End test `MissingSecretFlowTest` simulating the full Agent-Admin interaction loop.

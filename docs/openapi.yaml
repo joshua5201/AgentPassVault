@@ -1,0 +1,144 @@
+openapi: 3.0.3
+info:
+  title: AgentVault API
+  description: Secure Secret Manager for Automated Agents
+  version: 0.0.1
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local Dev
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - bearerAuth: []
+paths:
+  /auth/login:
+    post:
+      summary: Login
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tenantId: { type: string, format: uuid }
+                username: { type: string }
+                password: { type: string }
+                appToken: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken: { type: string }
+                  tokenType: { type: string }
+                  expiresIn: { type: integer }
+
+  /secrets/search:
+    post:
+      summary: Search Secrets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                metadata: { type: object }
+      responses:
+        '200':
+          description: Metadata list (values hidden)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SecretMetadata'
+
+  /secrets/{id}:
+    get:
+      summary: Get Secret Value
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Decrypted Secret
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Secret'
+
+  /requests:
+    post:
+      summary: Create Secret Request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                context: { type: string }
+                requiredMetadata: { type: object }
+                requiredFieldsInSecretValue: { type: array, items: { type: string } }
+      responses:
+        '200':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Request'
+
+  /requests/{id}/fulfill:
+    post:
+      summary: Fulfill Request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                value: { type: string }
+                metadata: { type: object }
+      responses:
+        '200':
+          description: Fulfilled
+
+components:
+  schemas:
+    SecretMetadata:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        metadata: { type: object }
+        createdAt: { type: string, format: date-time }
+    
+    Secret:
+      allOf:
+        - $ref: '#/components/schemas/SecretMetadata'
+        - type: object
+          properties:
+            value: { type: string }
+
+    Request:
+      type: object
+      properties:
+        id: { type: string }
+        status: { type: string, enum: [pending, fulfilled, rejected] }
+        mappedSecretId: { type: string }
