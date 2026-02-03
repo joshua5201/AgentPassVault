@@ -36,7 +36,7 @@ public class DataSeeder implements CommandLineRunner {
 
         // Create Tenant
         Tenant tenant = new Tenant();
-        tenant.setId(UUID.fromString("be417999-e8bb-432d-9cfc-89e839b0ad96"));
+        tenant.setId(UUID.randomUUID());
         tenant.setName("Dev Tenant");
         tenant.setStatus("active");
         tenant.setEncryptedTenantKey(keyManagementService.generateEncryptedTenantKey());
@@ -48,12 +48,12 @@ public class DataSeeder implements CommandLineRunner {
         String rawPassword = System.getenv("AGENTVAULT_DEV_PASSWORD");
         
         if (rawPassword == null || rawPassword.isBlank()) {
-            log.warn("AGENTVAULT_DEV_PASSWORD not set. Using default fallback password.");
-            rawPassword = "2E8DwW45lBRrb4";
+            log.warn("AGENTVAULT_DEV_PASSWORD not set. Generating a random password.");
+            rawPassword = UUID.randomUUID().toString().substring(0, 16);
         }
 
         User user = new User();
-        user.setId(UUID.fromString("c1e4889c-4f74-4b53-832c-352016343285"));
+        user.setId(UUID.randomUUID());
         user.setTenantId(tenant.getId());
         user.setUsername(username);
         user.setPasswordHash(passwordEncoder.encode(rawPassword));
