@@ -1,6 +1,7 @@
 package com.agentvault.model;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -11,8 +12,9 @@ import java.util.Map;
 import java.util.UUID;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Document(collection = "requests")
-public class Request {
+public class Request extends BaseEntity {
 
     @Id
     private String id; // ObjectId
@@ -36,7 +38,5 @@ public class Request {
 
     private String mappedSecretId; // ObjectId of the secret fulfilling this request
     private String rejectionReason;
-
-    private LocalDateTime createdAt;
 
 }

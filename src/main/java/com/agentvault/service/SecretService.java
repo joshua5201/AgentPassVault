@@ -45,8 +45,6 @@ public class SecretService {
         secret.setName(request.name());
         secret.setEncryptedValue(encryptedValue);
         secret.setMetadata(request.metadata());
-        secret.setCreatedAt(LocalDateTime.now());
-        secret.setUpdatedAt(LocalDateTime.now());
 
         Secret saved = secretRepository.save(secret);
         
