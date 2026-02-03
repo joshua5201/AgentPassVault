@@ -14,3 +14,9 @@ Agents working on this project must adhere to the specifications and workflows d
 - **Automatic Test Verification:** Upon completing implementation, write comprehensive automated tests (unit and integration) to verify the new features.
 - **Feature Branches:** Always create a new feature branch (e.g., `feat/my-feature`) for development work. Do not commit directly to `master`.
 - **Merge Strategy:** When merging to `master`, always use the `--no-ff` (no fast-forward) option to preserve the branch topology.
+
+## Java Implementation Context (feat/java)
+- **Primary Branch:** `feat/java` is the main development branch for the Java implementation.
+- **Feature Branching:** Until a new working version is finished, all new work must branch out from `feat/java`.
+- **Architecture:** Spring Boot 3 (Java 21) + MongoDB.
+- **Security:** Multi-tenant isolation using 2-tier key hierarchy (SMK + TK).
