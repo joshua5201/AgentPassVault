@@ -18,13 +18,13 @@ Define MongoDB documents with Lombok annotations.
 
 ## Phase 3: Cryptography & Key Management
 This is the core security layer.
-- [ ] **KeyManagementService**:
-    - [ ] Load `AGENTVAULT_SYSTEM_KEY` (SMK) from environment.
-    - [ ] Generate new Tenant Keys (TK).
-    - [ ] Encrypt/Decrypt TK using SMK.
-- [ ] **EncryptionService**:
-    - [ ] Implement AES-GCM encryption/decryption logic.
-    - [ ] Methods: `encrypt(data, key)`, `decrypt(data, key)`.
+- [x] **KeyManagementService**:
+    - [x] Load `AGENTVAULT_SYSTEM_KEY` (SMK) from environment.
+    - [x] Generate new Tenant Keys (TK).
+    - [x] Encrypt/Decrypt TK using SMK.
+- [x] **EncryptionService**:
+    - [x] Implement AES-GCM encryption/decryption logic.
+    - [x] Methods: `encrypt(data, key)`, `decrypt(data, key)`.
 
 ## Phase 4: Authentication & Tenant Context
 - [ ] **Token Service**: Implement JWT generation (signing) and validation.
