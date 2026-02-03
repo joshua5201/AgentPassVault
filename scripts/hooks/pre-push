@@ -1,0 +1,10 @@
+#!/bin/sh
+export LANG=en_US.UTF-8
+
+echo "Running Spotless Check..."
+./gradlew spotlessCheck
+
+if [ $? -ne 0 ]; then
+    echo "Spotless check failed. Please run './gradlew spotlessApply', commit the changes, and push again."
+    exit 1
+fi

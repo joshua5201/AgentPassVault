@@ -2,6 +2,8 @@ plugins {
 	java
 	id("org.springframework.boot") version "3.4.2"
 	id("io.spring.dependency-management") version "1.1.7"
+	id("net.ltgt.errorprone") version "4.0.0"
+	id("com.diffplug.spotless") version "6.25.0"
 }
 
 group = "com.agentvault"
@@ -35,6 +37,16 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.security:spring-security-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+	errorprone("com.google.errorprone:error_prone_core:2.26.1")
+}
+
+spotless {
+	java {
+		googleJavaFormat()
+		removeUnusedImports()
+		trimTrailingWhitespace()
+		endWithNewline()
+	}
 }
 
 tasks.withType<Test> {
