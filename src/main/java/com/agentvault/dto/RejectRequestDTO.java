@@ -1,3 +1,5 @@
 package com.agentvault.dto;
 
-public record RejectRequestDTO(String reason) {}
+import jakarta.validation.constraints.NotBlank;
+
+public record RejectRequestDTO(@NotBlank(message = "Reason cannot be blank") String reason) {}

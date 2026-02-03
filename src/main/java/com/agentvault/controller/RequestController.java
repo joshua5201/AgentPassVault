@@ -3,14 +3,17 @@ package com.agentvault.controller;
 import com.agentvault.dto.*;
 import com.agentvault.security.AgentVaultAuthentication;
 import com.agentvault.service.RequestService;
+import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/requests")
 @RequiredArgsConstructor
+@Validated
 public class RequestController {
 
   private final RequestService requestService;
@@ -18,16 +21,14 @@ public class RequestController {
   @PostMapping
   @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
   public RequestResponse createRequest(
-      AgentVaultAuthentication authentication, @RequestBody CreateRequestDTO dto) {
-    // Typically agents create requests
+      AgentVaultAuthentication authentication, @Valid @RequestBody CreateRequestDTO dto) {
     return requestService.createRequest(
         authentication.getTenantId(), (UUID) authentication.getPrincipal(), dto);
   }
 
   @GetMapping("/{id}")
   @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
-  public RequestResponse getRequest(
-      AgentVaultAuthentication authentication, @PathVariable String id) {
+  public RequestResponse getRequest(AgentVaultAuthentication authentication, @PathVariable String id) {
     return requestService.getRequest(authentication.getTenantId(), id);
   }
 
@@ -36,8 +37,7 @@ public class RequestController {
   public RequestResponse fulfillRequest(
       AgentVaultAuthentication authentication,
       @PathVariable String id,
-      @RequestBody FulfillRequestDTO dto) {
-    // Typically admins
+      @Valid @RequestBody FulfillRequestDTO dto) {
     return requestService.fulfillRequest(authentication.getTenantId(), id, dto);
   }
 
@@ -46,7 +46,7 @@ public class RequestController {
   public RequestResponse mapRequest(
       AgentVaultAuthentication authentication,
       @PathVariable String id,
-      @RequestBody MapRequestDTO dto) {
+      @Valid @RequestBody MapRequestDTO dto) {
     return requestService.mapRequest(authentication.getTenantId(), id, dto.secretId());
   }
 
@@ -55,7 +55,7 @@ public class RequestController {
   public RequestResponse rejectRequest(
       AgentVaultAuthentication authentication,
       @PathVariable String id,
-      @RequestBody RejectRequestDTO dto) {
+      @Valid @RequestBody RejectRequestDTO dto) {
     return requestService.rejectRequest(authentication.getTenantId(), id, dto.reason());
   }
 }

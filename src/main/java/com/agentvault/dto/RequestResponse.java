@@ -1,5 +1,6 @@
 package com.agentvault.dto;
 
+import com.agentvault.model.RequestStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -8,7 +9,7 @@ import java.util.UUID;
 public record RequestResponse(
     String id,
     UUID requestId,
-    String status,
+    RequestStatus status,
     String name,
     String context,
     Map<String, Object> requiredMetadata,

@@ -1,3 +1,5 @@
 package com.agentvault.dto;
 
-public record MapRequestDTO(String secretId) {}
+import jakarta.validation.constraints.NotBlank;
+
+public record MapRequestDTO(@NotBlank(message = "Secret ID cannot be blank") String secretId) {}

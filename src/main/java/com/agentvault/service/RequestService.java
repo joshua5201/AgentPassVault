@@ -2,8 +2,10 @@ package com.agentvault.service;
 
 import com.agentvault.dto.*;
 import com.agentvault.model.Request;
+import com.agentvault.model.RequestStatus;
 import com.agentvault.repository.RequestRepository;
 import com.agentvault.repository.SecretRepository;
+import com.agentvault.service.SecretService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,7 +24,7 @@ public class RequestService {
     request.setTenantId(tenantId);
     request.setRequesterId(requesterId);
     request.setRequestId(UUID.randomUUID());
-    request.setStatus("pending");
+    request.setStatus(RequestStatus.pending);
     request.setName(dto.name());
     request.setContext(dto.context());
     request.setRequiredMetadata(dto.requiredMetadata());
@@ -45,7 +47,7 @@ public class RequestService {
         new CreateSecretRequest(dto.name(), dto.value(), dto.metadata());
     SecretMetadataResponse secret = secretService.createSecret(tenantId, secretRequest);
 
-    request.setStatus("fulfilled");
+    request.setStatus(RequestStatus.fulfilled);
     request.setMappedSecretId(secret.id());
 
     return mapToResponse(requestRepository.save(request));
@@ -56,22 +58,14 @@ public class RequestService {
     validatePending(request);
 
     // Verify secret exists and belongs to tenant
-    if (!secretRepository.existsById(
-        secretId)) { // Ideally verify tenantId too, but SecretService handles logic usually.
-      // Here we access repo directly to check existence.
-      // Better to use secretService.getSecret but that decrypts.
-      // Or secretRepository.findByIdAndTenantId...
-      // Let's use repo check.
-      // Verify tenant match manually.
-      if (secretRepository
-          .findById(secretId)
-          .filter(s -> s.getTenantId().equals(tenantId))
-          .isEmpty()) {
-        throw new IllegalArgumentException("Secret not found");
-      }
+    if (secretRepository
+        .findById(secretId)
+        .filter(s -> s.getTenantId().equals(tenantId))
+        .isEmpty()) {
+      throw new IllegalArgumentException("Secret not found");
     }
 
-    request.setStatus("fulfilled");
+    request.setStatus(RequestStatus.fulfilled);
     request.setMappedSecretId(secretId);
 
     return mapToResponse(requestRepository.save(request));
@@ -81,7 +75,7 @@ public class RequestService {
     Request request = findRequest(tenantId, id);
     validatePending(request);
 
-    request.setStatus("rejected");
+    request.setStatus(RequestStatus.rejected);
     request.setRejectionReason(reason);
 
     return mapToResponse(requestRepository.save(request));
@@ -95,8 +89,8 @@ public class RequestService {
   }
 
   private void validatePending(Request request) {
-    if (!"pending".equals(request.getStatus())) {
-      throw new IllegalStateException("Request is already " + request.getStatus());
+    if (!RequestStatus.pending.equals(request.getStatus())) {
+      throw new IllegalStateException("Request is already " + request.getStatus().getValue());
     }
   }
 

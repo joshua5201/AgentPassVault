@@ -1,3 +1,5 @@
 package com.agentvault.dto;
 
-public record CreateAgentRequest(String name) {}
+import jakarta.validation.constraints.NotBlank;
+
+public record CreateAgentRequest(@NotBlank(message = "Agent name cannot be blank") String name) {}
