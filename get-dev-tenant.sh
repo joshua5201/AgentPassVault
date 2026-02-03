@@ -15,6 +15,6 @@ docker exec agentvault-mongodb mongosh agentvault --quiet --eval '
         print("Username:  (not found)");
     }
   } else {
-    print("Dev Tenant not found. Make sure the application has run in 'dev' profile at least once.");
+    print("Dev Tenant not found. Make sure the application has run in \"dev\" profile at least once.");
   }
 '
