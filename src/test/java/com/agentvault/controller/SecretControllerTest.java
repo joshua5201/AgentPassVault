@@ -33,11 +33,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
+@SuppressWarnings("HidingField")
 class SecretControllerTest extends BaseIntegrationTest {
 
   @Autowired private UserService userService;
   @Autowired private AgentService agentService;
   @Autowired private SecretRepository secretRepository;
+
 
   private String getAuthToken(UUID tenantId, String username, String password) throws Exception {
     String loginResponse =
