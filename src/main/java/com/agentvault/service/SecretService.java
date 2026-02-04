@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,6 +20,7 @@ import com.agentvault.dto.CreateSecretRequest;
 import com.agentvault.dto.SecretMetadataResponse;
 import com.agentvault.dto.SecretResponse;
 import com.agentvault.model.Secret;
+import com.agentvault.model.SecretVisibility;
 import com.agentvault.model.Tenant;
 import com.agentvault.repository.SecretRepository;
 import com.agentvault.repository.TenantRepository;
@@ -45,6 +46,7 @@ public class SecretService {
   private final KeyManagementService keyManagementService;
   private final EncryptionService encryptionService;
   private final MongoTemplate mongoTemplate; // For dynamic search queries
+  private final TokenService tokenService;
 
   public SecretMetadataResponse createSecret(UUID tenantId, CreateSecretRequest request) {
     byte[] tenantKey = getTenantKey(tenantId);
@@ -64,6 +66,29 @@ public class SecretService {
   }
 
   public SecretResponse getSecret(UUID tenantId, String secretId) {
+    Secret secret =
+        secretRepository
+            .findById(secretId)
+            .filter(s -> s.getTenantId().equals(tenantId))
+            .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
+
+    if (secret.getVisibility() == SecretVisibility.LEASE_REQUIRED) {
+      throw new IllegalStateException("Secret requires a lease token for access");
+    }
+    if (secret.getVisibility() == SecretVisibility.HIDDEN) {
+      throw new IllegalStateException("Secret is hidden");
+    }
+
+    byte[] tenantKey = getTenantKey(tenantId);
+    byte[] decryptedBytes = encryptionService.decrypt(secret.getEncryptedValue(), tenantKey);
+    String decryptedValue = new String(decryptedBytes, StandardCharsets.UTF_8);
+
+    return mapToResponse(secret, decryptedValue);
+  }
+
+  public SecretResponse getSecretWithLease(UUID tenantId, String secretId, String leaseToken) {
+    tokenService.validateLeaseToken(leaseToken, secretId);
+
     Secret secret =
         secretRepository
             .findById(secretId)
@@ -91,6 +116,8 @@ public class SecretService {
       UUID tenantId, Map<String, Object> metadataQuery) {
     Query query = new Query();
     query.addCriteria(Criteria.where("tenantId").is(tenantId));
+    // Exclude hidden secrets from agent searches
+    query.addCriteria(Criteria.where("visibility").ne(SecretVisibility.HIDDEN));
 
     if (metadataQuery != null) {
       metadataQuery.forEach(
@@ -119,6 +146,7 @@ public class SecretService {
         secret.getName(),
         decryptedValue,
         secret.getMetadata(),
+        secret.getVisibility(),
         secret.getCreatedAt(),
         secret.getUpdatedAt());
   }
@@ -128,6 +156,7 @@ public class SecretService {
         secret.getId(),
         secret.getName(),
         secret.getMetadata(),
+        secret.getVisibility(),
         secret.getCreatedAt(),
         secret.getUpdatedAt());
   }

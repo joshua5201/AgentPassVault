@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,6 +34,7 @@ public class RequestService {
   private final SecretRepository secretRepository;
   private final SecretService secretService;
   private final FulfillmentUrlService fulfillmentUrlService;
+  private final TokenService tokenService;
 
   public RequestResponse createRequest(UUID tenantId, UUID requesterId, CreateRequestDTO dto) {
     Request request = new Request();
@@ -45,6 +46,8 @@ public class RequestService {
     request.setContext(dto.context());
     request.setRequiredMetadata(dto.requiredMetadata());
     request.setRequiredFieldsInSecretValue(dto.requiredFieldsInSecretValue());
+    request.setType(dto.type());
+    request.setSecretId(dto.secretId());
 
     // Generate and set the URL
     request.setFulfillmentUrl(fulfillmentUrlService.generate(request));
@@ -72,22 +75,51 @@ public class RequestService {
     return mapToResponse(requestRepository.save(request));
   }
 
-  public RequestResponse mapRequest(UUID tenantId, String id, String secretId) {
+  public RequestResponse mapRequest(UUID tenantId, String id, MapRequestDTO dto) {
     Request request = findRequest(tenantId, id);
     validatePending(request);
 
     // Verify secret exists and belongs to tenant
-    if (secretRepository
-        .findById(secretId)
+    secretRepository
+        .findById(dto.secretId())
         .filter(s -> s.getTenantId().equals(tenantId))
-        .isEmpty()) {
-      throw new IllegalArgumentException("Secret not found");
-    }
+        .ifPresentOrElse(
+            secret -> {
+              if (dto.newVisibility() != null) {
+                secret.setVisibility(dto.newVisibility());
+                secretRepository.save(secret);
+              }
+            },
+            () -> {
+              throw new IllegalArgumentException("Secret not found");
+            });
 
     request.setStatus(RequestStatus.fulfilled);
-    request.setMappedSecretId(secretId);
+    request.setMappedSecretId(dto.secretId());
 
     return mapToResponse(requestRepository.save(request));
+  }
+
+  public ApproveLeaseResponseDTO approveLease(UUID tenantId, String id, String approverId) {
+    Request request = findRequest(tenantId, id);
+    validatePending(request);
+
+    if (request.getType() != com.agentvault.model.RequestType.LEASE) {
+      throw new IllegalStateException("Request is not a lease request");
+    }
+
+    String leaseToken =
+        tokenService.generateLeaseToken(
+            tenantId,
+            request.getRequesterId().toString(),
+            approverId,
+            request.getSecretId(),
+            request.getId());
+
+    request.setStatus(RequestStatus.fulfilled);
+    requestRepository.save(request);
+
+    return new ApproveLeaseResponseDTO(leaseToken);
   }
 
   public RequestResponse rejectRequest(UUID tenantId, String id, String reason) {
@@ -98,6 +130,17 @@ public class RequestService {
     request.setRejectionReason(reason);
 
     return mapToResponse(requestRepository.save(request));
+  }
+
+  public void abandonRequest(UUID tenantId, UUID requesterId, String id) {
+    Request request = findRequest(tenantId, id);
+    if (!request.getRequesterId().equals(requesterId)) {
+      throw new IllegalStateException("Only the requester can abandon the request");
+    }
+    validatePending(request);
+
+    request.setStatus(RequestStatus.abandoned);
+    requestRepository.save(request);
   }
 
   private Request findRequest(UUID tenantId, String id) {
@@ -118,6 +161,7 @@ public class RequestService {
         request.getId(),
         request.getRequestId(),
         request.getStatus(),
+        request.getType(),
         request.getName(),
         request.getContext(),
         request.getRequiredMetadata(),

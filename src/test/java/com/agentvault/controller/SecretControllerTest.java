@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,12 +21,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.agentvault.BaseIntegrationTest;
-import com.agentvault.dto.CreateSecretRequest;
-import com.agentvault.dto.LoginRequest;
-import com.agentvault.dto.SearchSecretRequest;
-import com.agentvault.model.Tenant;
+import com.agentvault.dto.*;
+import com.agentvault.model.Secret;
+import com.agentvault.model.SecretVisibility;
+import com.agentvault.repository.SecretRepository;
+import com.agentvault.service.AgentService;
 import com.agentvault.service.UserService;
-import com.agentvault.service.crypto.KeyManagementService;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -36,7 +36,8 @@ import org.springframework.http.MediaType;
 class SecretControllerTest extends BaseIntegrationTest {
 
   @Autowired private UserService userService;
-  @Autowired private KeyManagementService keyManagementService;
+  @Autowired private AgentService agentService;
+  @Autowired private SecretRepository secretRepository;
 
   private String getAuthToken(UUID tenantId, String username, String password) throws Exception {
     String loginResponse =
@@ -51,17 +52,6 @@ class SecretControllerTest extends BaseIntegrationTest {
             .getResponse()
             .getContentAsString();
     return objectMapper.readTree(loginResponse).get("accessToken").asText();
-  }
-
-  private UUID createTenant() {
-    UUID tenantId = UUID.randomUUID();
-    Tenant tenant = new Tenant();
-    tenant.setId(tenantId);
-    tenant.setName("Test Tenant");
-    tenant.setStatus("active");
-    tenant.setEncryptedTenantKey(keyManagementService.generateEncryptedTenantKey());
-    tenantRepository.save(tenant);
-    return tenantId;
   }
 
   @Test
@@ -207,5 +197,149 @@ class SecretControllerTest extends BaseIntegrationTest {
     mockMvc
         .perform(get("/api/v1/secrets/" + secretId).header("Authorization", "Bearer " + tokenB))
         .andExpect(status().isInternalServerError()); // NotFound exception
+  }
+
+  @Test
+  void searchSecrets_RespectsVisibility() throws Exception {
+    UUID tenantId = createTenant();
+    userService.createAdminUser(tenantId, "admin", "password");
+    String token = getAuthToken(tenantId, "admin", "password");
+
+    createSecret(token, "Visible", SecretVisibility.VISIBLE);
+    createSecret(token, "LeaseRequired", SecretVisibility.LEASE_REQUIRED);
+    createSecret(token, "Hidden", SecretVisibility.HIDDEN);
+
+    mockMvc
+        .perform(
+            post("/api/v1/secrets/search")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new SearchSecretRequest(null))))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$", hasSize(2)))
+        .andExpect(jsonPath("$[?(@.name == 'Hidden')]", empty()));
+  }
+
+  @Test
+  void testGetSecret_HandlesVisibility() throws Exception {
+    UUID tenantId = createTenant();
+    userService.createAdminUser(tenantId, "admin", "password");
+    String token = getAuthToken(tenantId, "admin", "password");
+
+    String leaseId = createSecret(token, "Lease", SecretVisibility.LEASE_REQUIRED);
+    String hiddenId = createSecret(token, "Hidden", SecretVisibility.HIDDEN);
+
+    // Attempt to get LEASE_REQUIRED without a lease token should fail
+    mockMvc
+        .perform(get("/api/v1/secrets/" + leaseId).header("Authorization", "Bearer " + token))
+        .andExpect(status().isInternalServerError());
+
+    // Attempt to get HIDDEN should fail
+    mockMvc
+        .perform(get("/api/v1/secrets/" + hiddenId).header("Authorization", "Bearer " + token))
+        .andExpect(status().isInternalServerError());
+  }
+
+  @Test
+  void testGetSecret_WithLease_Success() throws Exception {
+    UUID tenantId = createTenant();
+    userService.createAdminUser(tenantId, "admin", "password");
+    String adminToken = getAuthToken(tenantId, "admin", "password");
+
+    // 1. Create a LEASE_REQUIRED secret
+    String secretId = createSecret(adminToken, "Lease Me", SecretVisibility.LEASE_REQUIRED);
+
+    // 2. Agent creates a LEASE request
+    String agentJwt = createAgentAndGetJwt(tenantId);
+    CreateRequestDTO createReq =
+        new CreateRequestDTO(
+            "Request for " + secretId,
+            "Need lease access",
+            null,
+            null,
+            com.agentvault.model.RequestType.LEASE,
+            secretId);
+
+    String reqResponse =
+        mockMvc
+            .perform(
+                post("/api/v1/requests")
+                    .header("Authorization", "Bearer " + agentJwt)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(createReq)))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    String requestId = objectMapper.readTree(reqResponse).get("id").asText();
+
+    // 3. Admin approves the lease
+    UpdateRequestDTO approveReq =
+        new UpdateRequestDTO(
+            UpdateRequestDTO.Action.APPROVE_LEASE, null, null, null, null, null, null);
+
+    String approveResponse =
+        mockMvc
+            .perform(
+                patch("/api/v1/requests/" + requestId)
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(approveReq)))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    String leaseToken = objectMapper.readTree(approveResponse).get("leaseToken").asText();
+
+    // 4. Agent uses lease token to get the secret
+    mockMvc
+        .perform(
+            get("/api/v1/secrets/" + secretId + "?leaseToken=" + leaseToken)
+                .header("Authorization", "Bearer " + agentJwt))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.value").value("secret_value"));
+  }
+
+  // Helper methods
+  private String createSecret(String token, String name, SecretVisibility visibility)
+      throws Exception {
+    CreateSecretRequest createReq = new CreateSecretRequest(name, "secret_value", null);
+    String createResponse =
+        mockMvc
+            .perform(
+                post("/api/v1/secrets")
+                    .header("Authorization", "Bearer " + token)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(createReq)))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    String secretId = objectMapper.readTree(createResponse).get("id").asText();
+
+    // Manually update visibility as there is no API for it
+    Secret secret = secretRepository.findById(secretId).get();
+    secret.setVisibility(visibility);
+    secretRepository.save(secret);
+
+    return secretId;
+  }
+
+  private String createAgentAndGetJwt(UUID tenantId) throws Exception {
+    AgentTokenResponse agentResp = agentService.createAgent(tenantId, "test-agent");
+    String agentAppToken = agentResp.appToken();
+
+    String agentLoginResp =
+        mockMvc
+            .perform(
+                post("/api/v1/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        objectMapper.writeValueAsString(
+                            new LoginRequest(tenantId, null, null, agentAppToken))))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    return objectMapper.readTree(agentLoginResp).get("accessToken").asText();
   }
 }

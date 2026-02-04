@@ -1,18 +1,19 @@
 /*
- * Copyright 2026 Tsung-en Hsiao
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Copyright 2026 Tsung-en Hsiao
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     https://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law of an agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 package com.agentvault.model;
 
@@ -45,6 +46,9 @@ public class Request extends BaseEntity {
   @Field(targetType = FieldType.STRING)
   private RequestStatus status;
 
+  @Field(targetType = FieldType.STRING)
+  private RequestType type = RequestType.CREATE;
+
   private String name;
 
   private String context;
@@ -54,6 +58,8 @@ public class Request extends BaseEntity {
   private List<String> requiredFieldsInSecretValue;
 
   private String mappedSecretId; // ObjectId of the secret fulfilling this request
+
+  private String secretId; // ObjectId of the secret being requested for lease
 
   private String rejectionReason;
 

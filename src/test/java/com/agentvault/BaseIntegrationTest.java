@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,12 +16,19 @@
 
 package com.agentvault;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import com.agentvault.model.Tenant;
 import com.agentvault.repository.RequestRepository;
 import com.agentvault.repository.SecretRepository;
 import com.agentvault.repository.TenantRepository;
 import com.agentvault.repository.UserRepository;
+import com.agentvault.service.crypto.KeyManagementService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,6 +37,8 @@ import org.springframework.test.web.servlet.MockMvc;
 @SpringBootTest
 @AutoConfigureMockMvc
 public abstract class BaseIntegrationTest {
+
+  private static final Logger log = LoggerFactory.getLogger(BaseIntegrationTest.class);
 
   @Autowired protected MockMvc mockMvc;
 
@@ -43,11 +52,30 @@ public abstract class BaseIntegrationTest {
 
   @Autowired protected RequestRepository requestRepository;
 
+  @Autowired protected KeyManagementService keyManagementService;
+
   @BeforeEach
   void clearDatabase() {
     userRepository.deleteAll();
     tenantRepository.deleteAll();
     secretRepository.deleteAll();
     requestRepository.deleteAll();
+  }
+
+  protected UUID createTenant() {
+    UUID tenantId = UUID.randomUUID();
+    Tenant tenant = new Tenant();
+    tenant.setId(tenantId);
+    tenant.setName("Test Tenant");
+    tenant.setStatus("active");
+
+    byte[] encryptedTenantKey = keyManagementService.generateEncryptedTenantKey();
+    assertNotNull(encryptedTenantKey, "Encrypted tenant key should not be null");
+    log.info("Generated encryptedTenantKey with length: {}", encryptedTenantKey.length);
+
+    tenant.setEncryptedTenantKey(encryptedTenantKey);
+    tenantRepository.save(tenant);
+    log.info("Created tenant with ID: {}", tenantId);
+    return tenantId;
   }
 }

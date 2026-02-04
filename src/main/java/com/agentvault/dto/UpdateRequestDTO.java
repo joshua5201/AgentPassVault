@@ -3,7 +3,7 @@
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * You may not obtain a copy of the License at
  *
  *     https://www.apache.org/licenses/LICENSE-2.0
  *
@@ -17,13 +17,23 @@
 package com.agentvault.dto;
 
 import com.agentvault.model.SecretVisibility;
-import java.time.LocalDateTime;
-import java.util.Map;
+import jakarta.validation.constraints.NotNull;
 
-public record SecretMetadataResponse(
-    String id,
+public record UpdateRequestDTO(
+    @NotNull Action action,
+    // For FULFILL
     String name,
-    Map<String, Object> metadata,
-    SecretVisibility visibility,
-    LocalDateTime createdAt,
-    LocalDateTime updatedAt) {}
+    String value,
+    java.util.Map<String, Object> metadata,
+    // For MAP
+    String secretId,
+    SecretVisibility newVisibility,
+    // For REJECT
+    String reason) {
+  public enum Action {
+    FULFILL,
+    MAP,
+    REJECT,
+    APPROVE_LEASE
+  }
+}

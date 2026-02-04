@@ -39,6 +39,11 @@ dependencies {
 	testImplementation("org.springframework.security:spring-security-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	errorprone("com.google.errorprone:error_prone_core:2.26.1")
+ 
+ 	// JJWT for JWT generation and validation
+ 	implementation("io.jsonwebtoken:jjwt-api:0.12.3")
+ 	runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.3")
+ 	runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.3")
 }
 
 spotless {

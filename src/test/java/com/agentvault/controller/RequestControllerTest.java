@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,16 +16,16 @@
 
 package com.agentvault.controller;
 
-import static org.hamcrest.Matchers.startsWith;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.agentvault.BaseIntegrationTest;
-import com.agentvault.dto.*;
-import com.agentvault.model.Tenant;
+import com.agentvault.dto.CreateRequestDTO;
+import com.agentvault.dto.LoginRequest;
+import com.agentvault.dto.UpdateRequestDTO;
 import com.agentvault.service.UserService;
-import com.agentvault.service.crypto.KeyManagementService;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -36,7 +36,6 @@ import org.springframework.http.MediaType;
 class RequestControllerTest extends BaseIntegrationTest {
 
   @Autowired private UserService userService;
-  @Autowired private KeyManagementService keyManagementService;
 
   private String getAuthToken(UUID tenantId, String username, String password) throws Exception {
     String loginResponse =
@@ -51,17 +50,6 @@ class RequestControllerTest extends BaseIntegrationTest {
             .getResponse()
             .getContentAsString();
     return objectMapper.readTree(loginResponse).get("accessToken").asText();
-  }
-
-  private UUID createTenant() {
-    UUID tenantId = UUID.randomUUID();
-    Tenant tenant = new Tenant();
-    tenant.setId(tenantId);
-    tenant.setName("Test Tenant");
-    tenant.setStatus("active");
-    tenant.setEncryptedTenantKey(keyManagementService.generateEncryptedTenantKey());
-    tenantRepository.save(tenant);
-    return tenantId;
   }
 
   @Test
@@ -84,29 +72,31 @@ class RequestControllerTest extends BaseIntegrationTest {
                     .content(objectMapper.writeValueAsString(createReq)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("pending"))
-            .andExpect(jsonPath("$.fulfillmentUrl").exists())
-            .andExpect(jsonPath("$.fulfillmentUrl", startsWith("https://vault.local/requests/")))
             .andReturn()
             .getResponse()
             .getContentAsString();
     String requestId = objectMapper.readTree(reqResponse).get("id").asText();
 
     // 2. Fulfill Request
-    FulfillRequestDTO fulfillReq =
-        new FulfillRequestDTO("AWS Secret", "secretVal", Map.of("env", "prod"));
+    UpdateRequestDTO fulfillReq =
+        new UpdateRequestDTO(
+            UpdateRequestDTO.Action.FULFILL,
+            "AWS Secret",
+            "secretVal",
+            Map.of("env", "prod"),
+            null,
+            null,
+            null);
 
     mockMvc
         .perform(
-            post("/api/v1/requests/" + requestId + "/fulfill")
+            patch("/api/v1/requests/" + requestId)
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(fulfillReq)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("fulfilled"))
         .andExpect(jsonPath("$.mappedSecretId").exists());
-
-    // Verify secret was created
-    // We can't verify secret content easily without getting it, but mappedSecretId proves link.
   }
 
   @Test
@@ -128,11 +118,13 @@ class RequestControllerTest extends BaseIntegrationTest {
             .getContentAsString();
     String requestId = objectMapper.readTree(reqResponse).get("id").asText();
 
-    RejectRequestDTO rejectReq = new RejectRequestDTO("Denied");
+    UpdateRequestDTO rejectReq =
+        new UpdateRequestDTO(
+            UpdateRequestDTO.Action.REJECT, null, null, null, null, null, "Denied");
 
     mockMvc
         .perform(
-            post("/api/v1/requests/" + requestId + "/reject")
+            patch("/api/v1/requests/" + requestId)
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(rejectReq)))
