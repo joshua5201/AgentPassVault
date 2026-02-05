@@ -317,7 +317,7 @@ class SecretControllerTest extends BaseIntegrationTest {
     String secretId = objectMapper.readTree(createResponse).get("id").asText();
 
     // Manually update visibility as there is no API for it
-    Secret secret = secretRepository.findById(secretId).get();
+    Secret secret = secretRepository.findBySecretId(UUID.fromString(secretId)).get();
     secret.setVisibility(visibility);
     secretRepository.save(secret);
 

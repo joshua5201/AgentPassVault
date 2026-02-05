@@ -100,7 +100,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: string }
+          schema: { type: string, format: uuid }
         - name: leaseToken
           in: query
           required: false
@@ -118,7 +118,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: string }
+          schema: { type: string, format: uuid }
       responses:
         '204':
           description: Deleted
@@ -146,7 +146,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: string }
+          schema: { type: string, format: uuid }
       responses:
         '200':
           description: OK
@@ -160,7 +160,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: string }
+          schema: { type: string, format: uuid }
       requestBody:
         content:
           application/json:
@@ -181,10 +181,73 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: string }
+          schema: { type: string, format: uuid }
       responses:
         '204':
           description: Abandoned
+
+  /agents:
+    get:
+      summary: List Agents (Admin)
+      parameters:
+        - name: showAppToken
+          in: query
+          required: false
+          schema: { type: boolean, default: false }
+      responses:
+        '200':
+          description: Agent list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AgentResponse'
+    post:
+      summary: Create Agent (Admin)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+      responses:
+        '200':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentTokenResponse'
+
+  /agents/{id}/rotate:
+    post:
+      summary: Rotate Agent Token (Admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Rotated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentTokenResponse'
+
+  /agents/{id}:
+    delete:
+      summary: Delete Agent (Admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '204':
+          description: Deleted
 
 components:
   schemas:
@@ -195,7 +258,7 @@ components:
     SecretMetadata:
       type: object
       properties:
-        id: { type: string }
+        id: { type: string, format: uuid }
         name: { type: string }
         metadata: { type: object }
         visibility: { $ref: '#/components/schemas/SecretVisibility' }
@@ -228,15 +291,14 @@ components:
     Request:
       type: object
       properties:
-        id: { type: string }
-        requestId: { type: string, format: uuid }
+        id: { type: string, format: uuid }
         status: { $ref: '#/components/schemas/RequestStatus' }
         type: { $ref: '#/components/schemas/RequestType' }
         name: { type: string }
         context: { type: string }
         requiredMetadata: { type: object }
         requiredFieldsInSecretValue: { type: array, items: { type: string } }
-        mappedSecretId: { type: string }
+        mappedSecretId: { type: string, format: uuid }
         rejectionReason: { type: string }
         fulfillmentUrl: { type: string }
         createdAt: { type: string, format: date-time }
@@ -251,7 +313,7 @@ components:
         requiredMetadata: { type: object }
         requiredFieldsInSecretValue: { type: array, items: { type: string } }
         type: { $ref: '#/components/schemas/RequestType' }
-        secretId: { type: string }
+        secretId: { type: string, format: uuid }
 
     UpdateRequestDTO:
       type: object
@@ -263,7 +325,7 @@ components:
         name: { type: string }
         value: { type: string }
         metadata: { type: object }
-        secretId: { type: string }
+        secretId: { type: string, format: uuid }
         newVisibility: { $ref: '#/components/schemas/SecretVisibility' }
         reason: { type: string }
 
@@ -271,3 +333,17 @@ components:
       type: object
       properties:
         leaseToken: { type: string }
+
+    AgentResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        createdAt: { type: string, format: date-time }
+        appToken: { type: string, nullable: true }
+
+    AgentTokenResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        appToken: { type: string }

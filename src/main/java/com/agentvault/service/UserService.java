@@ -39,7 +39,7 @@ public class UserService {
     validateTenant(tenantId);
 
     User user = new User();
-    user.setId(UUID.randomUUID());
+    user.setUserId(UUID.randomUUID());
     user.setTenantId(tenantId);
     user.setUsername(username);
     user.setPasswordHash(passwordEncoder.encode(rawPassword));
@@ -52,7 +52,7 @@ public class UserService {
     validateTenant(tenantId);
 
     User user = new User();
-    user.setId(UUID.randomUUID());
+    user.setUserId(UUID.randomUUID());
     user.setTenantId(tenantId);
     user.setRole(Role.agent);
     user.setAppTokenHash(appTokenHash);
@@ -63,7 +63,7 @@ public class UserService {
   public void changePassword(UUID userId, String oldPassword, String newPassword) {
     User user =
         userRepository
-            .findById(userId)
+            .findByUserId(userId)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
     if (!passwordEncoder.matches(oldPassword, user.getPasswordHash())) {
@@ -113,7 +113,7 @@ public class UserService {
     if (tenantId == null) {
       throw new IllegalArgumentException("Tenant ID cannot be null");
     }
-    if (!tenantRepository.existsById(tenantId)) {
+    if (tenantRepository.findByTenantId(tenantId).isEmpty()) {
       throw new IllegalArgumentException("Tenant not found with ID: " + tenantId);
     }
   }

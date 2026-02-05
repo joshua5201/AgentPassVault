@@ -18,9 +18,10 @@ package com.agentvault.dto;
 import com.agentvault.model.SecretVisibility;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.UUID;
 
 public record SecretResponse(
-    String id,
+    UUID id,
     String name,
     String value, // Decrypted value
     Map<String, Object> metadata,

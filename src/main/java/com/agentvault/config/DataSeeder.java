@@ -47,12 +47,12 @@ public class DataSeeder implements CommandLineRunner {
 
     // Create Tenant
     Tenant tenant = new Tenant();
-    tenant.setId(UUID.randomUUID());
+    tenant.setTenantId(UUID.randomUUID());
     tenant.setName("Dev Tenant");
     tenant.setStatus("active");
     tenant.setEncryptedTenantKey(keyManagementService.generateEncryptedTenantKey());
     tenantRepository.save(tenant);
-    log.info("Created Default Tenant: ID={}", tenant.getId());
+    log.info("Created Default Tenant: ID={}", tenant.getTenantId());
 
     // Create Admin User
     String username = "devadmin";
@@ -69,7 +69,7 @@ public class DataSeeder implements CommandLineRunner {
     log.info("Password start char code: {}", (int) rawPassword.charAt(0));
     log.info("Password end char code: {}", (int) rawPassword.charAt(rawPassword.length() - 1));
 
-    userService.createAdminUser(tenant.getId(), username, rawPassword);
+    userService.createAdminUser(tenant.getTenantId(), username, rawPassword);
 
     log.info("Created Admin User: username={}", username);
   }

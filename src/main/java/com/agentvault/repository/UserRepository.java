@@ -22,7 +22,9 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface UserRepository extends MongoRepository<User, UUID> {
+public interface UserRepository extends MongoRepository<User, String> {
+  Optional<User> findByUserId(UUID userId);
+
   Optional<User> findByTenantIdAndUsername(UUID tenantId, String username);
 
   Optional<User> findByTenantIdAndAppTokenHash(UUID tenantId, String appTokenHash);

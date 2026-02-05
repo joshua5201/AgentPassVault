@@ -41,7 +41,7 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
     // 1. Setup Tenant
     UUID tenantId = UUID.randomUUID();
     Tenant tenant = new Tenant();
-    tenant.setId(tenantId);
+    tenant.setTenantId(tenantId);
     tenant.setName("E2E Tenant");
     tenant.setStatus("active");
     tenant.setEncryptedTenantKey(keyManagementService.generateEncryptedTenantKey());

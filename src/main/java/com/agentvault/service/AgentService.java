@@ -46,7 +46,7 @@ public class AgentService {
     agent.setUsername(name); // Set the name
     userRepository.save(agent); // Update name
 
-    return new AgentTokenResponse(agent.getId(), appToken);
+    return new AgentTokenResponse(agent.getUserId(), appToken);
   }
 
   public List<AgentResponse> listAgents(UUID tenantId) {
@@ -66,7 +66,7 @@ public class AgentService {
     agent.setAppTokenHash(tokenHash);
     userRepository.save(agent);
 
-    return new AgentTokenResponse(agent.getId(), newAppToken);
+    return new AgentTokenResponse(agent.getUserId(), newAppToken);
   }
 
   public void deleteAgent(UUID tenantId, UUID agentId) {
@@ -76,13 +76,13 @@ public class AgentService {
 
   private User getAgent(UUID tenantId, UUID agentId) {
     return userRepository
-        .findById(agentId)
+        .findByUserId(agentId)
         .filter(u -> u.getTenantId().equals(tenantId) && Role.agent.equals(u.getRole()))
         .orElseThrow(() -> new IllegalArgumentException("Agent not found"));
   }
 
   private AgentResponse mapToResponse(User user) {
-    return new AgentResponse(user.getId(), user.getUsername(), user.getCreatedAt());
+    return new AgentResponse(user.getUserId(), user.getUsername(), user.getCreatedAt());
   }
 
   private String generateAppToken() {

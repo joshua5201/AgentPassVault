@@ -45,14 +45,14 @@ public class RequestController {
   @GetMapping("/{id}")
   @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
   public RequestResponse getRequest(
-      AgentVaultAuthentication authentication, @PathVariable String id) {
+      AgentVaultAuthentication authentication, @PathVariable UUID id) {
     return requestService.getRequest(authentication.getTenantId(), id);
   }
 
   @DeleteMapping("/{id}")
   @PreAuthorize("hasRole('AGENT')")
   public ResponseEntity<Void> abandonRequest(
-      AgentVaultAuthentication authentication, @PathVariable String id) {
+      AgentVaultAuthentication authentication, @PathVariable UUID id) {
     requestService.abandonRequest(
         authentication.getTenantId(), (UUID) authentication.getPrincipal(), id);
     return ResponseEntity.noContent().build();
@@ -62,7 +62,7 @@ public class RequestController {
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<?> updateRequest(
       AgentVaultAuthentication authentication,
-      @PathVariable String id,
+      @PathVariable UUID id,
       @Valid @RequestBody UpdateRequestDTO dto) {
     switch (dto.action()) {
       case FULFILL:

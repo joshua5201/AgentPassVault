@@ -38,6 +38,9 @@ public class Secret extends BaseEntity {
 
   @Id private String id; // ObjectId
 
+  @Indexed(unique = true)
+  private UUID secretId;
+
   @Indexed private UUID tenantId;
 
   @TextIndexed private String name;

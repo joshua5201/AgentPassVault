@@ -213,7 +213,7 @@ class RequestControllerTest extends BaseIntegrationTest {
             .getContentAsString();
     String secretId = objectMapper.readTree(secretResp).get("id").asText();
 
-    com.agentvault.model.Secret secret = secretRepository.findById(secretId).get();
+    com.agentvault.model.Secret secret = secretRepository.findBySecretId(UUID.fromString(secretId)).get();
     secret.setVisibility(SecretVisibility.HIDDEN);
     secretRepository.save(secret);
 
@@ -238,7 +238,7 @@ class RequestControllerTest extends BaseIntegrationTest {
             null,
             null,
             null,
-            secretId,
+            UUID.fromString(secretId),
             SecretVisibility.VISIBLE,
             null);
 

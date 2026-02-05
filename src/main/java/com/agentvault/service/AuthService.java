@@ -40,7 +40,7 @@ public class AuthService {
 
   public LoginResponse login(LoginRequest request) {
     // Validate Tenant First
-    if (!tenantRepository.existsById(request.tenantId())) {
+    if (tenantRepository.findByTenantId(request.tenantId()).isEmpty()) {
       throw new BadCredentialsException("Tenant not found");
     }
 

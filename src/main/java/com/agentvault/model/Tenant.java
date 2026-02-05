@@ -19,6 +19,7 @@ import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
@@ -26,7 +27,11 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document(collection = "tenants")
 public class Tenant extends BaseEntity {
 
-  @Id private UUID id;
+  @Id private String id; // ObjectId
+
+  @Indexed(unique = true)
+  private UUID tenantId;
+
   private String name;
   private byte[] encryptedTenantKey;
   private String status;

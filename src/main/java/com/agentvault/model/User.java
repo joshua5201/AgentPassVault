@@ -30,7 +30,10 @@ import org.springframework.data.mongodb.core.mapping.FieldType;
 @Document(collection = "users")
 public class User extends BaseEntity {
 
-  @Id private UUID id;
+  @Id private String id; // ObjectId
+
+  @Indexed(unique = true)
+  private UUID userId;
 
   @Indexed private UUID tenantId;
 

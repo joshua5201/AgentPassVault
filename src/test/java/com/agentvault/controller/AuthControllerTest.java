@@ -40,7 +40,7 @@ class AuthControllerTest extends BaseIntegrationTest {
 
   private void createTenant(UUID id) {
     Tenant tenant = new Tenant();
-    tenant.setId(id);
+    tenant.setTenantId(id);
     tenant.setName("Test Tenant");
     tenant.setStatus("active");
     tenantRepository.save(tenant);

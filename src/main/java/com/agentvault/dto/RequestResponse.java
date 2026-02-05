@@ -23,8 +23,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public record RequestResponse(
-    String id,
-    UUID requestId,
+    UUID id,
     RequestStatus status,
     RequestType type,
     String name,

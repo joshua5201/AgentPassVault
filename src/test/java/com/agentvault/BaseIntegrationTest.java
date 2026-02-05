@@ -64,7 +64,7 @@ public abstract class BaseIntegrationTest {
   protected UUID createTenant() {
     UUID tenantId = UUID.randomUUID();
     Tenant tenant = new Tenant();
-    tenant.setId(tenantId);
+    tenant.setTenantId(tenantId);
     tenant.setName("Test Tenant");
     tenant.setStatus("active");
 
