@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.agentvault.controller;
 
 import com.agentvault.dto.*;
@@ -67,18 +66,27 @@ public class RequestController {
       @Valid @RequestBody UpdateRequestDTO dto) {
     switch (dto.action()) {
       case FULFILL:
+        if (dto.name() == null || dto.value() == null) {
+          return ResponseEntity.badRequest().body("Name and value are required for FULFILL");
+        }
         return ResponseEntity.ok(
             requestService.fulfillRequest(
                 authentication.getTenantId(),
                 id,
                 new FulfillRequestDTO(dto.name(), dto.value(), dto.metadata())));
       case MAP:
+        if (dto.secretId() == null) {
+          return ResponseEntity.badRequest().body("Secret ID is required for MAP");
+        }
         return ResponseEntity.ok(
             requestService.mapRequest(
                 authentication.getTenantId(),
                 id,
                 new MapRequestDTO(dto.secretId(), dto.newVisibility())));
       case REJECT:
+        if (dto.reason() == null) {
+          return ResponseEntity.badRequest().body("Reason is required for REJECT");
+        }
         return ResponseEntity.ok(
             requestService.rejectRequest(authentication.getTenantId(), id, dto.reason()));
       case APPROVE_LEASE:

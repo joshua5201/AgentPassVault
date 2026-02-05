@@ -48,6 +48,7 @@ dependencies {
 
 spotless {
 	java {
+		licenseHeaderFile(file("licence-header.txt"))
 		googleJavaFormat()
 		removeUnusedImports()
 		trimTrailingWhitespace()

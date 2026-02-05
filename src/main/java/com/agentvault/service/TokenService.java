@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.agentvault.service;
 
 import com.agentvault.config.JwtConfig;
@@ -32,10 +31,12 @@ public class TokenService {
 
   private final SecretKey secretKey;
   private final long expirationMinutes;
+  private final long leaseExpirationMinutes;
 
   public TokenService(JwtConfig jwtConfig) {
     this.secretKey = jwtConfig.getSecretKey();
     this.expirationMinutes = jwtConfig.getExpirationMinutes();
+    this.leaseExpirationMinutes = jwtConfig.getLeaseExpirationMinutes();
   }
 
   public String generateToken(User user) {
@@ -64,7 +65,7 @@ public class TokenService {
         .claim("secretId", secretId)
         .claim("requestId", requestId)
         .issuedAt(Date.from(now))
-        .expiration(Date.from(now.plus(60, ChronoUnit.MINUTES))) // Default 60 minutes
+        .expiration(Date.from(now.plus(leaseExpirationMinutes, ChronoUnit.MINUTES)))
         .signWith(secretKey)
         .compact();
   }
