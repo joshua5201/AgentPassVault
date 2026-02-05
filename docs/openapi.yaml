@@ -258,7 +258,7 @@ components:
     SecretMetadata:
       type: object
       properties:
-        id: { type: string, format: uuid }
+        secretId: { type: string, format: uuid }
         name: { type: string }
         metadata: { type: object }
         visibility: { $ref: '#/components/schemas/SecretVisibility' }
@@ -291,7 +291,7 @@ components:
     Request:
       type: object
       properties:
-        id: { type: string, format: uuid }
+        requestId: { type: string, format: uuid }
         status: { $ref: '#/components/schemas/RequestStatus' }
         type: { $ref: '#/components/schemas/RequestType' }
         name: { type: string }
@@ -337,7 +337,7 @@ components:
     AgentResponse:
       type: object
       properties:
-        id: { type: string, format: uuid }
+        agentId: { type: string, format: uuid }
         name: { type: string }
         createdAt: { type: string, format: date-time }
         appToken: { type: string, nullable: true }
@@ -345,5 +345,5 @@ components:
     AgentTokenResponse:
       type: object
       properties:
-        id: { type: string, format: uuid }
+        agentId: { type: string, format: uuid }
         appToken: { type: string }

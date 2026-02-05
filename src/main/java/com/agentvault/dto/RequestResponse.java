@@ -23,14 +23,14 @@ import java.util.Map;
 import java.util.UUID;
 
 public record RequestResponse(
-    UUID id,
+    UUID requestId,
     RequestStatus status,
     RequestType type,
     String name,
     String context,
     Map<String, Object> requiredMetadata,
     List<String> requiredFieldsInSecretValue,
-    String mappedSecretId,
+    UUID mappedSecretId,
     String rejectionReason,
     String fulfillmentUrl,
     LocalDateTime createdAt,

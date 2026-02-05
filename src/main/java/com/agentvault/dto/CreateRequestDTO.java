@@ -20,6 +20,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public record CreateRequestDTO(
     @NotBlank(message = "Request name cannot be blank") String name,
@@ -27,7 +28,7 @@ public record CreateRequestDTO(
     Map<String, Object> requiredMetadata,
     List<String> requiredFieldsInSecretValue,
     @NotNull RequestType type,
-    String secretId) {
+    UUID secretId) {
 
   // Constructor for CREATE requests
   public CreateRequestDTO(

@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public record SecretResponse(
-    UUID id,
+    UUID secretId,
     String name,
     String value, // Decrypted value
     Map<String, Object> metadata,

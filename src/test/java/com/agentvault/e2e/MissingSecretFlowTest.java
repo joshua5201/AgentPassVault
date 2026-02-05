@@ -103,7 +103,7 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
             .getResponse()
             .getContentAsString();
 
-    String requestId = objectMapper.readTree(reqResp).get("id").asText();
+    String requestId = objectMapper.readTree(reqResp).get("requestId").asText();
 
     // 4. Admin Checks Request (Verification step, maybe admin lists pending requests)
     mockMvc
@@ -147,7 +147,7 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
             .getResponse()
             .getContentAsString();
 
-    String secretId = objectMapper.readTree(searchResp).get(0).get("id").asText();
+    String secretId = objectMapper.readTree(searchResp).get(0).get("secretId").asText();
 
     // 7. Agent Gets Secret (Decrypts)
     mockMvc

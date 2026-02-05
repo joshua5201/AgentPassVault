@@ -95,10 +95,11 @@ class RequestControllerTest extends BaseIntegrationTest {
                     .content(objectMapper.writeValueAsString(createReq)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("pending"))
+            .andExpect(jsonPath("$.requestId").exists())
             .andReturn()
             .getResponse()
             .getContentAsString();
-    String requestId = objectMapper.readTree(reqResponse).get("id").asText();
+    String requestId = objectMapper.readTree(reqResponse).get("requestId").asText();
 
     // 2. Fulfill Request
     UpdateRequestDTO fulfillReq =
@@ -139,7 +140,7 @@ class RequestControllerTest extends BaseIntegrationTest {
             .andReturn()
             .getResponse()
             .getContentAsString();
-    String requestId = objectMapper.readTree(reqResponse).get("id").asText();
+    String requestId = objectMapper.readTree(reqResponse).get("requestId").asText();
 
     UpdateRequestDTO rejectReq =
         new UpdateRequestDTO(
@@ -174,7 +175,7 @@ class RequestControllerTest extends BaseIntegrationTest {
             .andReturn()
             .getResponse()
             .getContentAsString();
-    String requestId = objectMapper.readTree(reqResponse).get("id").asText();
+    String requestId = objectMapper.readTree(reqResponse).get("requestId").asText();
 
     // 2. Abandon Request as Agent
     mockMvc
@@ -211,7 +212,7 @@ class RequestControllerTest extends BaseIntegrationTest {
             .andReturn()
             .getResponse()
             .getContentAsString();
-    String secretId = objectMapper.readTree(secretResp).get("id").asText();
+    String secretId = objectMapper.readTree(secretResp).get("secretId").asText();
 
     com.agentvault.model.Secret secret = secretRepository.findBySecretId(UUID.fromString(secretId)).get();
     secret.setVisibility(SecretVisibility.HIDDEN);
@@ -229,7 +230,7 @@ class RequestControllerTest extends BaseIntegrationTest {
             .andReturn()
             .getResponse()
             .getContentAsString();
-    String requestId = objectMapper.readTree(reqResponse).get("id").asText();
+    String requestId = objectMapper.readTree(reqResponse).get("requestId").asText();
 
     // 3. Map Request and change visibility to VISIBLE
     UpdateRequestDTO mapReq =

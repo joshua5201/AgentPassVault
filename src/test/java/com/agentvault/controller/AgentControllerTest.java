@@ -62,7 +62,7 @@ class AgentControllerTest extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createReq)))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.id").exists())
+        .andExpect(jsonPath("$.agentId").exists())
         .andExpect(jsonPath("$.appToken").exists());
 
     // List Agents
@@ -91,7 +91,7 @@ class AgentControllerTest extends BaseIntegrationTest {
             .andReturn()
             .getResponse()
             .getContentAsString();
-    String agentId = objectMapper.readTree(createResponse).get("id").asText();
+    String agentId = objectMapper.readTree(createResponse).get("agentId").asText();
     String oldToken = objectMapper.readTree(createResponse).get("appToken").asText();
 
     // Rotate
@@ -121,7 +121,7 @@ class AgentControllerTest extends BaseIntegrationTest {
             .andReturn()
             .getResponse()
             .getContentAsString();
-    String agentId = objectMapper.readTree(createResponse).get("id").asText();
+    String agentId = objectMapper.readTree(createResponse).get("agentId").asText();
 
     // Delete
     mockMvc

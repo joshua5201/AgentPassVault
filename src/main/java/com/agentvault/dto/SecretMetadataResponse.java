@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public record SecretMetadataResponse(
-    UUID id,
+    UUID secretId,
     String name,
     Map<String, Object> metadata,
     SecretVisibility visibility,

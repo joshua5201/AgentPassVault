@@ -55,9 +55,9 @@ public class Request extends BaseEntity {
 
   private List<String> requiredFieldsInSecretValue;
 
-  private String mappedSecretId; // ObjectId of the secret fulfilling this request
+  private UUID mappedSecretId; // public secretId of the secret fulfilling this request
 
-  private String secretId; // ObjectId of the secret being requested for lease
+  private UUID secretId; // public secretId of the secret being requested for lease
 
   private String rejectionReason;
 

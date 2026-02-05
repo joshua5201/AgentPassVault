@@ -69,7 +69,7 @@ public class RequestService {
     SecretMetadataResponse secret = secretService.createSecret(tenantId, secretRequest);
 
     request.setStatus(RequestStatus.fulfilled);
-    request.setMappedSecretId(secret.id().toString());
+    request.setMappedSecretId(secret.secretId());
 
     return mapToResponse(requestRepository.save(request));
   }
@@ -94,7 +94,7 @@ public class RequestService {
             });
 
     request.setStatus(RequestStatus.fulfilled);
-    request.setMappedSecretId(dto.secretId().toString());
+    request.setMappedSecretId(dto.secretId());
 
     return mapToResponse(requestRepository.save(request));
   }
@@ -112,7 +112,7 @@ public class RequestService {
             tenantId,
             request.getRequesterId().toString(),
             approverId,
-            request.getSecretId(),
+            request.getSecretId().toString(),
             request.getRequestId().toString());
 
     request.setStatus(RequestStatus.fulfilled);

@@ -72,13 +72,13 @@ class SecretControllerTest extends BaseIntegrationTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(createReq)))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").exists())
+            .andExpect(jsonPath("$.secretId").exists())
             .andExpect(jsonPath("$.value").doesNotExist()) // Verify value is NOT returned
             .andReturn()
             .getResponse()
             .getContentAsString();
 
-    String secretId = objectMapper.readTree(createResponse).get("id").asText();
+    String secretId = objectMapper.readTree(createResponse).get("secretId").asText();
 
     // Get
     mockMvc
@@ -105,7 +105,7 @@ class SecretControllerTest extends BaseIntegrationTest {
             .andReturn()
             .getResponse()
             .getContentAsString();
-    String secretId = objectMapper.readTree(createResponse).get("id").asText();
+    String secretId = objectMapper.readTree(createResponse).get("secretId").asText();
 
     // Delete
     mockMvc
@@ -191,7 +191,7 @@ class SecretControllerTest extends BaseIntegrationTest {
             .andReturn()
             .getResponse()
             .getContentAsString();
-    String secretId = objectMapper.readTree(response).get("id").asText();
+    String secretId = objectMapper.readTree(response).get("secretId").asText();
 
     // B tries to get it
     mockMvc
@@ -258,7 +258,7 @@ class SecretControllerTest extends BaseIntegrationTest {
             null,
             null,
             com.agentvault.model.RequestType.LEASE,
-            secretId);
+            UUID.fromString(secretId));
 
     String reqResponse =
         mockMvc
@@ -270,7 +270,7 @@ class SecretControllerTest extends BaseIntegrationTest {
             .andReturn()
             .getResponse()
             .getContentAsString();
-    String requestId = objectMapper.readTree(reqResponse).get("id").asText();
+    String requestId = objectMapper.readTree(reqResponse).get("requestId").asText();
 
     // 3. Admin approves the lease
     UpdateRequestDTO approveReq =
@@ -314,7 +314,7 @@ class SecretControllerTest extends BaseIntegrationTest {
             .getResponse()
             .getContentAsString();
 
-    String secretId = objectMapper.readTree(createResponse).get("id").asText();
+    String secretId = objectMapper.readTree(createResponse).get("secretId").asText();
 
     // Manually update visibility as there is no API for it
     Secret secret = secretRepository.findBySecretId(UUID.fromString(secretId)).get();
