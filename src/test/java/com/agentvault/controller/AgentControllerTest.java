@@ -20,7 +20,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.agentvault.BaseIntegrationTest;
-import com.agentvault.dto.AgentTokenResponse;
 import com.agentvault.dto.CreateAgentRequest;
 import com.agentvault.dto.UserLoginRequest;
 import com.agentvault.service.UserService;
@@ -40,8 +39,7 @@ class AgentControllerTest extends BaseIntegrationTest {
                 post("/api/v1/auth/login/user")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
-                        objectMapper.writeValueAsString(
-                            new UserLoginRequest(username, password))))
+                        objectMapper.writeValueAsString(new UserLoginRequest(username, password))))
             .andExpect(status().isOk())
             .andReturn()
             .getResponse()

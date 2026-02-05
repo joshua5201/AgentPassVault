@@ -163,8 +163,7 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
                 post("/api/v1/auth/login/user")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
-                        objectMapper.writeValueAsString(
-                            new UserLoginRequest(username, password))))
+                        objectMapper.writeValueAsString(new UserLoginRequest(username, password))))
             .andReturn()
             .getResponse()
             .getContentAsString();

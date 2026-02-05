@@ -35,7 +35,8 @@ public class UserService {
   private final TenantRepository tenantRepository;
   private final PasswordEncoder passwordEncoder;
 
-  public User createAdminUser(UUID tenantId, String username, String rawPassword, String displayName) {
+  public User createAdminUser(
+      UUID tenantId, String username, String rawPassword, String displayName) {
     validateTenant(tenantId);
 
     User user = new User();
@@ -111,7 +112,8 @@ public class UserService {
             .orElseThrow(() -> new IllegalArgumentException("Invalid or expired reset token"));
 
     LocalDateTime now = LocalDateTime.now(ZoneId.of("UTC"));
-    if (user.getResetPasswordExpiresAt() == null || user.getResetPasswordExpiresAt().isBefore(now)) {
+    if (user.getResetPasswordExpiresAt() == null
+        || user.getResetPasswordExpiresAt().isBefore(now)) {
       throw new IllegalArgumentException("Invalid or expired reset token");
     }
 
@@ -119,7 +121,8 @@ public class UserService {
     if (user.getPasswordLastUpdatedAt() != null
         && user.getResetPasswordTokenCreatedAt() != null
         && user.getResetPasswordTokenCreatedAt().isBefore(user.getPasswordLastUpdatedAt())) {
-      throw new IllegalArgumentException("Reset token is invalid (password changed after token issuance)");
+      throw new IllegalArgumentException(
+          "Reset token is invalid (password changed after token issuance)");
     }
 
     user.setPasswordHash(passwordEncoder.encode(newPassword));

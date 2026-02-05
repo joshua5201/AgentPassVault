@@ -48,8 +48,7 @@ class RequestControllerTest extends BaseIntegrationTest {
                 post("/api/v1/auth/login/user")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
-                        objectMapper.writeValueAsString(
-                            new UserLoginRequest(username, password))))
+                        objectMapper.writeValueAsString(new UserLoginRequest(username, password))))
             .andReturn()
             .getResponse()
             .getContentAsString();
@@ -214,7 +213,8 @@ class RequestControllerTest extends BaseIntegrationTest {
             .getContentAsString();
     String secretId = objectMapper.readTree(secretResp).get("secretId").asText();
 
-    com.agentvault.model.Secret secret = secretRepository.findBySecretId(UUID.fromString(secretId)).get();
+    com.agentvault.model.Secret secret =
+        secretRepository.findBySecretId(UUID.fromString(secretId)).get();
     secret.setVisibility(SecretVisibility.HIDDEN);
     secretRepository.save(secret);
 

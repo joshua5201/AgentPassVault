@@ -160,7 +160,8 @@ class AuthControllerTest extends BaseIntegrationTest {
 
     // 2. Manually simulate password update AFTER token was issued
     com.agentvault.model.User user = userRepository.findByUsername("security_user").get();
-    user.setPasswordLastUpdatedAt(java.time.LocalDateTime.now(java.time.ZoneId.of("UTC")).plusSeconds(1));
+    user.setPasswordLastUpdatedAt(
+        java.time.LocalDateTime.now(java.time.ZoneId.of("UTC")).plusSeconds(1));
     userRepository.save(user);
 
     // 3. Attempt to reset password with the now "old" token
@@ -168,7 +169,9 @@ class AuthControllerTest extends BaseIntegrationTest {
         .perform(
             post("/api/v1/auth/reset-password")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(new com.agentvault.dto.ResetPasswordRequest(token, "newpass"))))
+                .content(
+                    objectMapper.writeValueAsString(
+                        new com.agentvault.dto.ResetPasswordRequest(token, "newpass"))))
         .andExpect(status().isInternalServerError());
   }
 
