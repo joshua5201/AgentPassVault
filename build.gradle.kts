@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
 	java
 	id("org.springframework.boot") version "3.4.2"
@@ -62,17 +64,4 @@ spotless {
 }
 tasks.getByName<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
 	systemProperty("spring.profiles.active", "dev")
-
-	// Load .env file if it exists
-	val envFile = file(".env")
-	if (envFile.exists()) {
-		envFile.readLines().forEach { line ->
-			if (line.isNotBlank() && !line.startsWith("#")) {
-				val parts = line.split("=", limit = 2)
-				if (parts.size == 2) {
-					environment(parts[0].trim(), parts[1].trim())
-				}
-			}
-		}
-	}
 }
