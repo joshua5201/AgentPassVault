@@ -15,13 +15,8 @@
  */
 package com.agentvault.dto;
 
-import com.agentvault.validation.ValidLoginRequest;
-import jakarta.validation.constraints.NotNull;
-import java.util.UUID;
+import jakarta.validation.constraints.NotBlank;
 
-@ValidLoginRequest
-public record LoginRequest(
-    @NotNull(message = "Tenant ID cannot be null") UUID tenantId,
-    String username,
-    String password,
-    String appToken) {}
+public record UserLoginRequest(
+    @NotBlank(message = "Username is required") String username,
+    @NotBlank(message = "Password is required") String password) {}

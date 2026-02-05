@@ -42,17 +42,17 @@ public class AgentService {
     String appToken = generateAppToken();
     String tokenHash = hashToken(appToken);
 
-    User agent = userService.createAgentUser(tenantId, tokenHash);
-    agent.setUsername(name); // Set the name
-    userRepository.save(agent); // Update name
+    User agent = userService.createAgentUser(tenantId, tokenHash, name);
+    agent.setUsername("agent-" + UUID.randomUUID()); // Random unique username
+    userRepository.save(agent);
 
-    return new AgentTokenResponse(agent.getId(), appToken);
+    return new AgentTokenResponse(agent.getUserId(), appToken);
   }
 
   public List<AgentResponse> listAgents(UUID tenantId) {
-    // Assuming agents are Users with role "agent"
+    // Assuming agents are Users with role "AGENT"
     return userRepository.findAll().stream()
-        .filter(u -> u.getTenantId().equals(tenantId) && Role.agent.equals(u.getRole()))
+        .filter(u -> u.getTenantId().equals(tenantId) && Role.AGENT.equals(u.getRole()))
         .map(this::mapToResponse)
         .collect(Collectors.toList());
   }
@@ -66,7 +66,7 @@ public class AgentService {
     agent.setAppTokenHash(tokenHash);
     userRepository.save(agent);
 
-    return new AgentTokenResponse(agent.getId(), newAppToken);
+    return new AgentTokenResponse(agent.getUserId(), newAppToken);
   }
 
   public void deleteAgent(UUID tenantId, UUID agentId) {
@@ -76,13 +76,14 @@ public class AgentService {
 
   private User getAgent(UUID tenantId, UUID agentId) {
     return userRepository
-        .findById(agentId)
-        .filter(u -> u.getTenantId().equals(tenantId) && Role.agent.equals(u.getRole()))
+        .findByUserId(agentId)
+        .filter(u -> u.getTenantId().equals(tenantId) && Role.AGENT.equals(u.getRole()))
         .orElseThrow(() -> new IllegalArgumentException("Agent not found"));
   }
 
   private AgentResponse mapToResponse(User user) {
-    return new AgentResponse(user.getId(), user.getUsername(), user.getCreatedAt());
+    return new AgentResponse(
+        user.getUserId(), user.getUsername(), user.getDisplayName(), user.getCreatedAt());
   }
 
   private String generateAppToken() {

@@ -20,8 +20,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.agentvault.BaseIntegrationTest;
+import com.agentvault.dto.AgentTokenResponse;
 import com.agentvault.dto.CreateAgentRequest;
-import com.agentvault.dto.LoginRequest;
+import com.agentvault.dto.UserLoginRequest;
 import com.agentvault.service.UserService;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -36,11 +37,12 @@ class AgentControllerTest extends BaseIntegrationTest {
     String loginResponse =
         mockMvc
             .perform(
-                post("/api/v1/auth/login")
+                post("/api/v1/auth/login/user")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         objectMapper.writeValueAsString(
-                            new LoginRequest(tenantId, username, password, null))))
+                            new UserLoginRequest(username, password))))
+            .andExpect(status().isOk())
             .andReturn()
             .getResponse()
             .getContentAsString();
@@ -62,7 +64,7 @@ class AgentControllerTest extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createReq)))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.id").exists())
+        .andExpect(jsonPath("$.agentId").exists())
         .andExpect(jsonPath("$.appToken").exists());
 
     // List Agents
@@ -70,7 +72,7 @@ class AgentControllerTest extends BaseIntegrationTest {
         .perform(get("/api/v1/agents").header("Authorization", "Bearer " + token))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$", hasSize(1)))
-        .andExpect(jsonPath("$[0].name").value("CI Runner"));
+        .andExpect(jsonPath("$[0].name").value(startsWith("agent-")));
   }
 
   @Test
@@ -91,7 +93,7 @@ class AgentControllerTest extends BaseIntegrationTest {
             .andReturn()
             .getResponse()
             .getContentAsString();
-    String agentId = objectMapper.readTree(createResponse).get("id").asText();
+    String agentId = objectMapper.readTree(createResponse).get("agentId").asText();
     String oldToken = objectMapper.readTree(createResponse).get("appToken").asText();
 
     // Rotate
@@ -121,7 +123,7 @@ class AgentControllerTest extends BaseIntegrationTest {
             .andReturn()
             .getResponse()
             .getContentAsString();
-    String agentId = objectMapper.readTree(createResponse).get("id").asText();
+    String agentId = objectMapper.readTree(createResponse).get("agentId").asText();
 
     // Delete
     mockMvc

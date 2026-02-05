@@ -35,35 +35,47 @@ public class UserService {
   private final TenantRepository tenantRepository;
   private final PasswordEncoder passwordEncoder;
 
-  public User createAdminUser(UUID tenantId, String username, String rawPassword) {
+  public User createAdminUser(UUID tenantId, String username, String rawPassword, String displayName) {
     validateTenant(tenantId);
 
     User user = new User();
-    user.setId(UUID.randomUUID());
+    user.setUserId(UUID.randomUUID());
     user.setTenantId(tenantId);
     user.setUsername(username);
+    user.setDisplayName(displayName);
     user.setPasswordHash(passwordEncoder.encode(rawPassword));
-    user.setRole(Role.admin);
+    user.setRole(Role.ADMIN);
 
     return userRepository.save(user);
   }
 
-  public User createAgentUser(UUID tenantId, String appTokenHash) {
+  // Keep old signature for compatibility if needed, or update all callers.
+  // I'll update all callers.
+  public User createAdminUser(UUID tenantId, String username, String rawPassword) {
+    return createAdminUser(tenantId, username, rawPassword, null);
+  }
+
+  public User createAgentUser(UUID tenantId, String appTokenHash, String displayName) {
     validateTenant(tenantId);
 
     User user = new User();
-    user.setId(UUID.randomUUID());
+    user.setUserId(UUID.randomUUID());
     user.setTenantId(tenantId);
-    user.setRole(Role.agent);
+    user.setDisplayName(displayName);
+    user.setRole(Role.AGENT);
     user.setAppTokenHash(appTokenHash);
 
     return userRepository.save(user);
   }
 
+  public User createAgentUser(UUID tenantId, String appTokenHash) {
+    return createAgentUser(tenantId, appTokenHash, null);
+  }
+
   public void changePassword(UUID userId, String oldPassword, String newPassword) {
     User user =
         userRepository
-            .findById(userId)
+            .findByUserId(userId)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
     if (!passwordEncoder.matches(oldPassword, user.getPasswordHash())) {
@@ -75,17 +87,18 @@ public class UserService {
     userRepository.save(user);
   }
 
-  public String initiatePasswordReset(UUID tenantId, String username) {
-    validateTenant(tenantId);
+  public String initiatePasswordReset(String username) {
     User user =
         userRepository
-            .findByTenantIdAndUsername(tenantId, username)
+            .findByUsername(username)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
     String token = UUID.randomUUID().toString();
     user.setResetPasswordToken(token);
     // Token expires in 15 minutes
-    user.setResetPasswordExpiresAt(LocalDateTime.now(ZoneId.of("UTC")).plusMinutes(15));
+    LocalDateTime now = LocalDateTime.now(ZoneId.of("UTC"));
+    user.setResetPasswordTokenCreatedAt(now);
+    user.setResetPasswordExpiresAt(now.plusMinutes(15));
     userRepository.save(user);
 
     return token;
@@ -97,15 +110,23 @@ public class UserService {
             .findByResetPasswordToken(token)
             .orElseThrow(() -> new IllegalArgumentException("Invalid or expired reset token"));
 
-    if (user.getResetPasswordExpiresAt() == null
-        || user.getResetPasswordExpiresAt().isBefore(LocalDateTime.now(ZoneId.of("UTC")))) {
+    LocalDateTime now = LocalDateTime.now(ZoneId.of("UTC"));
+    if (user.getResetPasswordExpiresAt() == null || user.getResetPasswordExpiresAt().isBefore(now)) {
       throw new IllegalArgumentException("Invalid or expired reset token");
     }
 
+    // Security check: token must be created after last password update
+    if (user.getPasswordLastUpdatedAt() != null
+        && user.getResetPasswordTokenCreatedAt() != null
+        && user.getResetPasswordTokenCreatedAt().isBefore(user.getPasswordLastUpdatedAt())) {
+      throw new IllegalArgumentException("Reset token is invalid (password changed after token issuance)");
+    }
+
     user.setPasswordHash(passwordEncoder.encode(newPassword));
-    user.setPasswordLastUpdatedAt(LocalDateTime.now(ZoneId.of("UTC")));
+    user.setPasswordLastUpdatedAt(now);
     user.setResetPasswordToken(null);
     user.setResetPasswordExpiresAt(null);
+    user.setResetPasswordTokenCreatedAt(null);
     userRepository.save(user);
   }
 
@@ -113,7 +134,7 @@ public class UserService {
     if (tenantId == null) {
       throw new IllegalArgumentException("Tenant ID cannot be null");
     }
-    if (!tenantRepository.existsById(tenantId)) {
+    if (tenantRepository.findByTenantId(tenantId).isEmpty()) {
       throw new IllegalArgumentException("Tenant not found with ID: " + tenantId);
     }
   }

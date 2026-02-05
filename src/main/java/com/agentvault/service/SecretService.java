@@ -54,6 +54,7 @@ public class SecretService {
         encryptionService.encrypt(request.value().getBytes(StandardCharsets.UTF_8), tenantKey);
 
     Secret secret = new Secret();
+    secret.setSecretId(UUID.randomUUID());
     secret.setTenantId(tenantId);
     secret.setName(request.name());
     secret.setEncryptedValue(encryptedValue);
@@ -64,10 +65,10 @@ public class SecretService {
     return mapToMetadataResponse(saved);
   }
 
-  public SecretResponse getSecret(UUID tenantId, String secretId) {
+  public SecretResponse getSecret(UUID tenantId, UUID secretId) {
     Secret secret =
         secretRepository
-            .findById(secretId)
+            .findBySecretId(secretId)
             .filter(s -> s.getTenantId().equals(tenantId))
             .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
 
@@ -85,12 +86,12 @@ public class SecretService {
     return mapToResponse(secret, decryptedValue);
   }
 
-  public SecretResponse getSecretWithLease(UUID tenantId, String secretId, String leaseToken) {
-    tokenService.validateLeaseToken(leaseToken, secretId);
+  public SecretResponse getSecretWithLease(UUID tenantId, UUID secretId, String leaseToken) {
+    tokenService.validateLeaseToken(leaseToken, secretId.toString());
 
     Secret secret =
         secretRepository
-            .findById(secretId)
+            .findBySecretId(secretId)
             .filter(s -> s.getTenantId().equals(tenantId))
             .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
 
@@ -101,10 +102,10 @@ public class SecretService {
     return mapToResponse(secret, decryptedValue);
   }
 
-  public void deleteSecret(UUID tenantId, String secretId) {
+  public void deleteSecret(UUID tenantId, UUID secretId) {
     Secret secret =
         secretRepository
-            .findById(secretId)
+            .findBySecretId(secretId)
             .filter(s -> s.getTenantId().equals(tenantId))
             .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
 
@@ -134,14 +135,14 @@ public class SecretService {
   private byte[] getTenantKey(UUID tenantId) {
     Tenant tenant =
         tenantRepository
-            .findById(tenantId)
+            .findByTenantId(tenantId)
             .orElseThrow(() -> new IllegalArgumentException("Tenant not found"));
     return keyManagementService.decryptTenantKey(tenant.getEncryptedTenantKey());
   }
 
   private SecretResponse mapToResponse(Secret secret, String decryptedValue) {
     return new SecretResponse(
-        secret.getId(),
+        secret.getSecretId(),
         secret.getName(),
         decryptedValue,
         secret.getMetadata(),
@@ -152,7 +153,7 @@ public class SecretService {
 
   private SecretMetadataResponse mapToMetadataResponse(Secret secret) {
     return new SecretMetadataResponse(
-        secret.getId(),
+        secret.getSecretId(),
         secret.getName(),
         secret.getMetadata(),
         secret.getVisibility(),

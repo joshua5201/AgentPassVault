@@ -35,9 +35,14 @@ public class AuthController {
   private final AuthService authService;
   private final UserService userService;
 
-  @PostMapping("/login")
-  public LoginResponse login(@Valid @RequestBody LoginRequest request) {
-    return authService.login(request);
+  @PostMapping("/login/user")
+  public LoginResponse userLogin(@Valid @RequestBody UserLoginRequest request) {
+    return authService.userLogin(request);
+  }
+
+  @PostMapping("/login/agent")
+  public LoginResponse agentLogin(@Valid @RequestBody AgentLoginRequest request) {
+    return authService.agentLogin(request);
   }
 
   @PostMapping("/change-password")
@@ -51,7 +56,7 @@ public class AuthController {
   @PostMapping("/forgot-password")
   public Map<String, String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
 
-    String token = userService.initiatePasswordReset(request.tenantId(), request.username());
+    String token = userService.initiatePasswordReset(request.username());
 
     return Map.of("resetToken", token);
   }
@@ -65,6 +70,14 @@ public class AuthController {
   @GetMapping("/ping")
   public Map<String, Object> ping(AgentVaultAuthentication authentication) {
 
-    return Map.of("message", "pong", "tenantId", authentication.getTenantId());
+    return Map.of(
+        "message",
+        "pong",
+        "tenantId",
+        authentication.getTenantId(),
+        "userId",
+        authentication.getPrincipal(),
+        "role",
+        authentication.getRole());
   }
 }

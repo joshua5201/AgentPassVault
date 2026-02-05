@@ -16,6 +16,9 @@
 package com.agentvault.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import java.util.UUID;
 
-public record ForgotPasswordRequest(
-    @NotBlank(message = "Username cannot be blank") String username) {}
+public record AgentLoginRequest(
+    @NotNull(message = "Tenant ID is required") UUID tenantId,
+    @NotBlank(message = "App token is required") String appToken) {}

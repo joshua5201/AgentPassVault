@@ -15,12 +15,15 @@
  */
 package com.agentvault.model;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -55,11 +58,15 @@ public class Request extends BaseEntity {
 
   private List<String> requiredFieldsInSecretValue;
 
-  private String mappedSecretId; // ObjectId of the secret fulfilling this request
+  private UUID mappedSecretId; // public secretId of the secret fulfilling this request
 
-  private String secretId; // ObjectId of the secret being requested for lease
+  private UUID secretId; // public secretId of the secret being requested for lease
 
   private String rejectionReason;
 
   private String fulfillmentUrl;
+
+  @CreatedDate private LocalDateTime createdAt;
+
+  @LastModifiedDate private LocalDateTime updatedAt;
 }

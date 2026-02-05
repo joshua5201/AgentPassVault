@@ -15,20 +15,49 @@ components:
 security:
   - bearerAuth: []
 paths:
-  /auth/login:
+  /auth/login/user:
     post:
-      summary: Login
+      summary: User Login (Admin/Human)
       security: []
       requestBody:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                tenantId: { type: string, format: uuid }
-                username: { type: string }
-                password: { type: string }
-                appToken: { type: string }
+              $ref: '#/components/schemas/UserLoginRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+
+  /auth/login/agent:
+    post:
+      summary: Agent Login
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentLoginRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+
+  /auth/forgot-password:
+    post:
+      summary: Initiate Password Reset
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
       responses:
         '200':
           description: OK
@@ -37,9 +66,36 @@ paths:
               schema:
                 type: object
                 properties:
-                  accessToken: { type: string }
-                  tokenType: { type: string }
-                  expiresIn: { type: integer }
+                  resetToken: { type: string }
+
+  /auth/reset-password:
+    post:
+      summary: Reset Password
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        '200':
+          description: OK
+
+  /auth/ping:
+    get:
+      summary: Ping (Auth check)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  tenantId: { type: string, format: uuid }
+                  userId: { type: string, format: uuid }
+                  role: { type: string, enum: [ADMIN, AGENT] }
 
   /secrets:
     post:
@@ -84,7 +140,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: string }
+          schema: { type: string, format: uuid }
         - name: leaseToken
           in: query
           required: false
@@ -102,7 +158,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: string }
+          schema: { type: string, format: uuid }
       responses:
         '204':
           description: Deleted
@@ -130,7 +186,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: string }
+          schema: { type: string, format: uuid }
       responses:
         '200':
           description: OK
@@ -144,7 +200,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: string }
+          schema: { type: string, format: uuid }
       requestBody:
         content:
           application/json:
@@ -165,10 +221,73 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: string }
+          schema: { type: string, format: uuid }
       responses:
         '204':
           description: Abandoned
+
+  /agents:
+    get:
+      summary: List Agents (Admin)
+      parameters:
+        - name: showAppToken
+          in: query
+          required: false
+          schema: { type: boolean, default: false }
+      responses:
+        '200':
+          description: Agent list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AgentResponse'
+    post:
+      summary: Create Agent (Admin)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+      responses:
+        '200':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentTokenResponse'
+
+  /agents/{id}/rotate:
+    post:
+      summary: Rotate Agent Token (Admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Rotated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentTokenResponse'
+
+  /agents/{id}:
+    delete:
+      summary: Delete Agent (Admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '204':
+          description: Deleted
 
 components:
   schemas:
@@ -179,7 +298,7 @@ components:
     SecretMetadata:
       type: object
       properties:
-        id: { type: string }
+        secretId: { type: string, format: uuid }
         name: { type: string }
         metadata: { type: object }
         visibility: { $ref: '#/components/schemas/SecretVisibility' }
@@ -212,7 +331,6 @@ components:
     Request:
       type: object
       properties:
-        id: { type: string }
         requestId: { type: string, format: uuid }
         status: { $ref: '#/components/schemas/RequestStatus' }
         type: { $ref: '#/components/schemas/RequestType' }
@@ -220,7 +338,7 @@ components:
         context: { type: string }
         requiredMetadata: { type: object }
         requiredFieldsInSecretValue: { type: array, items: { type: string } }
-        mappedSecretId: { type: string }
+        mappedSecretId: { type: string, format: uuid }
         rejectionReason: { type: string }
         fulfillmentUrl: { type: string }
         createdAt: { type: string, format: date-time }
@@ -235,7 +353,7 @@ components:
         requiredMetadata: { type: object }
         requiredFieldsInSecretValue: { type: array, items: { type: string } }
         type: { $ref: '#/components/schemas/RequestType' }
-        secretId: { type: string }
+        secretId: { type: string, format: uuid }
 
     UpdateRequestDTO:
       type: object
@@ -247,7 +365,7 @@ components:
         name: { type: string }
         value: { type: string }
         metadata: { type: object }
-        secretId: { type: string }
+        secretId: { type: string, format: uuid }
         newVisibility: { $ref: '#/components/schemas/SecretVisibility' }
         reason: { type: string }
 
@@ -255,3 +373,52 @@ components:
       type: object
       properties:
         leaseToken: { type: string }
+
+    UserLoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string }
+        password: { type: string }
+
+    AgentLoginRequest:
+      type: object
+      required: [tenantId, appToken]
+      properties:
+        tenantId: { type: string, format: uuid }
+        appToken: { type: string }
+
+    LoginResponse:
+      type: object
+      properties:
+        accessToken: { type: string }
+        tokenType: { type: string }
+        expiresIn: { type: integer }
+
+    ForgotPasswordRequest:
+      type: object
+      required: [username]
+      properties:
+        username: { type: string }
+
+    ResetPasswordRequest:
+      type: object
+      required: [token, newPassword]
+      properties:
+        token: { type: string }
+        newPassword: { type: string }
+
+    AgentResponse:
+      type: object
+      properties:
+        agentId: { type: string, format: uuid }
+        name: { type: string }
+        displayName: { type: string }
+        createdAt: { type: string, format: date-time }
+        appToken: { type: string, nullable: true }
+
+    AgentTokenResponse:
+      type: object
+      properties:
+        agentId: { type: string, format: uuid }
+        appToken: { type: string }

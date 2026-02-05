@@ -19,7 +19,9 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -30,11 +32,16 @@ import org.springframework.data.mongodb.core.mapping.FieldType;
 @Document(collection = "users")
 public class User extends BaseEntity {
 
-  @Id private UUID id;
+  @Id private String id; // ObjectId
+
+  @Indexed(unique = true)
+  private UUID userId;
 
   @Indexed private UUID tenantId;
 
+  @Indexed(unique = true)
   private String username;
+  private String displayName;
   private String passwordHash;
 
   @Field(targetType = FieldType.STRING)
@@ -43,5 +50,10 @@ public class User extends BaseEntity {
   private String appTokenHash;
   @Indexed private String resetPasswordToken;
   private LocalDateTime resetPasswordExpiresAt;
+  private LocalDateTime resetPasswordTokenCreatedAt;
   private LocalDateTime passwordLastUpdatedAt;
+
+  @CreatedDate private LocalDateTime createdAt;
+
+  @LastModifiedDate private LocalDateTime updatedAt;
 }

@@ -54,13 +54,13 @@ public class RequestService {
     return mapToResponse(requestRepository.save(request));
   }
 
-  public RequestResponse getRequest(UUID tenantId, String id) {
-    return mapToResponse(findRequest(tenantId, id));
+  public RequestResponse getRequest(UUID tenantId, UUID requestId) {
+    return mapToResponse(findRequest(tenantId, requestId));
   }
 
   @Transactional
-  public RequestResponse fulfillRequest(UUID tenantId, String id, FulfillRequestDTO dto) {
-    Request request = findRequest(tenantId, id);
+  public RequestResponse fulfillRequest(UUID tenantId, UUID requestId, FulfillRequestDTO dto) {
+    Request request = findRequest(tenantId, requestId);
     validatePending(request);
 
     // Create the secret
@@ -69,18 +69,18 @@ public class RequestService {
     SecretMetadataResponse secret = secretService.createSecret(tenantId, secretRequest);
 
     request.setStatus(RequestStatus.fulfilled);
-    request.setMappedSecretId(secret.id());
+    request.setMappedSecretId(secret.secretId());
 
     return mapToResponse(requestRepository.save(request));
   }
 
-  public RequestResponse mapRequest(UUID tenantId, String id, MapRequestDTO dto) {
-    Request request = findRequest(tenantId, id);
+  public RequestResponse mapRequest(UUID tenantId, UUID requestId, MapRequestDTO dto) {
+    Request request = findRequest(tenantId, requestId);
     validatePending(request);
 
     // Verify secret exists and belongs to tenant
     secretRepository
-        .findById(dto.secretId())
+        .findBySecretId(dto.secretId())
         .filter(s -> s.getTenantId().equals(tenantId))
         .ifPresentOrElse(
             secret -> {
@@ -99,8 +99,8 @@ public class RequestService {
     return mapToResponse(requestRepository.save(request));
   }
 
-  public ApproveLeaseResponseDTO approveLease(UUID tenantId, String id, String approverId) {
-    Request request = findRequest(tenantId, id);
+  public ApproveLeaseResponseDTO approveLease(UUID tenantId, UUID requestId, String approverId) {
+    Request request = findRequest(tenantId, requestId);
     validatePending(request);
 
     if (request.getType() != com.agentvault.model.RequestType.LEASE) {
@@ -112,8 +112,8 @@ public class RequestService {
             tenantId,
             request.getRequesterId().toString(),
             approverId,
-            request.getSecretId(),
-            request.getId());
+            request.getSecretId().toString(),
+            request.getRequestId().toString());
 
     request.setStatus(RequestStatus.fulfilled);
     requestRepository.save(request);
@@ -121,8 +121,8 @@ public class RequestService {
     return new ApproveLeaseResponseDTO(leaseToken);
   }
 
-  public RequestResponse rejectRequest(UUID tenantId, String id, String reason) {
-    Request request = findRequest(tenantId, id);
+  public RequestResponse rejectRequest(UUID tenantId, UUID requestId, String reason) {
+    Request request = findRequest(tenantId, requestId);
     validatePending(request);
 
     request.setStatus(RequestStatus.rejected);
@@ -131,8 +131,8 @@ public class RequestService {
     return mapToResponse(requestRepository.save(request));
   }
 
-  public void abandonRequest(UUID tenantId, UUID requesterId, String id) {
-    Request request = findRequest(tenantId, id);
+  public void abandonRequest(UUID tenantId, UUID requesterId, UUID requestId) {
+    Request request = findRequest(tenantId, requestId);
     if (!request.getRequesterId().equals(requesterId)) {
       throw new IllegalStateException("Only the requester can abandon the request");
     }
@@ -142,9 +142,9 @@ public class RequestService {
     requestRepository.save(request);
   }
 
-  private Request findRequest(UUID tenantId, String id) {
+  private Request findRequest(UUID tenantId, UUID requestId) {
     return requestRepository
-        .findById(id)
+        .findByRequestId(requestId)
         .filter(r -> r.getTenantId().equals(tenantId))
         .orElseThrow(() -> new IllegalArgumentException("Request not found"));
   }
@@ -157,7 +157,6 @@ public class RequestService {
 
   private RequestResponse mapToResponse(Request request) {
     return new RequestResponse(
-        request.getId(),
         request.getRequestId(),
         request.getStatus(),
         request.getType(),

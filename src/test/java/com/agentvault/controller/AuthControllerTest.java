@@ -20,10 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.agentvault.BaseIntegrationTest;
-import com.agentvault.dto.ChangePasswordRequest;
-import com.agentvault.dto.ForgotPasswordRequest;
-import com.agentvault.dto.LoginRequest;
-import com.agentvault.dto.ResetPasswordRequest;
+import com.agentvault.dto.*;
 import com.agentvault.model.Tenant;
 import com.agentvault.service.UserService;
 import java.nio.charset.StandardCharsets;
@@ -40,7 +37,8 @@ class AuthControllerTest extends BaseIntegrationTest {
 
   private void createTenant(UUID id) {
     Tenant tenant = new Tenant();
-    tenant.setId(id);
+    tenant.setId(id.toString());
+    tenant.setTenantId(id);
     tenant.setName("Test Tenant");
     tenant.setStatus("active");
     tenantRepository.save(tenant);
@@ -58,11 +56,12 @@ class AuthControllerTest extends BaseIntegrationTest {
     String loginResponse =
         mockMvc
             .perform(
-                post("/api/v1/auth/login")
+                post("/api/v1/auth/login/user")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         objectMapper.writeValueAsString(
-                            new LoginRequest(tenantId, "change_pass_user", "oldPass123", null))))
+                            new UserLoginRequest("change_pass_user", "oldPass123"))))
+            .andExpect(status().isOk())
             .andReturn()
             .getResponse()
             .getContentAsString();
@@ -83,11 +82,11 @@ class AuthControllerTest extends BaseIntegrationTest {
     // Verify new password by logging in
     mockMvc
         .perform(
-            post("/api/v1/auth/login")
+            post("/api/v1/auth/login/user")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     objectMapper.writeValueAsString(
-                        new LoginRequest(tenantId, "change_pass_user", "newPass456", null))))
+                        new UserLoginRequest("change_pass_user", "newPass456"))))
         .andExpect(status().isOk());
   }
 
@@ -98,7 +97,7 @@ class AuthControllerTest extends BaseIntegrationTest {
     userService.createAdminUser(tenantId, "reset_user", "oldPass");
 
     // 1. Forgot Password
-    ForgotPasswordRequest forgotReq = new ForgotPasswordRequest(tenantId, "reset_user");
+    ForgotPasswordRequest forgotReq = new ForgotPasswordRequest("reset_user");
 
     String response =
         mockMvc
@@ -127,12 +126,50 @@ class AuthControllerTest extends BaseIntegrationTest {
     // 3. Login with new password
     mockMvc
         .perform(
-            post("/api/v1/auth/login")
+            post("/api/v1/auth/login/user")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     objectMapper.writeValueAsString(
-                        new LoginRequest(tenantId, "reset_user", "newPass789", null))))
+                        new UserLoginRequest("reset_user", "newPass789"))))
         .andExpect(status().isOk());
+  }
+
+  @Test
+  void resetPassword_TokenIssuedBeforeLastUpdate_ReturnsError() throws Exception {
+    UUID tenantId = UUID.randomUUID();
+    createTenant(tenantId);
+    userService.createAdminUser(tenantId, "security_user", "pass");
+
+    // 1. Forgot Password -> get token
+    String token =
+        objectMapper
+            .readTree(
+                mockMvc
+                    .perform(
+                        post("/api/v1/auth/forgot-password")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(
+                                objectMapper.writeValueAsString(
+                                    new ForgotPasswordRequest("security_user"))))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString())
+            .get("resetToken")
+            .asText();
+
+    // 2. Manually simulate password update AFTER token was issued
+    com.agentvault.model.User user = userRepository.findByUsername("security_user").get();
+    user.setPasswordLastUpdatedAt(java.time.LocalDateTime.now(java.time.ZoneId.of("UTC")).plusSeconds(1));
+    userRepository.save(user);
+
+    // 3. Attempt to reset password with the now "old" token
+    mockMvc
+        .perform(
+            post("/api/v1/auth/reset-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new com.agentvault.dto.ResetPasswordRequest(token, "newpass"))))
+        .andExpect(status().isInternalServerError());
   }
 
   @Test
@@ -151,11 +188,11 @@ class AuthControllerTest extends BaseIntegrationTest {
     String loginResponse =
         mockMvc
             .perform(
-                post("/api/v1/auth/login")
+                post("/api/v1/auth/login/user")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         objectMapper.writeValueAsString(
-                            new LoginRequest(tenantId, "testuser", "password", null))))
+                            new UserLoginRequest("testuser", "password"))))
             .andReturn()
             .getResponse()
             .getContentAsString();
@@ -166,7 +203,9 @@ class AuthControllerTest extends BaseIntegrationTest {
         .perform(get("/api/v1/auth/ping").header("Authorization", "Bearer " + token))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.message").value("pong"))
-        .andExpect(jsonPath("$.tenantId").value(tenantId.toString()));
+        .andExpect(jsonPath("$.tenantId").value(tenantId.toString()))
+        .andExpect(jsonPath("$.userId").exists())
+        .andExpect(jsonPath("$.role").value("ADMIN"));
   }
 
   @Test
@@ -176,11 +215,11 @@ class AuthControllerTest extends BaseIntegrationTest {
 
     userService.createAdminUser(tenantId, "admin", "password");
 
-    LoginRequest request = new LoginRequest(tenantId, "admin", "password", null);
+    UserLoginRequest request = new UserLoginRequest("admin", "password");
 
     mockMvc
         .perform(
-            post("/api/v1/auth/login")
+            post("/api/v1/auth/login/user")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
@@ -201,11 +240,11 @@ class AuthControllerTest extends BaseIntegrationTest {
 
     userService.createAgentUser(tenantId, tokenHash);
 
-    LoginRequest request = new LoginRequest(tenantId, null, null, rawToken);
+    AgentLoginRequest request = new AgentLoginRequest(tenantId, rawToken);
 
     mockMvc
         .perform(
-            post("/api/v1/auth/login")
+            post("/api/v1/auth/login/agent")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
@@ -214,11 +253,11 @@ class AuthControllerTest extends BaseIntegrationTest {
 
   @Test
   void login_WithInvalidCredentials_Returns401() throws Exception {
-    LoginRequest request = new LoginRequest(UUID.randomUUID(), "wrong", "wrong", null);
+    UserLoginRequest request = new UserLoginRequest("wrong", "wrong");
 
     mockMvc
         .perform(
-            post("/api/v1/auth/login")
+            post("/api/v1/auth/login/user")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isUnauthorized());

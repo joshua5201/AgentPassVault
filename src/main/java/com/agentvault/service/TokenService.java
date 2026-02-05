@@ -42,7 +42,7 @@ public class TokenService {
   public String generateToken(User user) {
     Instant now = Instant.now();
     return Jwts.builder()
-        .subject(user.getId().toString())
+        .subject(user.getUserId().toString())
         .claim("tenant_id", user.getTenantId().toString())
         .claim("role", user.getRole().name())
         .issuedAt(Date.from(now))

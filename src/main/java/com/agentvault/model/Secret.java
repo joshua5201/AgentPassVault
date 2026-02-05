@@ -15,11 +15,14 @@
  */
 package com.agentvault.model;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -38,6 +41,9 @@ public class Secret extends BaseEntity {
 
   @Id private String id; // ObjectId
 
+  @Indexed(unique = true)
+  private UUID secretId;
+
   @Indexed private UUID tenantId;
 
   @TextIndexed private String name;
@@ -48,4 +54,8 @@ public class Secret extends BaseEntity {
   private Map<String, Object> metadata;
 
   private SecretVisibility visibility = SecretVisibility.VISIBLE;
+
+  @CreatedDate private LocalDateTime createdAt;
+
+  @LastModifiedDate private LocalDateTime updatedAt;
 }

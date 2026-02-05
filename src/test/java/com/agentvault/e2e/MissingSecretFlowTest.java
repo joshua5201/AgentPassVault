@@ -41,7 +41,7 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
     // 1. Setup Tenant
     UUID tenantId = UUID.randomUUID();
     Tenant tenant = new Tenant();
-    tenant.setId(tenantId);
+    tenant.setTenantId(tenantId);
     tenant.setName("E2E Tenant");
     tenant.setStatus("active");
     tenant.setEncryptedTenantKey(keyManagementService.generateEncryptedTenantKey());
@@ -59,11 +59,11 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
     String agentLoginResp =
         mockMvc
             .perform(
-                post("/api/v1/auth/login")
+                post("/api/v1/auth/login/agent")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         objectMapper.writeValueAsString(
-                            new LoginRequest(tenantId, null, null, agentAppToken))))
+                            new AgentLoginRequest(tenantId, agentAppToken))))
             .andExpect(status().isOk())
             .andReturn()
             .getResponse()
@@ -103,7 +103,7 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
             .getResponse()
             .getContentAsString();
 
-    String requestId = objectMapper.readTree(reqResp).get("id").asText();
+    String requestId = objectMapper.readTree(reqResp).get("requestId").asText();
 
     // 4. Admin Checks Request (Verification step, maybe admin lists pending requests)
     mockMvc
@@ -147,7 +147,7 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
             .getResponse()
             .getContentAsString();
 
-    String secretId = objectMapper.readTree(searchResp).get(0).get("id").asText();
+    String secretId = objectMapper.readTree(searchResp).get(0).get("secretId").asText();
 
     // 7. Agent Gets Secret (Decrypts)
     mockMvc
@@ -160,11 +160,11 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
     String loginResponse =
         mockMvc
             .perform(
-                post("/api/v1/auth/login")
+                post("/api/v1/auth/login/user")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         objectMapper.writeValueAsString(
-                            new LoginRequest(tenantId, username, password, null))))
+                            new UserLoginRequest(username, password))))
             .andReturn()
             .getResponse()
             .getContentAsString();
