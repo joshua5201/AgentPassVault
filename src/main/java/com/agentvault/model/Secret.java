@@ -55,7 +55,7 @@ public class Secret extends BaseEntity {
 
   private SecretVisibility visibility = SecretVisibility.VISIBLE;
 
-  @CreatedDate private java.util.Date createdAt;
+  @CreatedDate private LocalDateTime createdAt;
 
-  @LastModifiedDate private java.util.Date updatedAt;
+  @LastModifiedDate private LocalDateTime updatedAt;
 }

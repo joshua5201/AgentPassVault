@@ -52,7 +52,7 @@ public class User extends BaseEntity {
   private LocalDateTime resetPasswordTokenCreatedAt;
   private LocalDateTime passwordLastUpdatedAt;
 
-  @CreatedDate private java.util.Date createdAt;
+  @CreatedDate private LocalDateTime createdAt;
 
-  @LastModifiedDate private java.util.Date updatedAt;
+  @LastModifiedDate private LocalDateTime updatedAt;
 }

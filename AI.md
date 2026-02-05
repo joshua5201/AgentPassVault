@@ -20,6 +20,7 @@ Agents working on this project must adhere to the specifications and workflows d
 - **Feature Branching:** Until a new working version is finished, all new work must branch out from `feat/java`.
 - **Architecture:** Spring Boot 3 (Java 21) + MongoDB.
 - **Security:** Multi-tenant isolation using 2-tier key hierarchy (SMK + TK).
+- **Coding Standards:** NEVER use `java.util.Date`. Always use `java.time` APIs (e.g., `Instant`, `LocalDateTime`, `OffsetDateTime`).
 
 ## License Header
 - For all `.java` files, the license header from `licence-header.txt` must be present at the top of the file.

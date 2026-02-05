@@ -39,7 +39,7 @@ public class Tenant extends BaseEntity {
   private byte[] encryptedTenantKey;
   private String status;
 
-  @CreatedDate private java.util.Date createdAt;
+  @CreatedDate private LocalDateTime createdAt;
 
-  @LastModifiedDate private java.util.Date updatedAt;
+  @LastModifiedDate private LocalDateTime updatedAt;
 }

@@ -26,5 +26,5 @@ public record SecretResponse(
     String value, // Decrypted value
     Map<String, Object> metadata,
     SecretVisibility visibility,
-    java.util.Date createdAt,
-    java.util.Date updatedAt) {}
+    LocalDateTime createdAt,
+    LocalDateTime updatedAt) {}
