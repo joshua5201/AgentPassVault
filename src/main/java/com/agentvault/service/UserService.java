@@ -35,29 +35,41 @@ public class UserService {
   private final TenantRepository tenantRepository;
   private final PasswordEncoder passwordEncoder;
 
-  public User createAdminUser(UUID tenantId, String username, String rawPassword) {
+  public User createAdminUser(UUID tenantId, String username, String rawPassword, String displayName) {
     validateTenant(tenantId);
 
     User user = new User();
     user.setUserId(UUID.randomUUID());
     user.setTenantId(tenantId);
     user.setUsername(username);
+    user.setDisplayName(displayName);
     user.setPasswordHash(passwordEncoder.encode(rawPassword));
     user.setRole(Role.ADMIN);
 
     return userRepository.save(user);
   }
 
-  public User createAgentUser(UUID tenantId, String appTokenHash) {
+  // Keep old signature for compatibility if needed, or update all callers.
+  // I'll update all callers.
+  public User createAdminUser(UUID tenantId, String username, String rawPassword) {
+    return createAdminUser(tenantId, username, rawPassword, null);
+  }
+
+  public User createAgentUser(UUID tenantId, String appTokenHash, String displayName) {
     validateTenant(tenantId);
 
     User user = new User();
     user.setUserId(UUID.randomUUID());
     user.setTenantId(tenantId);
+    user.setDisplayName(displayName);
     user.setRole(Role.AGENT);
     user.setAppTokenHash(appTokenHash);
 
     return userRepository.save(user);
+  }
+
+  public User createAgentUser(UUID tenantId, String appTokenHash) {
+    return createAgentUser(tenantId, appTokenHash, null);
   }
 
   public void changePassword(UUID userId, String oldPassword, String newPassword) {

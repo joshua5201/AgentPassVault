@@ -69,7 +69,7 @@ public class DataSeeder implements CommandLineRunner {
     log.info("Password start char code: {}", (int) rawPassword.charAt(0));
     log.info("Password end char code: {}", (int) rawPassword.charAt(rawPassword.length() - 1));
 
-    userService.createAdminUser(tenant.getTenantId(), username, rawPassword);
+    userService.createAdminUser(tenant.getTenantId(), username, rawPassword, "Default Admin");
 
     log.info("Created Admin User: username={}", username);
   }

@@ -41,6 +41,7 @@ public class User extends BaseEntity {
 
   @Indexed(unique = true)
   private String username;
+  private String displayName;
   private String passwordHash;
 
   @Field(targetType = FieldType.STRING)

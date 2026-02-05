@@ -413,6 +413,7 @@ components:
       properties:
         agentId: { type: string, format: uuid }
         name: { type: string }
+        displayName: { type: string }
         createdAt: { type: string, format: date-time }
         appToken: { type: string, nullable: true }
 
