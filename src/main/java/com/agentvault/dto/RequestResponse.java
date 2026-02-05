@@ -33,5 +33,5 @@ public record RequestResponse(
     UUID mappedSecretId,
     String rejectionReason,
     String fulfillmentUrl,
-    LocalDateTime createdAt,
-    LocalDateTime updatedAt) {}
+    java.util.Date createdAt,
+    java.util.Date updatedAt) {}

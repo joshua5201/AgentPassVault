@@ -25,5 +25,5 @@ public record SecretMetadataResponse(
     String name,
     Map<String, Object> metadata,
     SecretVisibility visibility,
-    LocalDateTime createdAt,
-    LocalDateTime updatedAt) {}
+    java.util.Date createdAt,
+    java.util.Date updatedAt) {}

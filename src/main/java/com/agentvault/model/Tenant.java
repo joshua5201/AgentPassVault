@@ -15,10 +15,13 @@
  */
 package com.agentvault.model;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -35,4 +38,8 @@ public class Tenant extends BaseEntity {
   private String name;
   private byte[] encryptedTenantKey;
   private String status;
+
+  @CreatedDate private java.util.Date createdAt;
+
+  @LastModifiedDate private java.util.Date updatedAt;
 }
