@@ -55,7 +55,7 @@ paths:
                   message: { type: string }
                   tenantId: { type: string, format: uuid }
                   userId: { type: string, format: uuid }
-                  role: { type: string }
+                  role: { type: string, enum: [ADMIN, AGENT] }
 
   /secrets:
     post:

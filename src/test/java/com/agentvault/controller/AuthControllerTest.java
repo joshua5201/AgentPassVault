@@ -168,7 +168,7 @@ class AuthControllerTest extends BaseIntegrationTest {
         .andExpect(jsonPath("$.message").value("pong"))
         .andExpect(jsonPath("$.tenantId").value(tenantId.toString()))
         .andExpect(jsonPath("$.userId").exists())
-        .andExpect(jsonPath("$.role").value("admin"));
+        .andExpect(jsonPath("$.role").value("ADMIN"));
   }
 
   @Test

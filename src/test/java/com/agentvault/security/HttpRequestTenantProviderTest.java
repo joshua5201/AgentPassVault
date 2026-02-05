@@ -51,7 +51,7 @@ class HttpRequestTenantProviderTest {
 
     AgentVaultAuthentication auth =
         new AgentVaultAuthentication(
-            jwt, tenantId, userId, Role.admin, null, Collections.emptyList());
+            jwt, tenantId, userId, Role.ADMIN, null, Collections.emptyList());
 
     SecurityContextHolder.getContext().setAuthentication(auth);
 

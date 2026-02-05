@@ -50,9 +50,9 @@ public class AgentService {
   }
 
   public List<AgentResponse> listAgents(UUID tenantId) {
-    // Assuming agents are Users with role "agent"
+    // Assuming agents are Users with role "AGENT"
     return userRepository.findAll().stream()
-        .filter(u -> u.getTenantId().equals(tenantId) && Role.agent.equals(u.getRole()))
+        .filter(u -> u.getTenantId().equals(tenantId) && Role.AGENT.equals(u.getRole()))
         .map(this::mapToResponse)
         .collect(Collectors.toList());
   }
@@ -77,7 +77,7 @@ public class AgentService {
   private User getAgent(UUID tenantId, UUID agentId) {
     return userRepository
         .findByUserId(agentId)
-        .filter(u -> u.getTenantId().equals(tenantId) && Role.agent.equals(u.getRole()))
+        .filter(u -> u.getTenantId().equals(tenantId) && Role.AGENT.equals(u.getRole()))
         .orElseThrow(() -> new IllegalArgumentException("Agent not found"));
   }
 

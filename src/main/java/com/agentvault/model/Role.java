@@ -18,8 +18,8 @@ package com.agentvault.model;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum Role {
-  admin("admin"),
-  agent("agent");
+  ADMIN("ADMIN"),
+  AGENT("AGENT");
 
   private final String value;
 

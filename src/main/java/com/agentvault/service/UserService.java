@@ -43,7 +43,7 @@ public class UserService {
     user.setTenantId(tenantId);
     user.setUsername(username);
     user.setPasswordHash(passwordEncoder.encode(rawPassword));
-    user.setRole(Role.admin);
+    user.setRole(Role.ADMIN);
 
     return userRepository.save(user);
   }
@@ -54,7 +54,7 @@ public class UserService {
     User user = new User();
     user.setUserId(UUID.randomUUID());
     user.setTenantId(tenantId);
-    user.setRole(Role.agent);
+    user.setRole(Role.AGENT);
     user.setAppTokenHash(appTokenHash);
 
     return userRepository.save(user);
