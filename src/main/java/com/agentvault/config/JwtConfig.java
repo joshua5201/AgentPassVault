@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.agentvault.config;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.proc.SecurityContext;
 import java.util.Base64;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -34,18 +34,38 @@ public class JwtConfig {
   @Value("${agentvault.jwt.secret}")
   private String jwtSecret;
 
+  @Value("${agentvault.jwt.expiration-minutes}")
+  private long expirationMinutes;
+
+  @Value("${agentvault.jwt.lease-expiration-minutes:60}")
+  private long leaseExpirationMinutes;
+
+  private SecretKey secretKey;
+
+  public SecretKey getSecretKey() {
+    if (this.secretKey == null) {
+      byte[] keyBytes = Base64.getDecoder().decode(jwtSecret);
+      this.secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
+    }
+    return this.secretKey;
+  }
+
+  public long getExpirationMinutes() {
+    return expirationMinutes;
+  }
+
+  public long getLeaseExpirationMinutes() {
+    return leaseExpirationMinutes;
+  }
+
   @Bean
   public JwtDecoder jwtDecoder() {
-    byte[] keyBytes = Base64.getDecoder().decode(jwtSecret);
-    SecretKeySpec secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
-    return NimbusJwtDecoder.withSecretKey(secretKey).build();
+    return NimbusJwtDecoder.withSecretKey(getSecretKey()).build();
   }
 
   @Bean
   public JwtEncoder jwtEncoder() {
-    byte[] keyBytes = Base64.getDecoder().decode(jwtSecret);
-    SecretKeySpec secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
-    ImmutableSecret<SecurityContext> secret = new ImmutableSecret<>(secretKey);
+    ImmutableSecret<SecurityContext> secret = new ImmutableSecret<>(getSecretKey());
     return new NimbusJwtEncoder(secret);
   }
 }

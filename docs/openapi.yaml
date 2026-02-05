@@ -41,6 +41,22 @@ paths:
                   tokenType: { type: string }
                   expiresIn: { type: integer }
 
+  /secrets:
+    post:
+      summary: Create Secret (Admin/Agent)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSecretRequest'
+      responses:
+        '200':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecretMetadata'
+
   /secrets/search:
     post:
       summary: Search Secrets
@@ -69,6 +85,10 @@ paths:
           in: path
           required: true
           schema: { type: string }
+        - name: leaseToken
+          in: query
+          required: false
+          schema: { type: string }
       responses:
         '200':
           description: Decrypted Secret
@@ -76,6 +96,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Secret'
+    delete:
+      summary: Delete Secret (Admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204':
+          description: Deleted
 
   /requests:
     post:
@@ -84,12 +114,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name: { type: string }
-                context: { type: string }
-                requiredMetadata: { type: object }
-                requiredFieldsInSecretValue: { type: array, items: { type: string } }
+              $ref: '#/components/schemas/CreateRequestDTO'
       responses:
         '200':
           description: Created
@@ -98,9 +123,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/Request'
 
-  /requests/{id}/fulfill:
-    post:
-      summary: Fulfill Request
+  /requests/{id}:
+    get:
+      summary: Get Request Details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Request'
+    patch:
+      summary: Update Request (Admin: Fulfill, Map, Reject, Approve Lease)
       parameters:
         - name: id
           in: path
@@ -110,24 +149,42 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name: { type: string }
-                value: { type: string }
-                metadata: { type: object }
+              $ref: '#/components/schemas/UpdateRequestDTO'
       responses:
         '200':
-          description: Fulfilled
+          description: OK
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/Request'
+                  - $ref: '#/components/schemas/ApproveLeaseResponse'
+    delete:
+      summary: Abandon Request (Agent)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204':
+          description: Abandoned
 
 components:
   schemas:
+    SecretVisibility:
+      type: string
+      enum: [VISIBLE, LEASE_REQUIRED, HIDDEN]
+
     SecretMetadata:
       type: object
       properties:
         id: { type: string }
         name: { type: string }
         metadata: { type: object }
+        visibility: { $ref: '#/components/schemas/SecretVisibility' }
         createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
     
     Secret:
       allOf:
@@ -136,9 +193,65 @@ components:
           properties:
             value: { type: string }
 
+    CreateSecretRequest:
+      type: object
+      required: [name, value]
+      properties:
+        name: { type: string }
+        value: { type: string }
+        metadata: { type: object }
+
+    RequestStatus:
+      type: string
+      enum: [pending, fulfilled, rejected, abandoned]
+
+    RequestType:
+      type: string
+      enum: [CREATE, LEASE]
+
     Request:
       type: object
       properties:
         id: { type: string }
-        status: { type: string, enum: [pending, fulfilled, rejected] }
+        requestId: { type: string, format: uuid }
+        status: { $ref: '#/components/schemas/RequestStatus' }
+        type: { $ref: '#/components/schemas/RequestType' }
+        name: { type: string }
+        context: { type: string }
+        requiredMetadata: { type: object }
+        requiredFieldsInSecretValue: { type: array, items: { type: string } }
         mappedSecretId: { type: string }
+        rejectionReason: { type: string }
+        fulfillmentUrl: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    CreateRequestDTO:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        context: { type: string }
+        requiredMetadata: { type: object }
+        requiredFieldsInSecretValue: { type: array, items: { type: string } }
+        type: { $ref: '#/components/schemas/RequestType' }
+        secretId: { type: string }
+
+    UpdateRequestDTO:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [FULFILL, MAP, REJECT, APPROVE_LEASE]
+        name: { type: string }
+        value: { type: string }
+        metadata: { type: object }
+        secretId: { type: string }
+        newVisibility: { $ref: '#/components/schemas/SecretVisibility' }
+        reason: { type: string }
+
+    ApproveLeaseResponse:
+      type: object
+      properties:
+        leaseToken: { type: string }

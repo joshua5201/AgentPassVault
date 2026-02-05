@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.agentvault.e2e;
 
 import static org.hamcrest.Matchers.*;
@@ -25,7 +24,6 @@ import com.agentvault.dto.*;
 import com.agentvault.model.Tenant;
 import com.agentvault.service.AgentService;
 import com.agentvault.service.UserService;
-import com.agentvault.service.crypto.KeyManagementService;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -37,7 +35,6 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
 
   @Autowired private UserService userService;
   @Autowired private AgentService agentService;
-  @Autowired private KeyManagementService keyManagementService;
 
   @Test
   void completeMissingSecretFlow() throws Exception {
@@ -117,13 +114,19 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
         .andExpect(jsonPath("$.name").value("Prod DB Credentials"));
 
     // 5. Admin Fulfills Request
-    FulfillRequestDTO fulfillReq =
-        new FulfillRequestDTO(
-            "Prod DB Credentials", "super-secret-password", Map.of("service", "db", "env", "prod"));
+    UpdateRequestDTO fulfillReq =
+        new UpdateRequestDTO(
+            UpdateRequestDTO.Action.FULFILL,
+            "Prod DB Credentials",
+            "super-secret-password",
+            Map.of("service", "db", "env", "prod"),
+            null,
+            null,
+            null);
 
     mockMvc
         .perform(
-            post("/api/v1/requests/" + requestId + "/fulfill")
+            patch("/api/v1/requests/" + requestId)
                 .header("Authorization", "Bearer " + adminToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(fulfillReq)))

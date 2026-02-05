@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.agentvault.controller;
 
 import com.agentvault.dto.CreateSecretRequest;
@@ -47,7 +46,12 @@ public class SecretController {
   @GetMapping("/{id}")
   @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
   public SecretResponse getSecret(
-      AgentVaultAuthentication authentication, @PathVariable String id) {
+      AgentVaultAuthentication authentication,
+      @PathVariable String id,
+      @RequestParam(required = false) String leaseToken) {
+    if (leaseToken != null) {
+      return secretService.getSecretWithLease(authentication.getTenantId(), id, leaseToken);
+    }
     return secretService.getSecret(authentication.getTenantId(), id);
   }
 

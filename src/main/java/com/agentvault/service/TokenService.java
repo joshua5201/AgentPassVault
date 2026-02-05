@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,41 +13,70 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.agentvault.service;
 
+import com.agentvault.config.JwtConfig;
 import com.agentvault.model.User;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
-import org.springframework.security.oauth2.jwt.JwsHeader;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import java.util.Date;
+import java.util.UUID;
+import javax.crypto.SecretKey;
 import org.springframework.stereotype.Service;
 
 @Service
 public class TokenService {
 
-  private final JwtEncoder jwtEncoder;
+  private final SecretKey secretKey;
+  private final long expirationMinutes;
+  private final long leaseExpirationMinutes;
 
-  public TokenService(JwtEncoder jwtEncoder) {
-    this.jwtEncoder = jwtEncoder;
+  public TokenService(JwtConfig jwtConfig) {
+    this.secretKey = jwtConfig.getSecretKey();
+    this.expirationMinutes = jwtConfig.getExpirationMinutes();
+    this.leaseExpirationMinutes = jwtConfig.getLeaseExpirationMinutes();
   }
 
   public String generateToken(User user) {
     Instant now = Instant.now();
-    JwtClaimsSet claims =
-        JwtClaimsSet.builder()
-            .issuer("agentvault")
-            .issuedAt(now)
-            .expiresAt(now.plus(1, ChronoUnit.HOURS))
-            .subject(user.getId().toString())
-            .claim("tenant_id", user.getTenantId().toString())
-            .claim("role", user.getRole())
-            .build();
+    return Jwts.builder()
+        .subject(user.getId().toString())
+        .claim("tenant_id", user.getTenantId().toString())
+        .claim("role", user.getRole().name())
+        .issuedAt(Date.from(now))
+        .expiration(Date.from(now.plus(expirationMinutes, ChronoUnit.MINUTES)))
+        .signWith(secretKey)
+        .compact();
+  }
 
-    JwsHeader jwsHeader = JwsHeader.with(MacAlgorithm.HS256).build();
-    return this.jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims)).getTokenValue();
+  public String generateLeaseToken(
+      UUID tenantId,
+      String agentUserId,
+      String approvedByUserId,
+      String secretId,
+      String requestId) {
+    Instant now = Instant.now();
+    return Jwts.builder()
+        .subject(agentUserId)
+        .claim("tenantId", tenantId)
+        .claim("approvedBy", approvedByUserId)
+        .claim("secretId", secretId)
+        .claim("requestId", requestId)
+        .issuedAt(Date.from(now))
+        .expiration(Date.from(now.plus(leaseExpirationMinutes, ChronoUnit.MINUTES)))
+        .signWith(secretKey)
+        .compact();
+  }
+
+  public void validateLeaseToken(String token, String secretId) {
+    Claims claims =
+        Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload();
+
+    String tokenSecretId = claims.get("secretId", String.class);
+    if (!secretId.equals(tokenSecretId)) {
+      throw new IllegalArgumentException("Invalid lease token for the requested secret");
+    }
   }
 }

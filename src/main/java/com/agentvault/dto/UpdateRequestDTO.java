@@ -13,18 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.agentvault.service.crypto;
+package com.agentvault.dto;
 
-/**
- * Interface for providing the System Master Key (SMK). This allows for different implementations
- * such as Environment Variables, AWS KMS, Google Cloud KMS, or HashiCorp Vault.
- */
-public interface MasterKeyProvider {
+import com.agentvault.model.SecretVisibility;
+import jakarta.validation.constraints.NotNull;
 
-  /**
-   * Retrieves the System Master Key.
-   *
-   * @return The master key as a byte array.
-   */
-  byte[] getMasterKey();
+public record UpdateRequestDTO(
+    @NotNull Action action,
+    // For FULFILL
+    String name,
+    String value,
+    java.util.Map<String, Object> metadata,
+    // For MAP
+    String secretId,
+    SecretVisibility newVisibility,
+    // For REJECT
+    String reason) {
+  public enum Action {
+    FULFILL,
+    MAP,
+    REJECT,
+    APPROVE_LEASE
+  }
 }

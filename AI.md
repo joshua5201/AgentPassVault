@@ -12,7 +12,7 @@ Agents working on this project must adhere to the specifications and workflows d
 ## Development Workflow
 - **Big Structure First:** Always define the high-level architecture, file structure, and data models before implementing detailed logic.
 - **Automatic Test Verification:** Upon completing implementation, write comprehensive automated tests (unit and integration) to verify the new features.
-- **Feature Branches:** Always create a new feature branch (e.g., `feat/my-feature`) for development work. Do not commit directly to `master`.
+- **Feature Branches:** Always create a new feature branch (e.g., `feat/my-feature`) for development work. Do not commit directly to `master`. Avoid generic branch names like `feat/java-implementation`; prefer specific, feature-driven names (e.g., `feat/secret-visibility-lease`).
 - **Merge Strategy:** When merging to `master`, always use the `--no-ff` (no fast-forward) option to preserve the branch topology.
 
 ## Java Implementation Context (feat/java)
@@ -20,3 +20,6 @@ Agents working on this project must adhere to the specifications and workflows d
 - **Feature Branching:** Until a new working version is finished, all new work must branch out from `feat/java`.
 - **Architecture:** Spring Boot 3 (Java 21) + MongoDB.
 - **Security:** Multi-tenant isolation using 2-tier key hierarchy (SMK + TK).
+
+## License Header
+- For all `.java` files, the license header from `licence-header.txt` must be present at the top of the file.
