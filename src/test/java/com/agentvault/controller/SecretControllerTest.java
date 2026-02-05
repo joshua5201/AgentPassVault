@@ -43,11 +43,11 @@ class SecretControllerTest extends BaseIntegrationTest {
     String loginResponse =
         mockMvc
             .perform(
-                post("/api/v1/auth/login")
+                post("/api/v1/auth/login/user")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         objectMapper.writeValueAsString(
-                            new LoginRequest(tenantId, username, password, null))))
+                            new UserLoginRequest(username, password))))
             .andReturn()
             .getResponse()
             .getContentAsString();
@@ -331,11 +331,11 @@ class SecretControllerTest extends BaseIntegrationTest {
     String agentLoginResp =
         mockMvc
             .perform(
-                post("/api/v1/auth/login")
+                post("/api/v1/auth/login/agent")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         objectMapper.writeValueAsString(
-                            new LoginRequest(tenantId, null, null, agentAppToken))))
+                            new AgentLoginRequest(tenantId, agentAppToken))))
             .andReturn()
             .getResponse()
             .getContentAsString();

@@ -43,8 +43,11 @@ public class AgentService {
     String tokenHash = hashToken(appToken);
 
     User agent = userService.createAgentUser(tenantId, tokenHash);
-    agent.setUsername(name); // Set the name
-    userRepository.save(agent); // Update name
+    agent.setUsername("agent-" + UUID.randomUUID()); // Random unique username
+    // Note: 'name' is passed in CreateAgentRequest, but User model uses 'username' for lookups.
+    // Maybe we should have a 'displayName' or just use 'username' for the name provided.
+    // User wants "agent-(UUID)" so let's stick to that.
+    userRepository.save(agent);
 
     return new AgentTokenResponse(agent.getUserId(), appToken);
   }

@@ -53,17 +53,20 @@ public abstract class BaseIntegrationTest {
 
   @Autowired protected KeyManagementService keyManagementService;
 
+  @Autowired protected org.springframework.data.mongodb.core.MongoTemplate mongoTemplate;
+
   @BeforeEach
   void clearDatabase() {
-    userRepository.deleteAll();
-    tenantRepository.deleteAll();
-    secretRepository.deleteAll();
-    requestRepository.deleteAll();
+    mongoTemplate.dropCollection(com.agentvault.model.User.class);
+    mongoTemplate.dropCollection(com.agentvault.model.Tenant.class);
+    mongoTemplate.dropCollection(com.agentvault.model.Secret.class);
+    mongoTemplate.dropCollection(com.agentvault.model.Request.class);
   }
 
   protected UUID createTenant() {
     UUID tenantId = UUID.randomUUID();
     Tenant tenant = new Tenant();
+    tenant.setId(tenantId.toString());
     tenant.setTenantId(tenantId);
     tenant.setName("Test Tenant");
     tenant.setStatus("active");
@@ -74,7 +77,6 @@ public abstract class BaseIntegrationTest {
 
     tenant.setEncryptedTenantKey(encryptedTenantKey);
     tenantRepository.save(tenant);
-    log.info("Created tenant with ID: {}", tenantId);
     return tenantId;
   }
 }

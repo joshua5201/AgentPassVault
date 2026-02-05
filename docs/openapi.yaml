@@ -15,31 +15,39 @@ components:
 security:
   - bearerAuth: []
 paths:
-  /auth/login:
+  /auth/login/user:
     post:
-      summary: Login
+      summary: User Login (Admin/Human)
       security: []
       requestBody:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                tenantId: { type: string, format: uuid }
-                username: { type: string }
-                password: { type: string }
-                appToken: { type: string }
+              $ref: '#/components/schemas/UserLoginRequest'
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  accessToken: { type: string }
-                  tokenType: { type: string }
-                  expiresIn: { type: integer }
+                $ref: '#/components/schemas/LoginResponse'
+
+  /auth/login/agent:
+    post:
+      summary: Agent Login
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentLoginRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
 
   /auth/forgot-password:
     post:
@@ -365,6 +373,27 @@ components:
       type: object
       properties:
         leaseToken: { type: string }
+
+    UserLoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string }
+        password: { type: string }
+
+    AgentLoginRequest:
+      type: object
+      required: [tenantId, appToken]
+      properties:
+        tenantId: { type: string, format: uuid }
+        appToken: { type: string }
+
+    LoginResponse:
+      type: object
+      properties:
+        accessToken: { type: string }
+        tokenType: { type: string }
+        expiresIn: { type: integer }
 
     ForgotPasswordRequest:
       type: object

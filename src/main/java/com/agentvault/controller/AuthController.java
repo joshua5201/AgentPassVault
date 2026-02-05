@@ -35,9 +35,14 @@ public class AuthController {
   private final AuthService authService;
   private final UserService userService;
 
-  @PostMapping("/login")
-  public LoginResponse login(@Valid @RequestBody LoginRequest request) {
-    return authService.login(request);
+  @PostMapping("/login/user")
+  public LoginResponse userLogin(@Valid @RequestBody UserLoginRequest request) {
+    return authService.userLogin(request);
+  }
+
+  @PostMapping("/login/agent")
+  public LoginResponse agentLogin(@Valid @RequestBody AgentLoginRequest request) {
+    return authService.agentLogin(request);
   }
 
   @PostMapping("/change-password")

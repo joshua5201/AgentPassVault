@@ -20,8 +20,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.agentvault.BaseIntegrationTest;
+import com.agentvault.dto.AgentTokenResponse;
 import com.agentvault.dto.CreateAgentRequest;
-import com.agentvault.dto.LoginRequest;
+import com.agentvault.dto.UserLoginRequest;
 import com.agentvault.service.UserService;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -36,11 +37,12 @@ class AgentControllerTest extends BaseIntegrationTest {
     String loginResponse =
         mockMvc
             .perform(
-                post("/api/v1/auth/login")
+                post("/api/v1/auth/login/user")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         objectMapper.writeValueAsString(
-                            new LoginRequest(tenantId, username, password, null))))
+                            new UserLoginRequest(username, password))))
+            .andExpect(status().isOk())
             .andReturn()
             .getResponse()
             .getContentAsString();
@@ -70,7 +72,7 @@ class AgentControllerTest extends BaseIntegrationTest {
         .perform(get("/api/v1/agents").header("Authorization", "Bearer " + token))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$", hasSize(1)))
-        .andExpect(jsonPath("$[0].name").value("CI Runner"));
+        .andExpect(jsonPath("$[0].name").value(startsWith("agent-")));
   }
 
   @Test

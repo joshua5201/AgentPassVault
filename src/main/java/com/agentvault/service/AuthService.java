@@ -15,8 +15,9 @@
  */
 package com.agentvault.service;
 
-import com.agentvault.dto.LoginRequest;
+import com.agentvault.dto.AgentLoginRequest;
 import com.agentvault.dto.LoginResponse;
+import com.agentvault.dto.UserLoginRequest;
 import com.agentvault.model.User;
 import com.agentvault.repository.TenantRepository;
 import com.agentvault.repository.UserRepository;
@@ -24,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -38,33 +40,31 @@ public class AuthService {
   private final PasswordEncoder passwordEncoder;
   private final TokenService tokenService;
 
-  public LoginResponse login(LoginRequest request) {
+  public LoginResponse userLogin(UserLoginRequest request) {
+    User user =
+        userRepository
+            .findByUsername(request.username())
+            .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
+
+    if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+      throw new BadCredentialsException("Invalid credentials");
+    }
+
+    String token = tokenService.generateToken(user);
+    return new LoginResponse(token, "Bearer", 3600);
+  }
+
+  public LoginResponse agentLogin(AgentLoginRequest request) {
     // Validate Tenant First
     if (tenantRepository.findByTenantId(request.tenantId()).isEmpty()) {
       throw new BadCredentialsException("Tenant not found");
     }
 
-    User user;
-    if (request.username() != null && request.password() != null) {
-      // Admin/User Login
-      user =
-          userRepository
-              .findByUsername(request.username())
-              .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
-
-      if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-        throw new BadCredentialsException("Invalid credentials");
-      }
-    } else if (request.appToken() != null) {
-      // Agent Login
-      String tokenHash = hashToken(request.appToken());
-      user =
-          userRepository
-              .findByTenantIdAndAppTokenHash(request.tenantId(), tokenHash)
-              .orElseThrow(() -> new BadCredentialsException("Invalid token"));
-    } else {
-      throw new IllegalArgumentException("Missing credentials");
-    }
+    String tokenHash = hashToken(request.appToken());
+    User user =
+        userRepository
+            .findByTenantIdAndAppTokenHash(request.tenantId(), tokenHash)
+            .orElseThrow(() -> new BadCredentialsException("Invalid token"));
 
     String token = tokenService.generateToken(user);
     return new LoginResponse(token, "Bearer", 3600);
