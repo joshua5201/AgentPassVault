@@ -25,7 +25,7 @@ import org.springframework.stereotype.Repository;
 public interface UserRepository extends MongoRepository<User, String> {
   Optional<User> findByUserId(UUID userId);
 
-  Optional<User> findByTenantIdAndUsername(UUID tenantId, String username);
+  Optional<User> findByUsername(String username);
 
   Optional<User> findByTenantIdAndAppTokenHash(UUID tenantId, String appTokenHash);
 

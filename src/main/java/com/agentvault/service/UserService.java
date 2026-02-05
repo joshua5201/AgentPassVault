@@ -75,17 +75,18 @@ public class UserService {
     userRepository.save(user);
   }
 
-  public String initiatePasswordReset(UUID tenantId, String username) {
-    validateTenant(tenantId);
+  public String initiatePasswordReset(String username) {
     User user =
         userRepository
-            .findByTenantIdAndUsername(tenantId, username)
+            .findByUsername(username)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
     String token = UUID.randomUUID().toString();
     user.setResetPasswordToken(token);
     // Token expires in 15 minutes
-    user.setResetPasswordExpiresAt(LocalDateTime.now(ZoneId.of("UTC")).plusMinutes(15));
+    LocalDateTime now = LocalDateTime.now(ZoneId.of("UTC"));
+    user.setResetPasswordTokenCreatedAt(now);
+    user.setResetPasswordExpiresAt(now.plusMinutes(15));
     userRepository.save(user);
 
     return token;
@@ -97,15 +98,23 @@ public class UserService {
             .findByResetPasswordToken(token)
             .orElseThrow(() -> new IllegalArgumentException("Invalid or expired reset token"));
 
-    if (user.getResetPasswordExpiresAt() == null
-        || user.getResetPasswordExpiresAt().isBefore(LocalDateTime.now(ZoneId.of("UTC")))) {
+    LocalDateTime now = LocalDateTime.now(ZoneId.of("UTC"));
+    if (user.getResetPasswordExpiresAt() == null || user.getResetPasswordExpiresAt().isBefore(now)) {
       throw new IllegalArgumentException("Invalid or expired reset token");
     }
 
+    // Security check: token must be created after last password update
+    if (user.getPasswordLastUpdatedAt() != null
+        && user.getResetPasswordTokenCreatedAt() != null
+        && user.getResetPasswordTokenCreatedAt().isBefore(user.getPasswordLastUpdatedAt())) {
+      throw new IllegalArgumentException("Reset token is invalid (password changed after token issuance)");
+    }
+
     user.setPasswordHash(passwordEncoder.encode(newPassword));
-    user.setPasswordLastUpdatedAt(LocalDateTime.now(ZoneId.of("UTC")));
+    user.setPasswordLastUpdatedAt(now);
     user.setResetPasswordToken(null);
     user.setResetPasswordExpiresAt(null);
+    user.setResetPasswordTokenCreatedAt(null);
     userRepository.save(user);
   }
 

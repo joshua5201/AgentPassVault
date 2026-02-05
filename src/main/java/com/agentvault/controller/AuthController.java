@@ -51,7 +51,7 @@ public class AuthController {
   @PostMapping("/forgot-password")
   public Map<String, String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
 
-    String token = userService.initiatePasswordReset(request.tenantId(), request.username());
+    String token = userService.initiatePasswordReset(request.username());
 
     return Map.of("resetToken", token);
   }

@@ -49,7 +49,7 @@ public class AuthService {
       // Admin/User Login
       user =
           userRepository
-              .findByTenantIdAndUsername(request.tenantId(), request.username())
+              .findByUsername(request.username())
               .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
 
       if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {

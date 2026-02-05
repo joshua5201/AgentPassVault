@@ -39,6 +39,7 @@ public class User extends BaseEntity {
 
   @Indexed private UUID tenantId;
 
+  @Indexed(unique = true)
   private String username;
   private String passwordHash;
 
@@ -48,6 +49,7 @@ public class User extends BaseEntity {
   private String appTokenHash;
   @Indexed private String resetPasswordToken;
   private LocalDateTime resetPasswordExpiresAt;
+  private LocalDateTime resetPasswordTokenCreatedAt;
   private LocalDateTime passwordLastUpdatedAt;
 
   @CreatedDate private java.util.Date createdAt;

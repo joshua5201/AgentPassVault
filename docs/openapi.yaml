@@ -41,6 +41,38 @@ paths:
                   tokenType: { type: string }
                   expiresIn: { type: integer }
 
+  /auth/forgot-password:
+    post:
+      summary: Initiate Password Reset
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  resetToken: { type: string }
+
+  /auth/reset-password:
+    post:
+      summary: Reset Password
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        '200':
+          description: OK
+
   /auth/ping:
     get:
       summary: Ping (Auth check)
@@ -333,6 +365,19 @@ components:
       type: object
       properties:
         leaseToken: { type: string }
+
+    ForgotPasswordRequest:
+      type: object
+      required: [username]
+      properties:
+        username: { type: string }
+
+    ResetPasswordRequest:
+      type: object
+      required: [token, newPassword]
+      properties:
+        token: { type: string }
+        newPassword: { type: string }
 
     AgentResponse:
       type: object

@@ -98,7 +98,7 @@ class AuthControllerTest extends BaseIntegrationTest {
     userService.createAdminUser(tenantId, "reset_user", "oldPass");
 
     // 1. Forgot Password
-    ForgotPasswordRequest forgotReq = new ForgotPasswordRequest(tenantId, "reset_user");
+    ForgotPasswordRequest forgotReq = new ForgotPasswordRequest("reset_user");
 
     String response =
         mockMvc
@@ -133,6 +133,44 @@ class AuthControllerTest extends BaseIntegrationTest {
                     objectMapper.writeValueAsString(
                         new LoginRequest(tenantId, "reset_user", "newPass789", null))))
         .andExpect(status().isOk());
+  }
+
+  @Test
+  void resetPassword_TokenIssuedBeforeLastUpdate_ReturnsError() throws Exception {
+    UUID tenantId = UUID.randomUUID();
+    createTenant(tenantId);
+    userService.createAdminUser(tenantId, "security_user", "pass");
+
+    // 1. Forgot Password -> get token
+    String token =
+        objectMapper
+            .readTree(
+                mockMvc
+                    .perform(
+                        post("/api/v1/auth/forgot-password")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(
+                                objectMapper.writeValueAsString(
+                                    new ForgotPasswordRequest("security_user"))))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString())
+            .get("resetToken")
+            .asText();
+
+    // 2. Manually simulate password update AFTER token was issued
+    com.agentvault.model.User user = userRepository.findByUsername("security_user").get();
+    user.setPasswordLastUpdatedAt(java.time.LocalDateTime.now(java.time.ZoneId.of("UTC")).plusSeconds(1));
+    userRepository.save(user);
+
+    // 3. Attempt to reset password with the now "old" token
+    mockMvc
+        .perform(
+            post("/api/v1/auth/reset-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new com.agentvault.dto.ResetPasswordRequest(token, "newpass"))))
+        .andExpect(status().isInternalServerError());
   }
 
   @Test
