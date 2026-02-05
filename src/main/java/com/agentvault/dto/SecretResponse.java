@@ -23,7 +23,7 @@ import java.util.UUID;
 public record SecretResponse(
     UUID secretId,
     String name,
-    String value, // Decrypted value
+    String encryptedValue, // Encrypted Base64 value
     Map<String, Object> metadata,
     SecretVisibility visibility,
     LocalDateTime createdAt,

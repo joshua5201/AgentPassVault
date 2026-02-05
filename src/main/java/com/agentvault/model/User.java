@@ -54,6 +54,9 @@ public class User extends BaseEntity {
   private LocalDateTime resetPasswordTokenCreatedAt;
   private LocalDateTime passwordLastUpdatedAt;
 
+  private String publicKey; // PEM formatted public key
+  private String encryptedMasterKeySalt;
+
   @CreatedDate private LocalDateTime createdAt;
 
   @LastModifiedDate private LocalDateTime updatedAt;

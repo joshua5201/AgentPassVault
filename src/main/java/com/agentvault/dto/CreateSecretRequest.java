@@ -20,5 +20,5 @@ import java.util.Map;
 
 public record CreateSecretRequest(
     @NotBlank(message = "Secret name cannot be blank") String name,
-    @NotBlank(message = "Secret value cannot be blank") String value,
+    @NotBlank(message = "Encrypted secret value cannot be blank") String encryptedValue,
     Map<String, Object> metadata) {}

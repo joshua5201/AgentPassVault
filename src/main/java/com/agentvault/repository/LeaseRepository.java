@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.agentvault.service.crypto;
+package com.agentvault.repository;
 
-/**
- * Interface for providing the System Master Key (SMK). This allows for different implementations
- * such as Environment Variables, AWS KMS, Google Cloud KMS, or HashiCorp Vault.
- */
-public interface MasterKeyProvider {
+import com.agentvault.model.Lease;
+import java.util.Optional;
+import java.util.UUID;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
 
-  /**
-   * Retrieves the System Master Key.
-   *
-   * @return The master key as a byte array.
-   */
-  byte[] getMasterKey();
+@Repository
+public interface LeaseRepository extends MongoRepository<Lease, String> {
+  Optional<Lease> findByLeaseId(UUID leaseId);
 }

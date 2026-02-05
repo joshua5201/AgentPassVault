@@ -61,7 +61,7 @@ class SecretControllerTest extends BaseIntegrationTest {
 
     // Create
     CreateSecretRequest createReq =
-        new CreateSecretRequest("DB Pass", "secret123", Map.of("env", "prod"));
+        new CreateSecretRequest("DB Pass", "encrypted-secret-123", Map.of("env", "prod"));
 
     String createResponse =
         mockMvc
@@ -72,7 +72,7 @@ class SecretControllerTest extends BaseIntegrationTest {
                     .content(objectMapper.writeValueAsString(createReq)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.secretId").exists())
-            .andExpect(jsonPath("$.value").doesNotExist()) // Verify value is NOT returned
+            .andExpect(jsonPath("$.encryptedValue").doesNotExist()) // Verify encryptedValue is NOT returned in metadata
             .andReturn()
             .getResponse()
             .getContentAsString();
@@ -83,7 +83,7 @@ class SecretControllerTest extends BaseIntegrationTest {
     mockMvc
         .perform(get("/api/v1/secrets/" + secretId).header("Authorization", "Bearer " + token))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.value").value("secret123"))
+        .andExpect(jsonPath("$.encryptedValue").value("encrypted-secret-123"))
         .andExpect(jsonPath("$.metadata.env").value("prod"));
   }
 

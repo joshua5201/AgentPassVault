@@ -118,7 +118,7 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
         new UpdateRequestDTO(
             UpdateRequestDTO.Action.FULFILL,
             "Prod DB Credentials",
-            "super-secret-password",
+            "encrypted-super-secret-password",
             Map.of("service", "db", "env", "prod"),
             null,
             null,
@@ -149,11 +149,11 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
 
     String secretId = objectMapper.readTree(searchResp).get(0).get("secretId").asText();
 
-    // 7. Agent Gets Secret (Decrypts)
+    // 7. Agent Gets Secret (Returns encrypted value)
     mockMvc
         .perform(get("/api/v1/secrets/" + secretId).header("Authorization", "Bearer " + agentJwt))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.value").value("super-secret-password"));
+        .andExpect(jsonPath("$.encryptedValue").value("encrypted-super-secret-password"));
   }
 
   private String getAuthToken(UUID tenantId, String username, String password) throws Exception {

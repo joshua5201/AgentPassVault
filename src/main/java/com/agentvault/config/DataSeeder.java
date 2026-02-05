@@ -18,7 +18,6 @@ package com.agentvault.config;
 import com.agentvault.model.Tenant;
 import com.agentvault.repository.TenantRepository;
 import com.agentvault.service.UserService;
-import com.agentvault.service.crypto.KeyManagementService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +33,6 @@ public class DataSeeder implements CommandLineRunner {
 
   private final TenantRepository tenantRepository;
   private final UserService userService;
-  private final KeyManagementService keyManagementService;
 
   @Override
   public void run(String... args) {
@@ -50,7 +48,6 @@ public class DataSeeder implements CommandLineRunner {
     tenant.setTenantId(UUID.randomUUID());
     tenant.setName("Dev Tenant");
     tenant.setStatus("active");
-    tenant.setEncryptedTenantKey(keyManagementService.generateEncryptedTenantKey());
     tenantRepository.save(tenant);
     log.info("Created Default Tenant: ID={}", tenant.getTenantId());
 

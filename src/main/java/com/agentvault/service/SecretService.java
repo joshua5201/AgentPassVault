@@ -20,12 +20,7 @@ import com.agentvault.dto.SecretMetadataResponse;
 import com.agentvault.dto.SecretResponse;
 import com.agentvault.model.Secret;
 import com.agentvault.model.SecretVisibility;
-import com.agentvault.model.Tenant;
 import com.agentvault.repository.SecretRepository;
-import com.agentvault.repository.TenantRepository;
-import com.agentvault.service.crypto.EncryptionService;
-import com.agentvault.service.crypto.KeyManagementService;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -41,23 +36,15 @@ import org.springframework.stereotype.Service;
 public class SecretService {
 
   private final SecretRepository secretRepository;
-  private final TenantRepository tenantRepository;
-  private final KeyManagementService keyManagementService;
-  private final EncryptionService encryptionService;
   private final MongoTemplate mongoTemplate; // For dynamic search queries
   private final TokenService tokenService;
 
   public SecretMetadataResponse createSecret(UUID tenantId, CreateSecretRequest request) {
-    byte[] tenantKey = getTenantKey(tenantId);
-
-    byte[] encryptedValue =
-        encryptionService.encrypt(request.value().getBytes(StandardCharsets.UTF_8), tenantKey);
-
     Secret secret = new Secret();
     secret.setSecretId(UUID.randomUUID());
     secret.setTenantId(tenantId);
     secret.setName(request.name());
-    secret.setEncryptedValue(encryptedValue);
+    secret.setEncryptedData(request.encryptedValue());
     secret.setMetadata(request.metadata());
 
     Secret saved = secretRepository.save(secret);
@@ -79,11 +66,7 @@ public class SecretService {
       throw new IllegalStateException("Secret is hidden");
     }
 
-    byte[] tenantKey = getTenantKey(tenantId);
-    byte[] decryptedBytes = encryptionService.decrypt(secret.getEncryptedValue(), tenantKey);
-    String decryptedValue = new String(decryptedBytes, StandardCharsets.UTF_8);
-
-    return mapToResponse(secret, decryptedValue);
+    return mapToResponse(secret);
   }
 
   public SecretResponse getSecretWithLease(UUID tenantId, UUID secretId, String leaseToken) {
@@ -95,11 +78,7 @@ public class SecretService {
             .filter(s -> s.getTenantId().equals(tenantId))
             .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
 
-    byte[] tenantKey = getTenantKey(tenantId);
-    byte[] decryptedBytes = encryptionService.decrypt(secret.getEncryptedValue(), tenantKey);
-    String decryptedValue = new String(decryptedBytes, StandardCharsets.UTF_8);
-
-    return mapToResponse(secret, decryptedValue);
+    return mapToResponse(secret);
   }
 
   public void deleteSecret(UUID tenantId, UUID secretId) {
@@ -132,19 +111,11 @@ public class SecretService {
     return secrets.stream().map(this::mapToMetadataResponse).collect(Collectors.toList());
   }
 
-  private byte[] getTenantKey(UUID tenantId) {
-    Tenant tenant =
-        tenantRepository
-            .findByTenantId(tenantId)
-            .orElseThrow(() -> new IllegalArgumentException("Tenant not found"));
-    return keyManagementService.decryptTenantKey(tenant.getEncryptedTenantKey());
-  }
-
-  private SecretResponse mapToResponse(Secret secret, String decryptedValue) {
+  private SecretResponse mapToResponse(Secret secret) {
     return new SecretResponse(
         secret.getSecretId(),
         secret.getName(),
-        decryptedValue,
+        secret.getEncryptedData(),
         secret.getMetadata(),
         secret.getVisibility(),
         secret.getCreatedAt(),

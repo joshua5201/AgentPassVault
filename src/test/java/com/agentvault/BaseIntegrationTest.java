@@ -51,8 +51,6 @@ public abstract class BaseIntegrationTest {
 
   @Autowired protected RequestRepository requestRepository;
 
-  @Autowired protected KeyManagementService keyManagementService;
-
   @Autowired protected org.springframework.data.mongodb.core.MongoTemplate mongoTemplate;
 
   @BeforeEach
@@ -71,11 +69,6 @@ public abstract class BaseIntegrationTest {
     tenant.setName("Test Tenant");
     tenant.setStatus("active");
 
-    byte[] encryptedTenantKey = keyManagementService.generateEncryptedTenantKey();
-    assertNotNull(encryptedTenantKey, "Encrypted tenant key should not be null");
-    log.info("Generated encryptedTenantKey with length: {}", encryptedTenantKey.length);
-
-    tenant.setEncryptedTenantKey(encryptedTenantKey);
     tenantRepository.save(tenant);
     return tenantId;
   }

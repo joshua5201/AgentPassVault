@@ -13,12 +13,12 @@ This plan outlines the transition of AgentVault from a server-side encryption mo
 ## 2. Update Data Models
 *   **Secret Model:**
     *   Rename `encryptedValue` to `encryptedData` (or similar) to indicate it's an opaque blob.
-    *   Change the type to `String` (Base64 encoded) or keep as `byte[]` but treat as a blob.
+    *   Change the type to `String` (Base64 encoded)
 *   **Tenant Model:**
     *   Remove `encryptedTenantKey`.
 *   **User (Agent) Model:**
-    *   Add a field for the user's **Public Key** (`publicKey`), stored as a PEM string. This is used by others to encrypt secrets for this user (agent).
-    *   Add `encryptedMasterKeySalt` (String/Blob): Stores the user's master key salt, encrypted using the SYSTEM key.
+    *   Add a string field for the user's **Public Key** (`publicKey`), stored as a PEM string. This is used by others to encrypt secrets for this user (agent).
+    *   Add `encryptedMasterKeySalt` (String): Stores the user's master key salt, encrypted using the SYSTEM key.
 *   **Lease Model:**
     *   Create a new entity `Lease` to store the secret data encrypted specifically for an agent.
     *   Fields:
@@ -27,7 +27,7 @@ This plan outlines the transition of AgentVault from a server-side encryption mo
         *   `secretId` (UUID, FK to Secret).
         *   `agentId` (UUID, FK to Agent/User).
         *   `encryptedData` (Base64 string): The secret value encrypted with the Agent's Public Key.
-        *   `expiry` (LocalDateTime): When the lease expires.
+        *   `expiry` (LocalDateTime): When the lease expires. Null if no expiry
     *   Relationships: A Secret can have multiple Leases (one per agent). The Secret object itself stores the owner's copy (if any), while Leases store the agent copies.
 
 ## 3. Update API DTOs

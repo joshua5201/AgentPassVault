@@ -16,44 +16,34 @@
 package com.agentvault.model;
 
 import java.time.LocalDateTime;
-import java.util.Map;
 import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.mongodb.core.index.CompoundIndex;
-import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.index.TextIndexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@Document(collection = "secrets")
-@CompoundIndexes({
-  @CompoundIndex(name = "metadata_service_idx", def = "{'metadata.service': 1}"),
-  @CompoundIndex(name = "metadata_env_idx", def = "{'metadata.env': 1}"),
-  @CompoundIndex(name = "metadata_url_idx", def = "{'metadata.url': 1}")
-})
-public class Secret extends BaseEntity {
+@Document(collection = "leases")
+public class Lease extends BaseEntity {
 
   @Id private String id; // ObjectId
 
   @Indexed(unique = true)
-  private UUID secretId;
+  private UUID leaseId;
 
-  @Indexed private UUID tenantId;
+  @Indexed
+  private UUID secretId; // FK to Secret.secretId
 
-  @TextIndexed private String name;
+  @Indexed
+  private UUID agentId; // FK to User.userId (the agent)
 
-  private String encryptedData; // Opaque Base64 blob from client
+  private String encryptedData; // Secret value encrypted with Agent's public key
 
-  // Flexible metadata map, specific keys indexed via @CompoundIndexes above
-  private Map<String, Object> metadata;
-
-  private SecretVisibility visibility = SecretVisibility.VISIBLE;
+  private LocalDateTime expiry;
 
   @CreatedDate private LocalDateTime createdAt;
 

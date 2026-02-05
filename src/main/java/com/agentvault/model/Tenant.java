@@ -36,7 +36,6 @@ public class Tenant extends BaseEntity {
   private UUID tenantId;
 
   private String name;
-  private byte[] encryptedTenantKey;
   private String status;
 
   @CreatedDate private LocalDateTime createdAt;
