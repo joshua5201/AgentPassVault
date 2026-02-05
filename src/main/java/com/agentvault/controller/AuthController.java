@@ -65,6 +65,14 @@ public class AuthController {
   @GetMapping("/ping")
   public Map<String, Object> ping(AgentVaultAuthentication authentication) {
 
-    return Map.of("message", "pong", "tenantId", authentication.getTenantId());
+    return Map.of(
+        "message",
+        "pong",
+        "tenantId",
+        authentication.getTenantId(),
+        "userId",
+        authentication.getPrincipal(),
+        "role",
+        authentication.getRole());
   }
 }

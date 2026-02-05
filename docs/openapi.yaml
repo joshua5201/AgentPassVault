@@ -41,6 +41,22 @@ paths:
                   tokenType: { type: string }
                   expiresIn: { type: integer }
 
+  /auth/ping:
+    get:
+      summary: Ping (Auth check)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  tenantId: { type: string, format: uuid }
+                  userId: { type: string, format: uuid }
+                  role: { type: string }
+
   /secrets:
     post:
       summary: Create Secret (Admin/Agent)

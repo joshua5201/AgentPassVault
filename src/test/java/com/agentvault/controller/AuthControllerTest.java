@@ -166,7 +166,9 @@ class AuthControllerTest extends BaseIntegrationTest {
         .perform(get("/api/v1/auth/ping").header("Authorization", "Bearer " + token))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.message").value("pong"))
-        .andExpect(jsonPath("$.tenantId").value(tenantId.toString()));
+        .andExpect(jsonPath("$.tenantId").value(tenantId.toString()))
+        .andExpect(jsonPath("$.userId").exists())
+        .andExpect(jsonPath("$.role").value("admin"));
   }
 
   @Test
