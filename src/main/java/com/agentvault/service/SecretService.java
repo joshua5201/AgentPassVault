@@ -32,7 +32,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -111,7 +110,8 @@ public class SecretService {
         lease.setAgent(agent);
         lease.setPublicKey(leaseUpdate.publicKey());
         lease.setEncryptedData(leaseUpdate.encryptedData());
-        // Note: expiry is not updated here, it would need to be added to LeaseUpdateRequest if needed
+        // Note: expiry is not updated here, it would need to be added to LeaseUpdateRequest if
+        // needed
         leaseRepository.save(lease);
       }
     }
@@ -226,7 +226,10 @@ public class SecretService {
     return leaseRepository
         .findBySecret_IdAndAgent_IdAndPublicKey(secretId, agent.getId(), currentPublicKey)
         .map(lease -> mapToResponse(secret, lease.getEncryptedData()))
-        .orElseThrow(() -> new AccessDeniedException("No valid lease found for this secret and current public key"));
+        .orElseThrow(
+            () ->
+                new AccessDeniedException(
+                    "No valid lease found for this secret and current public key"));
   }
 
   // Deprecated flow but keeping for now if tests use it

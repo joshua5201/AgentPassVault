@@ -21,7 +21,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.agentvault.BaseIntegrationTest;
 import com.agentvault.dto.*;
-import com.agentvault.model.RequestType;
 import com.agentvault.service.AgentService;
 import com.agentvault.service.UserService;
 import java.util.Map;
@@ -320,8 +319,7 @@ class SecretControllerTest extends BaseIntegrationTest {
     String agentId = agentResp.agentId();
 
     // Create Lease
-    CreateLeaseRequest leaseReq =
-        new CreateLeaseRequest(agentId, "pubkey", "encdata", null);
+    CreateLeaseRequest leaseReq = new CreateLeaseRequest(agentId, "pubkey", "encdata", null);
     mockMvc
         .perform(
             post("/api/v1/secrets/" + secretId + "/leases")
@@ -367,8 +365,7 @@ class SecretControllerTest extends BaseIntegrationTest {
     String agentId = agentResp.agentId();
 
     // Create Lease
-    CreateLeaseRequest leaseReq =
-        new CreateLeaseRequest(agentId, "pubkey", "encdata", null);
+    CreateLeaseRequest leaseReq = new CreateLeaseRequest(agentId, "pubkey", "encdata", null);
     mockMvc
         .perform(
             post("/api/v1/secrets/" + secretId + "/leases")

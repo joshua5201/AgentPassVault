@@ -15,7 +15,6 @@
  */
 package com.agentvault.controller;
 
-import com.agentvault.dto.CreateLeaseRequest;
 import com.agentvault.dto.CreateSecretRequest;
 import com.agentvault.dto.SearchSecretRequest;
 import com.agentvault.dto.SecretMetadataResponse;
