@@ -19,7 +19,6 @@ import com.agentvault.dto.*;
 import com.agentvault.security.AgentVaultAuthentication;
 import com.agentvault.service.RequestService;
 import jakarta.validation.Valid;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -39,22 +38,22 @@ public class RequestController {
   public RequestResponse createRequest(
       AgentVaultAuthentication authentication, @Valid @RequestBody CreateRequestDTO dto) {
     return requestService.createRequest(
-        authentication.getTenantId(), (UUID) authentication.getPrincipal(), dto);
+        authentication.getTenantId(), (Long) authentication.getPrincipal(), dto);
   }
 
   @GetMapping("/{id}")
   @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
   public RequestResponse getRequest(
-      AgentVaultAuthentication authentication, @PathVariable UUID id) {
+      AgentVaultAuthentication authentication, @PathVariable Long id) {
     return requestService.getRequest(authentication.getTenantId(), id);
   }
 
   @DeleteMapping("/{id}")
   @PreAuthorize("hasRole('AGENT')")
   public ResponseEntity<Void> abandonRequest(
-      AgentVaultAuthentication authentication, @PathVariable UUID id) {
+      AgentVaultAuthentication authentication, @PathVariable Long id) {
     requestService.abandonRequest(
-        authentication.getTenantId(), (UUID) authentication.getPrincipal(), id);
+        authentication.getTenantId(), (Long) authentication.getPrincipal(), id);
     return ResponseEntity.noContent().build();
   }
 
@@ -62,7 +61,7 @@ public class RequestController {
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<?> updateRequest(
       AgentVaultAuthentication authentication,
-      @PathVariable UUID id,
+      @PathVariable Long id,
       @Valid @RequestBody UpdateRequestDTO dto) {
     switch (dto.action()) {
       case FULFILL:
@@ -82,7 +81,7 @@ public class RequestController {
             requestService.mapRequest(
                 authentication.getTenantId(),
                 id,
-                new MapRequestDTO(dto.secretId(), dto.newVisibility())));
+                new MapRequestDTO(dto.secretId().toString(), dto.newVisibility())));
       case REJECT:
         if (dto.reason() == null) {
           return ResponseEntity.badRequest().body("Reason is required for REJECT");

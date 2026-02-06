@@ -16,8 +16,19 @@
 package com.agentvault.dto;
 
 import com.agentvault.model.SecretVisibility;
+
 import jakarta.validation.constraints.NotNull;
-import java.util.UUID;
+
+import jakarta.validation.constraints.Pattern;
+
+
 
 public record MapRequestDTO(
-    @NotNull(message = "Secret ID cannot be null") UUID secretId, SecretVisibility newVisibility) {}
+
+    @NotNull(message = "Secret ID cannot be null")
+
+    @Pattern(regexp = "^[0-9]+$", message = "Secret ID must be numeric")
+
+    String secretId,
+
+    SecretVisibility newVisibility) {}

@@ -16,12 +16,8 @@
 package com.agentvault.repository;
 
 import com.agentvault.model.Lease;
-import java.util.Optional;
-import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface LeaseRepository extends JpaRepository<Lease, UUID> {
-  Optional<Lease> findByLeaseId(UUID leaseId);
-}
+public interface LeaseRepository extends JpaRepository<Lease, Long> {}

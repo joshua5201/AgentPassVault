@@ -54,15 +54,16 @@ public class AuthService {
   }
 
   public LoginResponse agentLogin(AgentLoginRequest request) {
+    Long tenantId = Long.valueOf(request.tenantId());
     // Validate Tenant First
-    if (tenantRepository.findByTenantId(request.tenantId()).isEmpty()) {
+    if (tenantRepository.findById(tenantId).isEmpty()) {
       throw new BadCredentialsException("Tenant not found");
     }
 
     String tokenHash = hashToken(request.appToken());
     User user =
         userRepository
-            .findByTenant_TenantIdAndAppTokenHash(request.tenantId(), tokenHash)
+            .findByTenant_IdAndAppTokenHash(tenantId, tokenHash)
             .orElseThrow(() -> new BadCredentialsException("Invalid token"));
 
     String token = tokenService.generateToken(user);

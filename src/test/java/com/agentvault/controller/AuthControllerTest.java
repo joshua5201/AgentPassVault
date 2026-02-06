@@ -25,7 +25,6 @@ import com.agentvault.service.UserService;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Base64;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -36,8 +35,7 @@ class AuthControllerTest extends BaseIntegrationTest {
 
   @Test
   void changePassword_WithValidCredentials_Success() throws Exception {
-    UUID tenantId = UUID.randomUUID();
-    createTenant(tenantId);
+    Long tenantId = createTenant();
 
     // Create user with known password
     userService.createAdminUser(tenantId, "change_pass_user", "oldPass123");
@@ -82,8 +80,7 @@ class AuthControllerTest extends BaseIntegrationTest {
 
   @Test
   void forgotAndResetPassword_Flow_Success() throws Exception {
-    UUID tenantId = UUID.randomUUID();
-    createTenant(tenantId);
+    Long tenantId = createTenant();
     userService.createAdminUser(tenantId, "reset_user", "oldPass");
 
     // 1. Forgot Password
@@ -126,8 +123,7 @@ class AuthControllerTest extends BaseIntegrationTest {
 
   @Test
   void resetPassword_TokenIssuedBeforeLastUpdate_ReturnsError() throws Exception {
-    UUID tenantId = UUID.randomUUID();
-    createTenant(tenantId);
+    Long tenantId = createTenant();
     userService.createAdminUser(tenantId, "security_user", "pass");
 
     // 1. Forgot Password -> get token
@@ -150,8 +146,7 @@ class AuthControllerTest extends BaseIntegrationTest {
 
     // 2. Manually simulate password update AFTER token was issued
     com.agentvault.model.User user = userRepository.findByUsername("security_user").get();
-    user.setPasswordLastUpdatedAt(
-        java.time.Instant.now().plusSeconds(1));
+    user.setPasswordLastUpdatedAt(java.time.Instant.now().plusSeconds(1));
     userRepository.save(user);
 
     // 3. Attempt to reset password with the now "old" token
@@ -172,8 +167,7 @@ class AuthControllerTest extends BaseIntegrationTest {
 
   @Test
   void ping_WithValidToken_ReturnsPong() throws Exception {
-    UUID tenantId = UUID.randomUUID();
-    createTenant(tenantId);
+    Long tenantId = createTenant();
 
     userService.createAdminUser(tenantId, "testuser", "password");
 
@@ -203,8 +197,7 @@ class AuthControllerTest extends BaseIntegrationTest {
 
   @Test
   void login_WithValidAdminCredentials_ReturnsToken() throws Exception {
-    UUID tenantId = UUID.randomUUID();
-    createTenant(tenantId);
+    Long tenantId = createTenant();
 
     userService.createAdminUser(tenantId, "admin", "password");
 
@@ -222,8 +215,7 @@ class AuthControllerTest extends BaseIntegrationTest {
 
   @Test
   void login_WithValidAgentToken_ReturnsToken() throws Exception {
-    UUID tenantId = UUID.randomUUID();
-    createTenant(tenantId);
+    Long tenantId = createTenant();
 
     String rawToken = "agent-token-123";
 
@@ -233,7 +225,7 @@ class AuthControllerTest extends BaseIntegrationTest {
 
     userService.createAgentUser(tenantId, tokenHash);
 
-    AgentLoginRequest request = new AgentLoginRequest(tenantId, rawToken);
+    AgentLoginRequest request = new AgentLoginRequest(tenantId.toString(), rawToken);
 
     mockMvc
         .perform(

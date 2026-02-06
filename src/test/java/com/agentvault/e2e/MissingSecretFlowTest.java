@@ -21,12 +21,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.agentvault.BaseIntegrationTest;
 import com.agentvault.dto.*;
-import com.agentvault.model.Tenant;
 import com.agentvault.service.AgentService;
 import com.agentvault.service.UserService;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -39,12 +37,7 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
   @Test
   void completeMissingSecretFlow() throws Exception {
     // 1. Setup Tenant
-    UUID tenantId = UUID.randomUUID();
-    Tenant tenant = new Tenant();
-    tenant.setTenantId(tenantId);
-    tenant.setName("E2E Tenant");
-    tenant.setStatus("active");
-    tenantRepository.save(tenant);
+    Long tenantId = createTenant();
 
     // Setup Admin
     userService.createAdminUser(tenantId, "admin", "password");
@@ -62,7 +55,7 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         objectMapper.writeValueAsString(
-                            new AgentLoginRequest(tenantId, agentAppToken))))
+                            new AgentLoginRequest(tenantId.toString(), agentAppToken))))
             .andExpect(status().isOk())
             .andReturn()
             .getResponse()
@@ -155,32 +148,17 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
         .andExpect(jsonPath("$.encryptedValue").value("encrypted-super-secret-password"));
   }
 
-    private String getAuthToken(String username, String password) throws Exception {
-
-      String loginResponse =
-
-          mockMvc
-
-              .perform(
-
-                  post("/api/v1/auth/login/user")
-
-                      .contentType(MediaType.APPLICATION_JSON)
-
-                      .content(
-
-                          objectMapper.writeValueAsString(new UserLoginRequest(username, password))))
-
-              .andReturn()
-
-              .getResponse()
-
-              .getContentAsString();
-
-      return objectMapper.readTree(loginResponse).get("accessToken").asText();
-
-    }
-
+  private String getAuthToken(String username, String password) throws Exception {
+    String loginResponse =
+        mockMvc
+            .perform(
+                post("/api/v1/auth/login/user")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        objectMapper.writeValueAsString(new UserLoginRequest(username, password))))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readTree(loginResponse).get("accessToken").asText();
   }
-
-  
+}

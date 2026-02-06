@@ -18,7 +18,6 @@ package com.agentvault.config;
 import com.agentvault.model.Tenant;
 import com.agentvault.repository.TenantRepository;
 import com.agentvault.service.UserService;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -45,11 +44,10 @@ public class DataSeeder implements CommandLineRunner {
 
     // Create Tenant
     Tenant tenant = new Tenant();
-    tenant.setTenantId(UUID.randomUUID());
     tenant.setName("Dev Tenant");
     tenant.setStatus("active");
-    tenantRepository.save(tenant);
-    log.info("Created Default Tenant: ID={}", tenant.getTenantId());
+    tenant = tenantRepository.save(tenant);
+    log.info("Created Default Tenant: ID={}", tenant.getId());
 
     // Create Admin User
     String username = "devadmin";
@@ -62,7 +60,7 @@ public class DataSeeder implements CommandLineRunner {
 
     rawPassword = rawPassword.trim();
 
-    userService.createAdminUser(tenant.getTenantId(), username, rawPassword, "Default Admin");
+    userService.createAdminUser(tenant.getId(), username, rawPassword, "Default Admin");
 
     log.info("Created Admin User: username={}", username);
   }

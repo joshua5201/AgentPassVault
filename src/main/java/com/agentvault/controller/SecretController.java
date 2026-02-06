@@ -23,7 +23,6 @@ import com.agentvault.security.AgentVaultAuthentication;
 import com.agentvault.service.SecretService;
 import jakarta.validation.Valid;
 import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -48,7 +47,7 @@ public class SecretController {
   @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
   public SecretResponse getSecret(
       AgentVaultAuthentication authentication,
-      @PathVariable UUID id,
+      @PathVariable Long id,
       @RequestParam(required = false) String leaseToken) {
     if (leaseToken != null) {
       return secretService.getSecretWithLease(authentication.getTenantId(), id, leaseToken);
@@ -58,7 +57,7 @@ public class SecretController {
 
   @DeleteMapping("/{id}")
   @PreAuthorize("hasRole('ADMIN')")
-  public void deleteSecret(AgentVaultAuthentication authentication, @PathVariable UUID id) {
+  public void deleteSecret(AgentVaultAuthentication authentication, @PathVariable Long id) {
     secretService.deleteSecret(authentication.getTenantId(), id);
   }
 

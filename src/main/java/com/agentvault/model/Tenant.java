@@ -18,7 +18,6 @@ package com.agentvault.model;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -27,9 +26,6 @@ import lombok.EqualsAndHashCode;
 @Table(name = "tenants")
 @EqualsAndHashCode(callSuper = true)
 public class Tenant extends BaseEntity {
-
-  @Column(name = "tenant_id", unique = true, nullable = false)
-  private UUID tenantId;
 
   @Column(name = "name", unique = true, nullable = false)
   private String name;

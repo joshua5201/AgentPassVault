@@ -27,7 +27,6 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -43,14 +42,13 @@ public class SecretService {
   private final TokenService tokenService;
 
   @Transactional
-  public SecretMetadataResponse createSecret(UUID tenantId, CreateSecretRequest request) {
+  public SecretMetadataResponse createSecret(Long tenantId, CreateSecretRequest request) {
     Tenant tenant =
         tenantRepository
-            .findByTenantId(tenantId)
+            .findById(tenantId)
             .orElseThrow(() -> new IllegalArgumentException("Tenant not found"));
 
     Secret secret = new Secret();
-    secret.setSecretId(UUID.randomUUID());
     secret.setTenant(tenant);
     secret.setName(request.name());
     secret.setEncryptedData(request.encryptedValue());
@@ -61,11 +59,11 @@ public class SecretService {
     return mapToMetadataResponse(saved);
   }
 
-  public SecretResponse getSecret(UUID tenantId, UUID secretId) {
+  public SecretResponse getSecret(Long tenantId, Long secretId) {
     Secret secret =
         secretRepository
-            .findBySecretId(secretId)
-            .filter(s -> s.getTenant().getTenantId().equals(tenantId))
+            .findById(secretId)
+            .filter(s -> s.getTenant().getId().equals(tenantId))
             .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
 
     if (secret.getVisibility() == SecretVisibility.LEASE_REQUIRED) {
@@ -78,24 +76,24 @@ public class SecretService {
     return mapToResponse(secret);
   }
 
-  public SecretResponse getSecretWithLease(UUID tenantId, UUID secretId, String leaseToken) {
+  public SecretResponse getSecretWithLease(Long tenantId, Long secretId, String leaseToken) {
     tokenService.validateLeaseToken(leaseToken, secretId.toString());
 
     Secret secret =
         secretRepository
-            .findBySecretId(secretId)
-            .filter(s -> s.getTenant().getTenantId().equals(tenantId))
+            .findById(secretId)
+            .filter(s -> s.getTenant().getId().equals(tenantId))
             .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
 
     return mapToResponse(secret);
   }
 
   @Transactional
-  public void deleteSecret(UUID tenantId, UUID secretId) {
+  public void deleteSecret(Long tenantId, Long secretId) {
     Secret secret =
         secretRepository
-            .findBySecretId(secretId)
-            .filter(s -> s.getTenant().getTenantId().equals(tenantId))
+            .findById(secretId)
+            .filter(s -> s.getTenant().getId().equals(tenantId))
             .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
 
     secretRepository.delete(secret);
@@ -103,10 +101,10 @@ public class SecretService {
 
   @SuppressWarnings("unchecked")
   public List<SecretMetadataResponse> searchSecrets(
-      UUID tenantId, Map<String, Object> metadataQuery) {
+      Long tenantId, Map<String, Object> metadataQuery) {
     StringBuilder sql = new StringBuilder("SELECT s.* FROM secrets s ");
     sql.append("JOIN tenants t ON s.tenant_id = t.id ");
-    sql.append("WHERE t.tenant_id = :tenantId ");
+    sql.append("WHERE t.id = :tenantId ");
     sql.append("AND s.visibility != 'HIDDEN' ");
 
     if (metadataQuery != null && !metadataQuery.isEmpty()) {
@@ -121,11 +119,6 @@ public class SecretService {
     }
 
     Query query = entityManager.createNativeQuery(sql.toString(), Secret.class);
-    query.setParameter("tenantId", tenantId.toString().replace("-", "")); // MySQL UUID as binary/string might need handling
-
-    // Actually JPA UUID handling depends on configuration.
-    // If using strategy = GenerationType.UUID, it might be stored as binary(16).
-    // For native query, it's safer to use the UUID object if the driver supports it.
     query.setParameter("tenantId", tenantId);
 
     if (metadataQuery != null && !metadataQuery.isEmpty()) {
@@ -142,7 +135,7 @@ public class SecretService {
 
   private SecretResponse mapToResponse(Secret secret) {
     return new SecretResponse(
-        secret.getSecretId(),
+        secret.getId().toString(),
         secret.getName(),
         secret.getEncryptedData(),
         secret.getMetadata(),
@@ -153,7 +146,7 @@ public class SecretService {
 
   private SecretMetadataResponse mapToMetadataResponse(Secret secret) {
     return new SecretMetadataResponse(
-        secret.getSecretId(),
+        secret.getId().toString(),
         secret.getName(),
         secret.getMetadata(),
         secret.getVisibility(),

@@ -22,7 +22,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
-import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -31,9 +30,6 @@ import lombok.EqualsAndHashCode;
 @Table(name = "leases")
 @EqualsAndHashCode(callSuper = true)
 public class Lease extends BaseEntity {
-
-  @Column(name = "lease_id", unique = true, nullable = false)
-  private UUID leaseId;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "secret_id", nullable = false)

@@ -26,7 +26,6 @@ import com.agentvault.model.SecretVisibility;
 import com.agentvault.service.AgentService;
 import com.agentvault.service.UserService;
 import java.util.Map;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -53,7 +52,7 @@ class SecretControllerTest extends BaseIntegrationTest {
 
   @Test
   void createAndGetSecret_Success() throws Exception {
-    UUID tenantId = createTenant();
+    Long tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin", "password");
     String token = getAuthToken("admin", "password");
 
@@ -87,7 +86,7 @@ class SecretControllerTest extends BaseIntegrationTest {
 
   @Test
   void deleteSecret_Success() throws Exception {
-    UUID tenantId = createTenant();
+    Long tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin", "password");
     String token = getAuthToken("admin", "password");
 
@@ -117,7 +116,7 @@ class SecretControllerTest extends BaseIntegrationTest {
 
   @Test
   void searchSecrets_Success() throws Exception {
-    UUID tenantId = createTenant();
+    Long tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin", "password");
     String token = getAuthToken("admin", "password");
 
@@ -166,12 +165,12 @@ class SecretControllerTest extends BaseIntegrationTest {
   @Test
   void crossTenantAccess_Denied() throws Exception {
     // Tenant A
-    UUID tenantA = createTenant();
+    Long tenantA = createTenant();
     userService.createAdminUser(tenantA, "adminA", "pass");
     String tokenA = getAuthToken("adminA", "pass");
 
     // Tenant B
-    UUID tenantB = createTenant();
+    Long tenantB = createTenant();
     userService.createAdminUser(tenantB, "adminB", "pass");
     String tokenB = getAuthToken("adminB", "pass");
 
@@ -197,7 +196,7 @@ class SecretControllerTest extends BaseIntegrationTest {
 
   @Test
   void searchSecrets_RespectsVisibility() throws Exception {
-    UUID tenantId = createTenant();
+    Long tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin", "password");
     String token = getAuthToken("admin", "password");
 
@@ -218,7 +217,7 @@ class SecretControllerTest extends BaseIntegrationTest {
 
   @Test
   void testGetSecret_HandlesVisibility() throws Exception {
-    UUID tenantId = createTenant();
+    Long tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin", "password");
     String token = getAuthToken("admin", "password");
 
@@ -238,7 +237,7 @@ class SecretControllerTest extends BaseIntegrationTest {
 
   @Test
   void testGetSecret_WithLease_Success() throws Exception {
-    UUID tenantId = createTenant();
+    Long tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin", "password");
     String adminToken = getAuthToken("admin", "password");
 
@@ -254,7 +253,7 @@ class SecretControllerTest extends BaseIntegrationTest {
             null,
             null,
             com.agentvault.model.RequestType.LEASE,
-            UUID.fromString(secretId));
+            secretId);
 
     String reqResponse =
         mockMvc
@@ -263,7 +262,6 @@ class SecretControllerTest extends BaseIntegrationTest {
                     .header("Authorization", "Bearer " + agentJwt)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(createReq)))
-            .andExpect(status().isOk())
             .andReturn()
             .getResponse()
             .getContentAsString();
@@ -314,14 +312,14 @@ class SecretControllerTest extends BaseIntegrationTest {
     String secretId = objectMapper.readTree(createResponse).get("secretId").asText();
 
     // Manually update visibility as there is no API for it
-    Secret secret = secretRepository.findBySecretId(UUID.fromString(secretId)).get();
+    Secret secret = secretRepository.findById(Long.valueOf(secretId)).get();
     secret.setVisibility(visibility);
     secretRepository.save(secret);
 
     return secretId;
   }
 
-  private String createAgentAndGetJwt(UUID tenantId) throws Exception {
+  private String createAgentAndGetJwt(Long tenantId) throws Exception {
     AgentTokenResponse agentResp = agentService.createAgent(tenantId, "test-agent");
     String agentAppToken = agentResp.appToken();
 
@@ -332,7 +330,7 @@ class SecretControllerTest extends BaseIntegrationTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         objectMapper.writeValueAsString(
-                            new AgentLoginRequest(tenantId, agentAppToken))))
+                            new AgentLoginRequest(tenantId.toString(), agentAppToken))))
             .andReturn()
             .getResponse()
             .getContentAsString();

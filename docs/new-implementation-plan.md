@@ -98,6 +98,39 @@ The project transitioned from MongoDB to MySQL 8 to leverage robust relational i
 #### [x] 2.1.5. Code Cleanup
 *   Remove `spring-boot-starter-data-mongodb` usage in all service classes.
 
+### [x] 2.2 Primary Key (TSID) change and repository utils
+Replace UUID primary keys and separate public IDs with a single TSID (Time-Sorted Unique Identifier) primary key. This improves database performance (locality) and simplifies the model. We will use `hypersistence-tsid` for generation and `hypersistence-utils` for repository utilities.
+
+#### [x] 2.2.1 Dependencies
+*   **Add:** `io.hypersistence:hypersistence-tsid:2.1.1` to `build.gradle.kts`.
+*   (Already added `hypersistence-utils-hibernate-63` in 2.1).
+
+#### [x] 2.2.2 BaseEntity & ID Configuration
+*   **Modify `BaseEntity`:**
+    *   Change `id` type from `UUID` to `Long`.
+    *   Annotate with `@Id @GeneratedValue(strategy = GenerationType.AUTO)`.
+    *   Configure Hibernate to use a TSID generator (likely via `hypersistence-utils` or a custom generator wrapping `TSID.fast()`).
+    *   **MySQL Column:** `BIGINT` (Primary Key).
+
+#### [x] 2.2.3 Entity Cleanup
+*   **Remove Secondary UUIDs:**
+    *   `Tenant`: Remove `tenantId`.
+    *   `User`: Remove `userId`.
+    *   `Secret`: Remove `secretId`.
+    *   `Request`: Remove `requestId`.
+    *   `Lease`: Remove `leaseId`.
+*   **Foreign Keys:** Update all `@ManyToOne` join columns to reference the new `BIGINT` ids.
+
+#### [x] 2.2.4 Repository & Service Layer Updates
+*   **Repositories:** Update `JpaRepository` type parameters to `<Entity, Long>`.
+*   **Services/Controllers:**
+    *   Update method signatures to accept/return `Long`.
+*   **DTO Layer (Request/Response):** 
+    *   IDs must be represented as `String` in DTOs to avoid precision loss in JavaScript (JSON).
+    *   Implement conversion logic between `String` (DTO) and `Long` (Service/Entity).
+    *   **Validation:** Add validation to DTOs to ensure the `String` ID is a valid positive numeric string (representing a Long).
+*   **TSID Factory:** Configure a `TsidFactory` bean or static initializer to ensure unique node bits if necessary (for now default is fine for single instance).
+
 ## [ ] 3. Update API DTOs
 *   **CreateSecretRequest:**
     *   Remove `value` (plaintext).
