@@ -44,8 +44,7 @@ class IdempotencyTest extends BaseIntegrationTest {
                 post("/api/v1/auth/login/user")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
-                        objectMapper.writeValueAsString(
-                            new UserLoginRequest("admin", "password"))))
+                        objectMapper.writeValueAsString(new UserLoginRequest("admin", "password"))))
             .andReturn()
             .getResponse()
             .getContentAsString();
@@ -84,7 +83,7 @@ class IdempotencyTest extends BaseIntegrationTest {
             .getContentAsString();
 
     assertEquals(firstResponse, secondResponse);
-    
+
     // Verify only one secret created in DB
     assertEquals(1, secretRepository.count());
   }

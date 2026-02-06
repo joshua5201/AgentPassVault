@@ -210,7 +210,8 @@ class AuthControllerTest extends BaseIntegrationTest {
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.accessToken").exists())
-        .andExpect(jsonPath("$.tokenType").value("Bearer"));
+        .andExpect(jsonPath("$.tokenType").value("Bearer"))
+        .andExpect(jsonPath("$.refreshTokenExpiresIn").exists());
   }
 
   @Test
@@ -233,7 +234,8 @@ class AuthControllerTest extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.accessToken").exists());
+        .andExpect(jsonPath("$.accessToken").exists())
+        .andExpect(jsonPath("$.refreshTokenExpiresIn").exists());
   }
 
   @Test
@@ -245,6 +247,53 @@ class AuthControllerTest extends BaseIntegrationTest {
             post("/api/v1/auth/login/user")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void refreshToken_WithValidToken_Success() throws Exception {
+    Long tenantId = createTenant();
+    userService.createAdminUser(tenantId, "refresh_user", "password");
+
+    // 1. Login to get refresh token
+    String loginResponse =
+        mockMvc
+            .perform(
+                post("/api/v1/auth/login/user")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        objectMapper.writeValueAsString(
+                            new UserLoginRequest("refresh_user", "password"))))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    String refreshToken = objectMapper.readTree(loginResponse).get("refreshToken").asText();
+
+    // 2. Refresh token
+    RefreshTokenRequest refreshRequest = new RefreshTokenRequest(refreshToken);
+
+    mockMvc
+        .perform(
+            post("/api/v1/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(refreshRequest)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.accessToken").exists())
+        .andExpect(jsonPath("$.refreshToken").exists())
+        .andExpect(jsonPath("$.refreshTokenExpiresIn").exists());
+  }
+
+  @Test
+  void refreshToken_WithInvalidToken_Returns401() throws Exception {
+    RefreshTokenRequest refreshRequest = new RefreshTokenRequest("invalid_token");
+
+    mockMvc
+        .perform(
+            post("/api/v1/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(refreshRequest)))
         .andExpect(status().isUnauthorized());
   }
 }

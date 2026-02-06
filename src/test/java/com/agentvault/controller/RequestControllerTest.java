@@ -196,8 +196,7 @@ class RequestControllerTest extends BaseIntegrationTest {
     String adminToken = getAuthToken("admin", "password");
 
     // 1. Create a secret
-    CreateSecretRequest createSecretReq =
-        new CreateSecretRequest("Test Secret", "val", null);
+    CreateSecretRequest createSecretReq = new CreateSecretRequest("Test Secret", "val", null);
     String secretResp =
         mockMvc
             .perform(
@@ -227,14 +226,7 @@ class RequestControllerTest extends BaseIntegrationTest {
     // 3. Map Request
     UpdateRequestDTO mapReq =
         new UpdateRequestDTO(
-            UpdateRequestDTO.Action.MAP,
-            null,
-            null,
-            null,
-            null,
-            null,
-            secretId,
-            null);
+            UpdateRequestDTO.Action.MAP, null, null, null, null, null, secretId, null);
 
     mockMvc
         .perform(

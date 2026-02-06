@@ -21,7 +21,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.agentvault.BaseIntegrationTest;
 import com.agentvault.dto.*;
-import com.agentvault.model.Secret;
 import com.agentvault.service.AgentService;
 import com.agentvault.service.UserService;
 import java.util.Map;
@@ -68,7 +67,9 @@ class SecretControllerTest extends BaseIntegrationTest {
                     .content(objectMapper.writeValueAsString(createReq)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.secretId").exists())
-            .andExpect(jsonPath("$.encryptedValue").doesNotExist()) // Verify encryptedValue is NOT returned in metadata
+            .andExpect(
+                jsonPath("$.encryptedValue")
+                    .doesNotExist()) // Verify encryptedValue is NOT returned in metadata
             .andReturn()
             .getResponse()
             .getContentAsString();
@@ -254,8 +255,7 @@ class SecretControllerTest extends BaseIntegrationTest {
   }
 
   // Helper methods
-  private String createSecret(String token, String name)
-      throws Exception {
+  private String createSecret(String token, String name) throws Exception {
     CreateSecretRequest createReq = new CreateSecretRequest(name, "secret_value", null);
     String createResponse =
         mockMvc

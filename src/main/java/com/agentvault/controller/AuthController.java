@@ -44,6 +44,11 @@ public class AuthController {
     return authService.agentLogin(request);
   }
 
+  @PostMapping("/refresh")
+  public LoginResponse refresh(@Valid @RequestBody RefreshTokenRequest request) {
+    return authService.refreshToken(request.refreshToken());
+  }
+
   @PostMapping("/change-password")
   public void changePassword(
       AgentVaultAuthentication authentication, @Valid @RequestBody ChangePasswordRequest request) {

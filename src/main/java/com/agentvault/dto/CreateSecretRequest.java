@@ -22,6 +22,6 @@ import java.util.Map;
 public record CreateSecretRequest(
     @NotBlank(message = "Secret name cannot be blank") String name,
     @NotBlank(message = "Encrypted secret value cannot be blank")
-    @Size(max = 87381, message = "Encrypted value must not exceed 64 KB")
-    String encryptedValue,
+        @Size(max = 87381, message = "Encrypted value must not exceed 64 KB")
+        String encryptedValue,
     Map<String, Object> metadata) {}

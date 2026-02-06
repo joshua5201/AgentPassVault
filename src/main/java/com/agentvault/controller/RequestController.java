@@ -65,8 +65,11 @@ public class RequestController {
       @Valid @RequestBody UpdateRequestDTO dto) {
     switch (dto.action()) {
       case FULFILL:
-        if (dto.name() == null || dto.ownerEncryptedData() == null || dto.agentEncryptedData() == null) {
-          return ResponseEntity.badRequest().body("Name, ownerEncryptedData and agentEncryptedData are required for FULFILL");
+        if (dto.name() == null
+            || dto.ownerEncryptedData() == null
+            || dto.agentEncryptedData() == null) {
+          return ResponseEntity.badRequest()
+              .body("Name, ownerEncryptedData and agentEncryptedData are required for FULFILL");
         }
         return ResponseEntity.ok(
             requestService.fulfillRequest(
@@ -93,7 +96,8 @@ public class RequestController {
             requestService.rejectRequest(authentication.getTenantId(), id, dto.reason()));
       case APPROVE_LEASE:
         if (dto.agentEncryptedData() == null) {
-          return ResponseEntity.badRequest().body("agentEncryptedData is required for APPROVE_LEASE");
+          return ResponseEntity.badRequest()
+              .body("agentEncryptedData is required for APPROVE_LEASE");
         }
         ApproveLeaseResponseDTO leaseResponse =
             requestService.approveLease(

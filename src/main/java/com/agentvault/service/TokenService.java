@@ -30,11 +30,13 @@ public class TokenService {
 
   private final SecretKey secretKey;
   private final long expirationMinutes;
+  private final long refreshExpirationMinutes;
   private final long leaseExpirationMinutes;
 
   public TokenService(JwtConfig jwtConfig) {
     this.secretKey = jwtConfig.getSecretKey();
     this.expirationMinutes = jwtConfig.getExpirationMinutes();
+    this.refreshExpirationMinutes = jwtConfig.getRefreshExpirationMinutes();
     this.leaseExpirationMinutes = jwtConfig.getLeaseExpirationMinutes();
   }
 
@@ -44,10 +46,34 @@ public class TokenService {
         .subject(user.getId().toString())
         .claim("tenant_id", user.getTenant().getId().toString())
         .claim("role", user.getRole().name())
+        .claim("type", "access")
         .issuedAt(Date.from(now))
         .expiration(Date.from(now.plus(expirationMinutes, ChronoUnit.MINUTES)))
         .signWith(secretKey)
         .compact();
+  }
+
+  public String generateRefreshToken(User user) {
+    Instant now = Instant.now();
+    return Jwts.builder()
+        .subject(user.getId().toString())
+        .claim("type", "refresh")
+        .issuedAt(Date.from(now))
+        .expiration(Date.from(now.plus(refreshExpirationMinutes, ChronoUnit.MINUTES)))
+        .signWith(secretKey)
+        .compact();
+  }
+
+  public Long getUserIdFromToken(String token, String expectedType) {
+    Claims claims =
+        Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload();
+
+    String type = claims.get("type", String.class);
+    if (!expectedType.equals(type)) {
+      throw new IllegalArgumentException("Invalid token type");
+    }
+
+    return Long.parseLong(claims.getSubject());
   }
 
   public String generateLeaseToken(
@@ -77,5 +103,13 @@ public class TokenService {
     if (!secretId.equals(tokenSecretId)) {
       throw new IllegalArgumentException("Invalid lease token for the requested secret");
     }
+  }
+
+  public long getExpirationMinutes() {
+    return expirationMinutes;
+  }
+
+  public long getRefreshExpirationMinutes() {
+    return refreshExpirationMinutes;
   }
 }

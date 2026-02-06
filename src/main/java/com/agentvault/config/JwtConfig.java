@@ -37,6 +37,9 @@ public class JwtConfig {
   @Value("${agentvault.jwt.expiration-minutes}")
   private long expirationMinutes;
 
+  @Value("${agentvault.jwt.refresh-expiration-minutes}")
+  private long refreshExpirationMinutes;
+
   @Value("${agentvault.jwt.lease-expiration-minutes:60}")
   private long leaseExpirationMinutes;
 
@@ -52,6 +55,10 @@ public class JwtConfig {
 
   public long getExpirationMinutes() {
     return expirationMinutes;
+  }
+
+  public long getRefreshExpirationMinutes() {
+    return refreshExpirationMinutes;
   }
 
   public long getLeaseExpirationMinutes() {

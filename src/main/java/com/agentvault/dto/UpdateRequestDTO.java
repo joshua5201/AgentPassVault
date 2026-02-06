@@ -29,8 +29,7 @@ public record UpdateRequestDTO(
     Instant expiry,
     Map<String, Object> metadata,
     // For MAP or APPROVE_LEASE (Existing Secret)
-    @Pattern(regexp = "^[0-9]+$", message = "Secret ID must be numeric")
-    String secretId,
+    @Pattern(regexp = "^[0-9]+$", message = "Secret ID must be numeric") String secretId,
     // For REJECT
     String reason) {
   public enum Action {

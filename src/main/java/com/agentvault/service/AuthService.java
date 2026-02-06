@@ -49,8 +49,7 @@ public class AuthService {
       throw new BadCredentialsException("Invalid credentials");
     }
 
-    String token = tokenService.generateToken(user);
-    return new LoginResponse(token, "Bearer", 3600);
+    return createLoginResponse(user);
   }
 
   public LoginResponse agentLogin(AgentLoginRequest request) {
@@ -66,8 +65,32 @@ public class AuthService {
             .findByTenant_IdAndAppTokenHash(tenantId, tokenHash)
             .orElseThrow(() -> new BadCredentialsException("Invalid token"));
 
-    String token = tokenService.generateToken(user);
-    return new LoginResponse(token, "Bearer", 3600);
+    return createLoginResponse(user);
+  }
+
+  public LoginResponse refreshToken(String refreshToken) {
+    try {
+      Long userId = tokenService.getUserIdFromToken(refreshToken, "refresh");
+      User user =
+          userRepository
+              .findById(userId)
+              .orElseThrow(() -> new BadCredentialsException("Invalid refresh token"));
+
+      return createLoginResponse(user);
+    } catch (Exception e) {
+      throw new BadCredentialsException("Invalid refresh token");
+    }
+  }
+
+  private LoginResponse createLoginResponse(User user) {
+    String accessToken = tokenService.generateToken(user);
+    String refreshToken = tokenService.generateRefreshToken(user);
+    return new LoginResponse(
+        accessToken,
+        refreshToken,
+        "Bearer",
+        tokenService.getExpirationMinutes() * 60,
+        tokenService.getRefreshExpirationMinutes() * 60);
   }
 
   private String hashToken(String token) {

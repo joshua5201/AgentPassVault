@@ -99,7 +99,8 @@ public class SecretService {
             .filter(s -> s.getTenant().getId().equals(tenantId))
             .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
 
-    return mapToResponse(secret, secret.getEncryptedData()); // This is wrong in ZK but keeping for compilation
+    return mapToResponse(
+        secret, secret.getEncryptedData()); // This is wrong in ZK but keeping for compilation
   }
 
   @Transactional

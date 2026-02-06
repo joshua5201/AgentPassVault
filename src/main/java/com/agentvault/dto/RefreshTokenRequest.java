@@ -15,10 +15,6 @@
  */
 package com.agentvault.dto;
 
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotBlank;
 
-public record MapRequestDTO(
-    @NotNull(message = "Secret ID cannot be null")
-        @Pattern(regexp = "^[0-9]+$", message = "Secret ID must be numeric")
-        String secretId) {}
+public record RefreshTokenRequest(@NotBlank String refreshToken) {}

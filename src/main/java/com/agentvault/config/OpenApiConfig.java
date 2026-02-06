@@ -24,13 +24,15 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @OpenAPIDefinition(
-    info = @Info(title = "AgentVault API", version = "0.0.1", description = "Secure Secret Manager for Automated Agents"),
-    security = @SecurityRequirement(name = "bearerAuth")
-)
+    info =
+        @Info(
+            title = "AgentVault API",
+            version = "0.0.1",
+            description = "Secure Secret Manager for Automated Agents"),
+    security = @SecurityRequirement(name = "bearerAuth"))
 @SecurityScheme(
     name = "bearerAuth",
     type = SecuritySchemeType.HTTP,
     bearerFormat = "JWT",
-    scheme = "bearer"
-)
+    scheme = "bearer")
 public class OpenApiConfig {}
