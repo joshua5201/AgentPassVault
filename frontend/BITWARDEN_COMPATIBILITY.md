@@ -47,7 +47,7 @@ The bulk of the Bitwarden client logic (primitives, UI components, etc.) is unde
 
 ### Decision for AgentPassVault
 We have chosen a **Hybrid Licensing Model** combined with a **Clean Room** implementation:
-- **Backend:** **Apache 2.0** to encourage self-hosting, integration, and community value-add.
+- **Backend:** **AGPLv3** to ensure that any network-accessible modifications are shared with the community.
 - **Frontend/Client (SDK, CLI, Web):** **GPLv3** to provide robust defensive patent protection and ensure that the "Agent Fulfillment" flow remains open and available to the community without risk of patent hijacking.
 - **Implementation:** Research into the Bitwarden SDK confirmed that it is too tightly integrated with Bitwarden's specific application architecture. Our clean room implementation ensures 100% protocol compatibility while maintaining a lightweight and legally independent codebase.
 

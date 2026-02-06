@@ -131,3 +131,6 @@ We must store the algorithm metadata to support future agility (e.g., migrating 
     *   UI to select or create a secret for a specific request.
     *   Encrypt secret with Agent's Public Key (create Lease).
 4.  **Audit Log View:** Display history of secret accesses and modifications.
+
+## License
+The frontend code (SDK, CLI, and Web UI) is licensed under the **GNU General Public License v3.0**. See the `frontend/LICENSE` file for details.

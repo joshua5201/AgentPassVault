@@ -55,11 +55,16 @@ The API will be available at `http://localhost:8080`.
 
 ## License & Commercial Usage
 
-This project is licensed under the **GNU Affero General Public License v3.0**. See the `LICENSE` file for details. All source files must contain the standard AGPL v3.0 license header.
+### Backend
+The backend project is licensed under the **GNU Affero General Public License v3.0**. See the `LICENSE` file for details. All source files must contain the standard AGPL v3.0 license header.
 
 For commercial inquiries, custom licensing terms, or enterprise support, please contact: `joshua841025@gmail.com`
 
----
+### Fronted
+
+*   **Frontend (SDK, CLI, Web UI):** Licensed under the **GNU General Public License v3.0 (GPLv3)**. See the `frontend/LICENSE` file for details.
 
 ## Contributing
 We welcome all contributions! To ensure legal clarity for all users, all contributors must agree to our [Contributor License Agreement (CLA)](CONTRIBUTING.md) when submitting a Pull Request.
+
+All source files must contain the appropriate license header.
