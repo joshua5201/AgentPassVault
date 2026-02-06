@@ -3,7 +3,7 @@
 # Extract Tenant ID and Username for "Dev Tenant" from MySQL
 # Using -N to remove headers and -s for silent mode
 RESULT=$(docker exec agentvault-mysql mysql -uroot -proot -s -N -e "
-  USE agentvault;
+  USE agentvault_dev;
   SELECT t.id, u.username 
   FROM tenants t 
   LEFT JOIN users u ON t.id = u.tenant_id 

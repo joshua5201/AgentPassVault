@@ -3,14 +3,21 @@ services:
     image: mysql:8.0
     container_name: agentvault-mysql
     ports:
-      - "127.0.0.1:3306:3306"
+      - "127.0.0.1:${MYSQL_PORT_3306:-}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: agentvault
-      MYSQL_USER: user
-      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: agentvault_dev
+
+  flyway:
+    image: flyway/flyway:10
+    container_name: agentvault-flyway
+    entrypoint: ["sh", "-c", "sleep infinity"]
+    volumes:
+      - ./src/main/resources/db/migration:/flyway/sql
+    depends_on:
+      - mysql
 
 volumes:
   mysql_data:
