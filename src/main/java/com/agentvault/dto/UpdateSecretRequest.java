@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.agentvault.repository;
+package com.agentvault.dto;
 
-import com.agentvault.model.Lease;
+import jakarta.validation.constraints.Size;
 import java.util.List;
-import java.util.Optional;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import java.util.Map;
 
-@Repository
-public interface LeaseRepository extends JpaRepository<Lease, Long> {
-  List<Lease> findBySecret_IdAndAgent_Id(Long secretId, Long agentId);
+public record UpdateSecretRequest(
+    String name,
+    @Size(max = 87381, message = "Encrypted value must not exceed 64 KB") String encryptedValue,
+    Map<String, Object> metadata,
+    List<LeaseUpdateRequest> updatedLeases) {
 
-  List<Lease> findBySecret_Id(Long secretId);
-
-  Optional<Lease> findBySecret_IdAndAgent_IdAndPublicKey(
-      Long secretId, Long agentId, String publicKey);
+  public record LeaseUpdateRequest(String agentId, String publicKey, String encryptedData) {}
 }

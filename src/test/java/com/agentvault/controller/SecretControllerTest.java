@@ -21,6 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.agentvault.BaseIntegrationTest;
 import com.agentvault.dto.*;
+import com.agentvault.model.RequestType;
 import com.agentvault.service.AgentService;
 import com.agentvault.service.UserService;
 import java.util.Map;
@@ -221,7 +222,17 @@ class SecretControllerTest extends BaseIntegrationTest {
             .getContentAsString();
     String agentJwt = objectMapper.readTree(agentLoginResp).get("accessToken").asText();
 
-    // 3. Agent creates a LEASE request
+    // 3. Agent registers its public key
+    String publicKey = "test-public-key";
+    mockMvc
+        .perform(
+            post("/api/v1/agents/" + agentId + "/register")
+                .header("Authorization", "Bearer " + agentJwt)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new RegisterAgentRequest(publicKey))))
+        .andExpect(status().isOk());
+
+    // 4. Agent creates a LEASE request
     CreateRequestDTO createReq =
         new CreateRequestDTO(
             "Request for " + secretId,
@@ -244,8 +255,9 @@ class SecretControllerTest extends BaseIntegrationTest {
             .getContentAsString();
     String requestId = objectMapper.readTree(reqResponse).get("requestId").asText();
 
-    // 4. Admin creates the lease
-    CreateLeaseRequest leaseReq = new CreateLeaseRequest(agentId, "agent_encrypted_val", null);
+    // 5. Admin creates the lease
+    CreateLeaseRequest leaseReq =
+        new CreateLeaseRequest(agentId, publicKey, "agent_encrypted_val", null);
     mockMvc
         .perform(
             post("/api/v1/secrets/" + secretId + "/leases")
@@ -254,7 +266,7 @@ class SecretControllerTest extends BaseIntegrationTest {
                 .content(objectMapper.writeValueAsString(leaseReq)))
         .andExpect(status().isOk());
 
-    // 5. Admin fulfills the request (updates status)
+    // 6. Admin fulfills the request (updates status)
     UpdateRequestDTO fulfillReq =
         new UpdateRequestDTO(com.agentvault.model.RequestStatus.fulfilled, secretId, null);
 
@@ -266,11 +278,132 @@ class SecretControllerTest extends BaseIntegrationTest {
                 .content(objectMapper.writeValueAsString(fulfillReq)))
         .andExpect(status().isOk());
 
-    // 6. Agent uses lease token to get the secret
+    // 7. Agent gets the secret
     mockMvc
         .perform(get("/api/v1/secrets/" + secretId).header("Authorization", "Bearer " + agentJwt))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.encryptedValue").value("agent_encrypted_val"));
+  }
+
+  @Test
+  void updateSecret_Success() throws Exception {
+    Long tenantId = createTenant();
+    userService.createAdminUser(tenantId, "admin", "password");
+    String token = getAuthToken("admin", "password");
+
+    String secretId = createSecret(token, "Original Name");
+
+    // Update name and metadata
+    UpdateSecretRequest updateReq =
+        new UpdateSecretRequest("Updated Name", null, Map.of("new", "meta"), null);
+
+    mockMvc
+        .perform(
+            patch("/api/v1/secrets/" + secretId)
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateReq)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.name").value("Updated Name"))
+        .andExpect(jsonPath("$.metadata.new").value("meta"));
+  }
+
+  @Test
+  void listAndRevokeLeases_Success() throws Exception {
+    Long tenantId = createTenant();
+    userService.createAdminUser(tenantId, "admin", "password");
+    String token = getAuthToken("admin", "password");
+
+    String secretId = createSecret(token, "Secret");
+
+    AgentTokenResponse agentResp = agentService.createAgent(tenantId, "agent-1");
+    String agentId = agentResp.agentId();
+
+    // Create Lease
+    CreateLeaseRequest leaseReq =
+        new CreateLeaseRequest(agentId, "pubkey", "encdata", null);
+    mockMvc
+        .perform(
+            post("/api/v1/secrets/" + secretId + "/leases")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(leaseReq)))
+        .andExpect(status().isOk());
+
+    // List Leases
+    mockMvc
+        .perform(
+            get("/api/v1/secrets/" + secretId + "/leases")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$", hasSize(1)))
+        .andExpect(jsonPath("$[0].agentId").value(agentId));
+
+    // Revoke Lease
+    mockMvc
+        .perform(
+            delete("/api/v1/secrets/" + secretId + "/leases/" + agentId)
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk());
+
+    // List Leases should be empty
+    mockMvc
+        .perform(
+            get("/api/v1/secrets/" + secretId + "/leases")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$", hasSize(0)));
+  }
+
+  @Test
+  void updateSecret_WithEncryptedValue_DeletesLeases() throws Exception {
+    Long tenantId = createTenant();
+    userService.createAdminUser(tenantId, "admin", "password");
+    String token = getAuthToken("admin", "password");
+
+    String secretId = createSecret(token, "Secret");
+
+    AgentTokenResponse agentResp = agentService.createAgent(tenantId, "agent-1");
+    String agentId = agentResp.agentId();
+
+    // Create Lease
+    CreateLeaseRequest leaseReq =
+        new CreateLeaseRequest(agentId, "pubkey", "encdata", null);
+    mockMvc
+        .perform(
+            post("/api/v1/secrets/" + secretId + "/leases")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(leaseReq)))
+        .andExpect(status().isOk());
+
+    // Verify lease exists
+    mockMvc
+        .perform(
+            get("/api/v1/secrets/" + secretId + "/leases")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$", hasSize(1)));
+
+    // Update secret encrypted value
+    UpdateSecretRequest updateReq =
+        new UpdateSecretRequest(null, "new-encrypted-value", null, null);
+
+    mockMvc
+        .perform(
+            patch("/api/v1/secrets/" + secretId)
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateReq)))
+        .andExpect(status().isOk());
+
+    // Verify lease is deleted
+    mockMvc
+        .perform(
+            get("/api/v1/secrets/" + secretId + "/leases")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$", hasSize(0)));
   }
 
   // Helper methods
@@ -288,24 +421,5 @@ class SecretControllerTest extends BaseIntegrationTest {
             .getContentAsString();
 
     return objectMapper.readTree(createResponse).get("secretId").asText();
-  }
-
-  private String createAgentAndGetJwt(Long tenantId) throws Exception {
-    AgentTokenResponse agentResp = agentService.createAgent(tenantId, "test-agent");
-    String agentAppToken = agentResp.appToken();
-
-    String agentLoginResp =
-        mockMvc
-            .perform(
-                post("/api/v1/auth/login/agent")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(
-                        objectMapper.writeValueAsString(
-                            new AgentLoginRequest(tenantId.toString(), agentAppToken))))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-
-    return objectMapper.readTree(agentLoginResp).get("accessToken").asText();
   }
 }

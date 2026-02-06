@@ -1,6 +1,6 @@
 # Agent Rules & Instructions
 
-Agents working on this project must adhere to the specifications and workflows defined in [DESIGN.md](./DESIGN.md).
+Agents working on this project must adhere to the specifications and workflows defined in [DESIGN.md](./docs/DESIGN.md).
 
 ## Core Requirements
 - Always verify secret retrieval patterns against the "Missing Secret Flow".
@@ -26,3 +26,8 @@ Agents working on this project must adhere to the specifications and workflows d
 
 ## License Header
 - For all `.java` files, the license header from `licence-header.txt` must be present at the top of the file.
+
+## Development tips
+- Find useful scripts under scripts/
+- Always use flyway to create new field. Don't modify existing flyway migrations that are already committed
+- Use scripts/database/flyway.sh to do flyway operations

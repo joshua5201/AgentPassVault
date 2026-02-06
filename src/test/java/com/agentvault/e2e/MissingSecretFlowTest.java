@@ -65,6 +65,16 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
 
     String agentJwt = objectMapper.readTree(agentLoginResp).get("accessToken").asText();
 
+    // 1b. Agent registers its public key
+    String publicKey = "agent-public-key";
+    mockMvc
+        .perform(
+            post("/api/v1/agents/" + agentId + "/register")
+                .header("Authorization", "Bearer " + agentJwt)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new RegisterAgentRequest(publicKey))))
+        .andExpect(status().isOk());
+
     // 2. Agent Searches for "Prod DB" (and finds nothing)
     SearchSecretRequest searchReq = new SearchSecretRequest(Map.of("service", "db", "env", "prod"));
     mockMvc
@@ -126,7 +136,8 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
     String secretId = objectMapper.readTree(secretResp).get("secretId").asText();
 
     // 5b. Create Lease
-    CreateLeaseRequest createLeaseReq = new CreateLeaseRequest(agentId, "agent-enc-pass", null);
+    CreateLeaseRequest createLeaseReq =
+        new CreateLeaseRequest(agentId, publicKey, "agent-enc-pass", null);
     mockMvc
         .perform(
             post("/api/v1/secrets/" + secretId + "/leases")

@@ -39,6 +39,9 @@ public class Lease extends BaseEntity {
   @JoinColumn(name = "agent_id", nullable = false)
   private User agent;
 
+  @Column(name = "public_key", columnDefinition = "TEXT", nullable = false)
+  private String publicKey;
+
   @Column(name = "encrypted_data", columnDefinition = "TEXT")
   private String encryptedData;
 

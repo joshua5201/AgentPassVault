@@ -27,6 +27,53 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/SecretMetadataResponse"
+  /api/v1/secrets/{secretId}/leases:
+    get:
+      tags:
+      - lease-controller
+      operationId: listLeases
+      parameters:
+      - name: secretId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: agentId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LeaseResponse"
+    post:
+      tags:
+      - lease-controller
+      operationId: createLease
+      parameters:
+      - name: secretId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLeaseRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
   /api/v1/secrets/search:
     post:
       tags:
@@ -238,6 +285,68 @@ paths:
       responses:
         "200":
           description: OK
+  /api/v1/secrets/{id}:
+    get:
+      tags:
+      - secret-controller
+      operationId: getSecret
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: leaseToken
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SecretResponse"
+    delete:
+      tags:
+      - secret-controller
+      operationId: deleteSecret
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+    patch:
+      tags:
+      - secret-controller
+      operationId: updateSecret
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSecretRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SecretMetadataResponse"
   /api/v1/requests/{id}:
     get:
       tags:
@@ -294,66 +403,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: object
-  /api/v1/secrets/{id}:
-    get:
-      tags:
-      - secret-controller
-      operationId: getSecret
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-      - name: leaseToken
-        in: query
-        required: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/SecretResponse"
-    delete:
-      tags:
-      - secret-controller
-      operationId: deleteSecret
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-      responses:
-        "200":
-          description: OK
-  /api/v1/secrets/{id}/leases:
-    post:
-      tags:
-      - secret-controller
-      operationId: createLease
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateLeaseRequest"
-        required: true
-      responses:
-        "200":
-          description: OK
+                $ref: "#/components/schemas/RequestResponse"
   /api/v1/auth/ping:
     get:
       tags:
@@ -401,6 +451,27 @@ paths:
       responses:
         "200":
           description: OK
+  /api/v1/secrets/{secretId}/leases/{agentId}:
+    delete:
+      tags:
+      - lease-controller
+      operationId: revokeLease
+      parameters:
+      - name: secretId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: agentId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
 components:
   schemas:
     CreateSecretRequest:
@@ -436,6 +507,23 @@ components:
         updatedAt:
           type: string
           format: date-time
+    CreateLeaseRequest:
+      type: object
+      properties:
+        agentId:
+          type: string
+          pattern: "^[0-9]+$"
+        publicKey:
+          type: string
+        encryptedData:
+          type: string
+        expiry:
+          type: string
+          format: date-time
+      required:
+      - agentId
+      - encryptedData
+      - publicKey
     SearchSecretRequest:
       type: object
       properties:
@@ -603,6 +691,32 @@ components:
           type: string
       required:
       - publicKey
+    LeaseUpdateRequest:
+      type: object
+      properties:
+        agentId:
+          type: string
+        publicKey:
+          type: string
+        encryptedData:
+          type: string
+    UpdateSecretRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        encryptedValue:
+          type: string
+          maxLength: 87381
+          minLength: 0
+        metadata:
+          type: object
+          additionalProperties:
+            type: object
+        updatedLeases:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeaseUpdateRequest"
     UpdateRequestDTO:
       type: object
       properties:
@@ -620,20 +734,28 @@ components:
           type: string
       required:
       - status
-    CreateLeaseRequest:
+    LeaseResponse:
       type: object
       properties:
+        id:
+          type: string
         agentId:
           type: string
-          pattern: "^[0-9]+$"
+        agentName:
+          type: string
+        publicKey:
+          type: string
         encryptedData:
           type: string
         expiry:
           type: string
           format: date-time
-      required:
-      - agentId
-      - encryptedData
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
     SecretResponse:
       type: object
       properties:

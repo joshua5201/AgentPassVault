@@ -20,6 +20,7 @@ import com.agentvault.dto.CreateSecretRequest;
 import com.agentvault.dto.SearchSecretRequest;
 import com.agentvault.dto.SecretMetadataResponse;
 import com.agentvault.dto.SecretResponse;
+import com.agentvault.dto.UpdateSecretRequest;
 import com.agentvault.security.AgentVaultAuthentication;
 import com.agentvault.service.SecretService;
 import jakarta.validation.Valid;
@@ -44,15 +45,6 @@ public class SecretController {
     return secretService.createSecret(authentication.getTenantId(), request);
   }
 
-  @PostMapping("/{id}/leases")
-  @PreAuthorize("hasRole('ADMIN')")
-  public void createLease(
-      AgentVaultAuthentication authentication,
-      @PathVariable Long id,
-      @Valid @RequestBody CreateLeaseRequest request) {
-    secretService.createLease(authentication.getTenantId(), id, request);
-  }
-
   @GetMapping("/{id}")
   @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
   public SecretResponse getSecret(
@@ -63,6 +55,15 @@ public class SecretController {
       return secretService.getSecretWithLease(authentication.getTenantId(), id, leaseToken);
     }
     return secretService.getSecret(authentication, id);
+  }
+
+  @PatchMapping("/{id}")
+  @PreAuthorize("hasRole('ADMIN')")
+  public SecretMetadataResponse updateSecret(
+      AgentVaultAuthentication authentication,
+      @PathVariable Long id,
+      @Valid @RequestBody UpdateSecretRequest request) {
+    return secretService.updateSecret(authentication.getTenantId(), id, request);
   }
 
   @DeleteMapping("/{id}")

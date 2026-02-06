@@ -24,5 +24,6 @@ public record CreateLeaseRequest(
     @NotNull(message = "Agent ID is required")
         @Pattern(regexp = "^[0-9]+$", message = "Agent ID must be numeric")
         String agentId,
+    @NotBlank(message = "Public key is required") String publicKey,
     @NotBlank(message = "Encrypted data cannot be blank") String encryptedData,
     Instant expiry) {}

@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.agentvault.repository;
+package com.agentvault.dto;
 
-import com.agentvault.model.Lease;
-import java.util.List;
-import java.util.Optional;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import java.time.Instant;
 
-@Repository
-public interface LeaseRepository extends JpaRepository<Lease, Long> {
-  List<Lease> findBySecret_IdAndAgent_Id(Long secretId, Long agentId);
-
-  List<Lease> findBySecret_Id(Long secretId);
-
-  Optional<Lease> findBySecret_IdAndAgent_IdAndPublicKey(
-      Long secretId, Long agentId, String publicKey);
-}
+public record LeaseResponse(
+    String id,
+    String agentId,
+    String agentName,
+    String publicKey,
+    String encryptedData,
+    Instant expiry,
+    Instant createdAt,
+    Instant updatedAt) {}
