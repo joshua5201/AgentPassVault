@@ -20,6 +20,18 @@ Agents working on this project must adhere to the specifications and workflows d
 ## Java Implementation Note
 - **Coding Standards:** NEVER use `java.util.Date`. Always use `java.time` APIs (e.g., `Instant`, `LocalDateTime`, `OffsetDateTime`).
 
+## Frontend Implementation Context
+- **Directory:** `frontend/`
+- **Primary Branch:** `feat/frontend`. Use this as the base for all frontend work.
+- **Git Restriction:** **NEVER push to origin.** All changes must remain local.
+- **Architecture:** Monorepo using Turborepo + PNPM.
+- **Sub-projects:**
+    - `packages/sdk`: Core crypto/API logic (TypeScript).
+    - `apps/cli`: Agent CLI (Node.js).
+    - `apps/web`: Admin/Fulfillment UI (React).
+- **Security:** Use Web Crypto API. secrets must never be stored in plaintext.
+- **Style:** TypeScript strict mode. Functional components for React.
+
 ## License Header
 - For all `.java` files, the license header from `licence-header.txt` must be present at the top of the file.
 
