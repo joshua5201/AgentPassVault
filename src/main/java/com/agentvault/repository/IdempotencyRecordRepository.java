@@ -13,6 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.agentvault.dto;
+package com.agentvault.repository;
 
-public record ApproveLeaseResponseDTO(String leaseToken) {}
+import com.agentvault.model.IdempotencyRecord;
+import java.time.Instant;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface IdempotencyRecordRepository extends JpaRepository<IdempotencyRecord, String> {
+  void deleteByCreatedAtBefore(Instant threshold);
+}

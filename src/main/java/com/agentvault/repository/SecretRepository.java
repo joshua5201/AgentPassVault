@@ -16,12 +16,8 @@
 package com.agentvault.repository;
 
 import com.agentvault.model.Secret;
-import java.util.Optional;
-import java.util.UUID;
-import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface SecretRepository extends MongoRepository<Secret, String> {
-  Optional<Secret> findBySecretId(UUID secretId);
-}
+public interface SecretRepository extends JpaRepository<Secret, Long> {}

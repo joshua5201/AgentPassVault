@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.agentvault.config;
+package com.agentvault.dto;
 
-import org.springframework.context.annotation.Configuration;
-import org.springframework.data.mongodb.config.EnableMongoAuditing;
+import jakarta.validation.constraints.NotBlank;
 
-@Configuration
-@EnableMongoAuditing
-public class MongoConfig {}
+public record RegisterAgentRequest(
+    @NotBlank(message = "Public key cannot be blank") String publicKey) {}

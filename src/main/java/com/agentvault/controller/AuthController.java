@@ -21,7 +21,6 @@ import com.agentvault.service.AuthService;
 import com.agentvault.service.UserService;
 import jakarta.validation.Valid;
 import java.util.Map;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -45,12 +44,17 @@ public class AuthController {
     return authService.agentLogin(request);
   }
 
+  @PostMapping("/refresh")
+  public LoginResponse refresh(@Valid @RequestBody RefreshTokenRequest request) {
+    return authService.refreshToken(request.refreshToken());
+  }
+
   @PostMapping("/change-password")
   public void changePassword(
       AgentVaultAuthentication authentication, @Valid @RequestBody ChangePasswordRequest request) {
 
     userService.changePassword(
-        (UUID) authentication.getPrincipal(), request.oldPassword(), request.newPassword());
+        (Long) authentication.getPrincipal(), request.oldPassword(), request.newPassword());
   }
 
   @PostMapping("/forgot-password")
@@ -74,9 +78,9 @@ public class AuthController {
         "message",
         "pong",
         "tenantId",
-        authentication.getTenantId(),
+        authentication.getTenantId().toString(),
         "userId",
-        authentication.getPrincipal(),
+        authentication.getPrincipal().toString(),
         "role",
         authentication.getRole());
   }

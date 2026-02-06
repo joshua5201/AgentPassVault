@@ -27,7 +27,7 @@ public class FulfillmentUrlService {
   private final VaultUiProperties uiProperties;
 
   public String generate(Request request) {
-    // e.g., https://vault.local/requests/uuid...
-    return uiProperties.baseUrl() + uiProperties.fulfillmentPath() + request.getRequestId();
+    // e.g., https://vault.local/requests/tsid...
+    return uiProperties.baseUrl() + uiProperties.fulfillmentPath() + request.getId();
   }
 }

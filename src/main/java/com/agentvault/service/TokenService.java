@@ -22,7 +22,6 @@ import io.jsonwebtoken.Jwts;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.UUID;
 import javax.crypto.SecretKey;
 import org.springframework.stereotype.Service;
 
@@ -31,28 +30,54 @@ public class TokenService {
 
   private final SecretKey secretKey;
   private final long expirationMinutes;
+  private final long refreshExpirationMinutes;
   private final long leaseExpirationMinutes;
 
   public TokenService(JwtConfig jwtConfig) {
     this.secretKey = jwtConfig.getSecretKey();
     this.expirationMinutes = jwtConfig.getExpirationMinutes();
+    this.refreshExpirationMinutes = jwtConfig.getRefreshExpirationMinutes();
     this.leaseExpirationMinutes = jwtConfig.getLeaseExpirationMinutes();
   }
 
   public String generateToken(User user) {
     Instant now = Instant.now();
     return Jwts.builder()
-        .subject(user.getUserId().toString())
-        .claim("tenant_id", user.getTenantId().toString())
+        .subject(user.getId().toString())
+        .claim("tenant_id", user.getTenant().getId().toString())
         .claim("role", user.getRole().name())
+        .claim("type", "access")
         .issuedAt(Date.from(now))
         .expiration(Date.from(now.plus(expirationMinutes, ChronoUnit.MINUTES)))
         .signWith(secretKey)
         .compact();
   }
 
+  public String generateRefreshToken(User user) {
+    Instant now = Instant.now();
+    return Jwts.builder()
+        .subject(user.getId().toString())
+        .claim("type", "refresh")
+        .issuedAt(Date.from(now))
+        .expiration(Date.from(now.plus(refreshExpirationMinutes, ChronoUnit.MINUTES)))
+        .signWith(secretKey)
+        .compact();
+  }
+
+  public Long getUserIdFromToken(String token, String expectedType) {
+    Claims claims =
+        Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload();
+
+    String type = claims.get("type", String.class);
+    if (!expectedType.equals(type)) {
+      throw new IllegalArgumentException("Invalid token type");
+    }
+
+    return Long.parseLong(claims.getSubject());
+  }
+
   public String generateLeaseToken(
-      UUID tenantId,
+      Long tenantId,
       String agentUserId,
       String approvedByUserId,
       String secretId,
@@ -60,7 +85,7 @@ public class TokenService {
     Instant now = Instant.now();
     return Jwts.builder()
         .subject(agentUserId)
-        .claim("tenantId", tenantId)
+        .claim("tenant_id", tenantId.toString())
         .claim("approvedBy", approvedByUserId)
         .claim("secretId", secretId)
         .claim("requestId", requestId)
@@ -78,5 +103,13 @@ public class TokenService {
     if (!secretId.equals(tokenSecretId)) {
       throw new IllegalArgumentException("Invalid lease token for the requested secret");
     }
+  }
+
+  public long getExpirationMinutes() {
+    return expirationMinutes;
+  }
+
+  public long getRefreshExpirationMinutes() {
+    return refreshExpirationMinutes;
   }
 }

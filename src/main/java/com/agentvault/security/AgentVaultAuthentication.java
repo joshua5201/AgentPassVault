@@ -17,7 +17,6 @@ package com.agentvault.security;
 
 import com.agentvault.model.Role;
 import java.util.Collection;
-import java.util.UUID;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -25,17 +24,17 @@ import org.springframework.security.oauth2.jwt.Jwt;
 public class AgentVaultAuthentication extends AbstractAuthenticationToken {
 
   private final Jwt jwt;
-  private final UUID tenantId;
+  private final Long tenantId;
   private final Role role;
-  private final UUID agentId; // Nullable (only for agents)
-  private final UUID userId; // Subject
+  private final Long agentId; // Nullable (only for agents)
+  private final Long userId; // Subject
 
   public AgentVaultAuthentication(
       Jwt jwt,
-      UUID tenantId,
-      UUID userId,
+      Long tenantId,
+      Long userId,
       Role role,
-      UUID agentId,
+      Long agentId,
       Collection<? extends GrantedAuthority> authorities) {
     super(authorities);
     this.jwt = jwt;
@@ -56,7 +55,7 @@ public class AgentVaultAuthentication extends AbstractAuthenticationToken {
     return userId;
   }
 
-  public UUID getTenantId() {
+  public Long getTenantId() {
     return tenantId;
   }
 
@@ -64,7 +63,7 @@ public class AgentVaultAuthentication extends AbstractAuthenticationToken {
     return role;
   }
 
-  public UUID getAgentId() {
+  public Long getAgentId() {
     return agentId;
   }
 

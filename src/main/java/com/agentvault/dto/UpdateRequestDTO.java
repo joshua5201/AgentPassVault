@@ -15,25 +15,13 @@
  */
 package com.agentvault.dto;
 
-import com.agentvault.model.SecretVisibility;
+import com.agentvault.model.RequestStatus;
 import jakarta.validation.constraints.NotNull;
-import java.util.UUID;
+import jakarta.validation.constraints.Pattern;
 
 public record UpdateRequestDTO(
-    @NotNull Action action,
-    // For FULFILL
-    String name,
-    String value,
-    java.util.Map<String, Object> metadata,
-    // For MAP
-    UUID secretId,
-    SecretVisibility newVisibility,
+    @NotNull(message = "Status is required") RequestStatus status,
+    // For FULFILL (Existing Secret)
+    @Pattern(regexp = "^[0-9]+$", message = "Secret ID must be numeric") String secretId,
     // For REJECT
-    String reason) {
-  public enum Action {
-    FULFILL,
-    MAP,
-    REJECT,
-    APPROVE_LEASE
-  }
-}
+    String rejectionReason) {}

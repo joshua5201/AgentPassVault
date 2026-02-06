@@ -24,13 +24,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.agentvault.BaseIntegrationTest;
 import com.agentvault.dto.*;
-import com.agentvault.model.SecretVisibility;
-import com.agentvault.repository.SecretRepository;
+import com.agentvault.model.RequestStatus;
 import com.agentvault.service.AgentService;
 import com.agentvault.service.UserService;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -39,9 +37,8 @@ class RequestControllerTest extends BaseIntegrationTest {
 
   @Autowired private UserService userService;
   @Autowired private AgentService agentService;
-  @Autowired private SecretRepository secretRepository;
 
-  private String getAuthToken(UUID tenantId, String username, String password) throws Exception {
+  private String getAuthToken(String username, String password) throws Exception {
     String loginResponse =
         mockMvc
             .perform(
@@ -55,10 +52,11 @@ class RequestControllerTest extends BaseIntegrationTest {
     return objectMapper.readTree(loginResponse).get("accessToken").asText();
   }
 
-  private String createAgentAndGetJwt(UUID tenantId) throws Exception {
-    AgentTokenResponse agentResp = agentService.createAgent(tenantId, "test-agent");
-    String agentAppToken = agentResp.appToken();
+  private AgentTokenResponse createAgentAndGetJwt(Long tenantId) throws Exception {
+    return agentService.createAgent(tenantId, "test-agent");
+  }
 
+  private String getAgentJwt(Long tenantId, String agentAppToken) throws Exception {
     String agentLoginResp =
         mockMvc
             .perform(
@@ -66,7 +64,7 @@ class RequestControllerTest extends BaseIntegrationTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         objectMapper.writeValueAsString(
-                            new AgentLoginRequest(tenantId, agentAppToken))))
+                            new AgentLoginRequest(tenantId.toString(), agentAppToken))))
             .andReturn()
             .getResponse()
             .getContentAsString();
@@ -76,9 +74,9 @@ class RequestControllerTest extends BaseIntegrationTest {
 
   @Test
   void createAndFulfillRequest_Success() throws Exception {
-    UUID tenantId = createTenant();
+    Long tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin", "password");
-    String token = getAuthToken(tenantId, "admin", "password");
+    String token = getAuthToken("admin", "password");
 
     // 1. Create Request
     CreateRequestDTO createReq =
@@ -100,16 +98,24 @@ class RequestControllerTest extends BaseIntegrationTest {
             .getContentAsString();
     String requestId = objectMapper.readTree(reqResponse).get("requestId").asText();
 
-    // 2. Fulfill Request
-    UpdateRequestDTO fulfillReq =
-        new UpdateRequestDTO(
-            UpdateRequestDTO.Action.FULFILL,
-            "AWS Secret",
-            "secretVal",
-            Map.of("env", "prod"),
-            null,
-            null,
-            null);
+    // 2. Create Secret
+    CreateSecretRequest createSecretReq =
+        new CreateSecretRequest("AWS Secret", "ownerEncVal", Map.of("env", "prod"));
+    String secretResp =
+        mockMvc
+            .perform(
+                post("/api/v1/secrets")
+                    .header("Authorization", "Bearer " + token)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(createSecretReq)))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    String secretId = objectMapper.readTree(secretResp).get("secretId").asText();
+
+    // 3. Fulfill Request (Update status and link secret)
+    UpdateRequestDTO fulfillReq = new UpdateRequestDTO(RequestStatus.fulfilled, secretId, null);
 
     mockMvc
         .perform(
@@ -119,14 +125,14 @@ class RequestControllerTest extends BaseIntegrationTest {
                 .content(objectMapper.writeValueAsString(fulfillReq)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("fulfilled"))
-        .andExpect(jsonPath("$.mappedSecretId").exists());
+        .andExpect(jsonPath("$.mappedSecretId").value(secretId));
   }
 
   @Test
   void rejectRequest_Success() throws Exception {
-    UUID tenantId = createTenant();
+    Long tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin", "password");
-    String token = getAuthToken(tenantId, "admin", "password");
+    String token = getAuthToken("admin", "password");
 
     CreateRequestDTO createReq = new CreateRequestDTO("Bad Req", "Context", null, null);
     String reqResponse =
@@ -141,9 +147,7 @@ class RequestControllerTest extends BaseIntegrationTest {
             .getContentAsString();
     String requestId = objectMapper.readTree(reqResponse).get("requestId").asText();
 
-    UpdateRequestDTO rejectReq =
-        new UpdateRequestDTO(
-            UpdateRequestDTO.Action.REJECT, null, null, null, null, null, "Denied");
+    UpdateRequestDTO rejectReq = new UpdateRequestDTO(RequestStatus.rejected, null, "Denied");
 
     mockMvc
         .perform(
@@ -158,8 +162,9 @@ class RequestControllerTest extends BaseIntegrationTest {
 
   @Test
   void abandonRequest_Success() throws Exception {
-    UUID tenantId = createTenant();
-    String agentJwt = createAgentAndGetJwt(tenantId);
+    Long tenantId = createTenant();
+    AgentTokenResponse agentTokenResp = createAgentAndGetJwt(tenantId);
+    String agentJwt = getAgentJwt(tenantId, agentTokenResp.appToken());
 
     // 1. Create Request as Agent
     CreateRequestDTO createReq = new CreateRequestDTO("Agent Req", "Context", null, null);
@@ -184,7 +189,7 @@ class RequestControllerTest extends BaseIntegrationTest {
 
     // 3. Verify status is abandoned
     userService.createAdminUser(tenantId, "admin", "password");
-    String adminToken = getAuthToken(tenantId, "admin", "password");
+    String adminToken = getAuthToken("admin", "password");
     mockMvc
         .perform(
             get("/api/v1/requests/" + requestId).header("Authorization", "Bearer " + adminToken))
@@ -193,14 +198,13 @@ class RequestControllerTest extends BaseIntegrationTest {
   }
 
   @Test
-  void mapRequest_WithNewVisibility_Success() throws Exception {
-    UUID tenantId = createTenant();
+  void mapRequest_Success() throws Exception {
+    Long tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin", "password");
-    String adminToken = getAuthToken(tenantId, "admin", "password");
+    String adminToken = getAuthToken("admin", "password");
 
-    // 1. Create a HIDDEN secret
-    CreateSecretRequest createSecretReq =
-        new CreateSecretRequest("Hidden Secret", "hiddenVal", null);
+    // 1. Create a secret
+    CreateSecretRequest createSecretReq = new CreateSecretRequest("Test Secret", "val", null);
     String secretResp =
         mockMvc
             .perform(
@@ -212,11 +216,6 @@ class RequestControllerTest extends BaseIntegrationTest {
             .getResponse()
             .getContentAsString();
     String secretId = objectMapper.readTree(secretResp).get("secretId").asText();
-
-    com.agentvault.model.Secret secret =
-        secretRepository.findBySecretId(UUID.fromString(secretId)).get();
-    secret.setVisibility(SecretVisibility.HIDDEN);
-    secretRepository.save(secret);
 
     // 2. Create Request for it
     CreateRequestDTO createReq = new CreateRequestDTO("Reveal Secret", "Context", null, null);
@@ -232,16 +231,8 @@ class RequestControllerTest extends BaseIntegrationTest {
             .getContentAsString();
     String requestId = objectMapper.readTree(reqResponse).get("requestId").asText();
 
-    // 3. Map Request and change visibility to VISIBLE
-    UpdateRequestDTO mapReq =
-        new UpdateRequestDTO(
-            UpdateRequestDTO.Action.MAP,
-            null,
-            null,
-            null,
-            UUID.fromString(secretId),
-            SecretVisibility.VISIBLE,
-            null);
+    // 3. Map Request (Same as Fulfill in new API, just linking existing secret)
+    UpdateRequestDTO mapReq = new UpdateRequestDTO(RequestStatus.fulfilled, secretId, null);
 
     mockMvc
         .perform(
@@ -252,11 +243,5 @@ class RequestControllerTest extends BaseIntegrationTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("fulfilled"))
         .andExpect(jsonPath("$.mappedSecretId").value(secretId));
-
-    // 4. Verify secret is now VISIBLE
-    mockMvc
-        .perform(get("/api/v1/secrets/" + secretId).header("Authorization", "Bearer " + adminToken))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.visibility").value("VISIBLE"));
   }
 }

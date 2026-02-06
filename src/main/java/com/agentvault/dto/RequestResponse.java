@@ -17,21 +17,20 @@ package com.agentvault.dto;
 
 import com.agentvault.model.RequestStatus;
 import com.agentvault.model.RequestType;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 public record RequestResponse(
-    UUID requestId,
+    String requestId,
     RequestStatus status,
     RequestType type,
     String name,
     String context,
     Map<String, Object> requiredMetadata,
     List<String> requiredFieldsInSecretValue,
-    UUID mappedSecretId,
+    String mappedSecretId,
     String rejectionReason,
     String fulfillmentUrl,
-    LocalDateTime createdAt,
-    LocalDateTime updatedAt) {}
+    Instant createdAt,
+    Instant updatedAt) {}

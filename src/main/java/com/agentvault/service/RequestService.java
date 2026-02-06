@@ -16,11 +16,8 @@
 package com.agentvault.service;
 
 import com.agentvault.dto.*;
-import com.agentvault.model.Request;
-import com.agentvault.model.RequestStatus;
-import com.agentvault.repository.RequestRepository;
-import com.agentvault.repository.SecretRepository;
-import java.util.UUID;
+import com.agentvault.model.*;
+import com.agentvault.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,22 +28,34 @@ public class RequestService {
 
   private final RequestRepository requestRepository;
   private final SecretRepository secretRepository;
-  private final SecretService secretService;
+  private final TenantRepository tenantRepository;
+  private final UserRepository userRepository;
   private final FulfillmentUrlService fulfillmentUrlService;
-  private final TokenService tokenService;
 
-  public RequestResponse createRequest(UUID tenantId, UUID requesterId, CreateRequestDTO dto) {
+  @Transactional
+  public RequestResponse createRequest(Long tenantId, Long requesterId, CreateRequestDTO dto) {
+    Tenant tenant =
+        tenantRepository
+            .findById(tenantId)
+            .orElseThrow(() -> new IllegalArgumentException("Tenant not found"));
+
+    User requester =
+        userRepository
+            .findById(requesterId)
+            .orElseThrow(() -> new IllegalArgumentException("Requester not found"));
+
     Request request = new Request();
-    request.setTenantId(tenantId);
-    request.setRequesterId(requesterId);
-    request.setRequestId(UUID.randomUUID());
+    request.setTenant(tenant);
+    request.setRequester(requester);
     request.setStatus(RequestStatus.pending);
     request.setName(dto.name());
     request.setContext(dto.context());
     request.setRequiredMetadata(dto.requiredMetadata());
     request.setRequiredFieldsInSecretValue(dto.requiredFieldsInSecretValue());
     request.setType(dto.type());
-    request.setSecretId(dto.secretId());
+    if (dto.secretId() != null) {
+      request.setSecretId(Long.valueOf(dto.secretId()));
+    }
 
     // Generate and set the URL
     request.setFulfillmentUrl(fulfillmentUrlService.generate(request));
@@ -54,86 +63,48 @@ public class RequestService {
     return mapToResponse(requestRepository.save(request));
   }
 
-  public RequestResponse getRequest(UUID tenantId, UUID requestId) {
+  public RequestResponse getRequest(Long tenantId, Long requestId) {
     return mapToResponse(findRequest(tenantId, requestId));
   }
 
   @Transactional
-  public RequestResponse fulfillRequest(UUID tenantId, UUID requestId, FulfillRequestDTO dto) {
+  public RequestResponse updateRequestStatus(Long tenantId, Long requestId, UpdateRequestDTO dto) {
     Request request = findRequest(tenantId, requestId);
     validatePending(request);
 
-    // Create the secret
-    CreateSecretRequest secretRequest =
-        new CreateSecretRequest(dto.name(), dto.value(), dto.metadata());
-    SecretMetadataResponse secret = secretService.createSecret(tenantId, secretRequest);
+    if (dto.status() == RequestStatus.fulfilled) {
+      if (dto.secretId() == null) {
+        throw new IllegalArgumentException("Secret ID is required for fulfilling request");
+      }
+      Long secretId = Long.valueOf(dto.secretId());
+      // Verify secret exists and belongs to tenant
+      @SuppressWarnings("unused")
+      Secret unused =
+          secretRepository
+              .findById(secretId)
+              .filter(s -> s.getTenant().getId().equals(tenantId))
+              .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
 
-    request.setStatus(RequestStatus.fulfilled);
-    request.setMappedSecretId(secret.secretId());
-
-    return mapToResponse(requestRepository.save(request));
-  }
-
-  public RequestResponse mapRequest(UUID tenantId, UUID requestId, MapRequestDTO dto) {
-    Request request = findRequest(tenantId, requestId);
-    validatePending(request);
-
-    // Verify secret exists and belongs to tenant
-    secretRepository
-        .findBySecretId(dto.secretId())
-        .filter(s -> s.getTenantId().equals(tenantId))
-        .ifPresentOrElse(
-            secret -> {
-              if (dto.newVisibility() != null) {
-                secret.setVisibility(dto.newVisibility());
-                secretRepository.save(secret);
-              }
-            },
-            () -> {
-              throw new IllegalArgumentException("Secret not found");
-            });
-
-    request.setStatus(RequestStatus.fulfilled);
-    request.setMappedSecretId(dto.secretId());
-
-    return mapToResponse(requestRepository.save(request));
-  }
-
-  public ApproveLeaseResponseDTO approveLease(UUID tenantId, UUID requestId, String approverId) {
-    Request request = findRequest(tenantId, requestId);
-    validatePending(request);
-
-    if (request.getType() != com.agentvault.model.RequestType.LEASE) {
-      throw new IllegalStateException("Request is not a lease request");
+      request.setStatus(RequestStatus.fulfilled);
+      request.setMappedSecretId(secretId);
+    } else if (dto.status() == RequestStatus.rejected) {
+      if (dto.rejectionReason() == null) {
+        throw new IllegalArgumentException("Rejection reason is required");
+      }
+      request.setStatus(RequestStatus.rejected);
+      request.setRejectionReason(dto.rejectionReason());
+    } else {
+      throw new IllegalArgumentException(
+          "Invalid status update. Only fulfilled or rejected allowed.");
     }
 
-    String leaseToken =
-        tokenService.generateLeaseToken(
-            tenantId,
-            request.getRequesterId().toString(),
-            approverId,
-            request.getSecretId().toString(),
-            request.getRequestId().toString());
-
-    request.setStatus(RequestStatus.fulfilled);
-    requestRepository.save(request);
-
-    return new ApproveLeaseResponseDTO(leaseToken);
-  }
-
-  public RequestResponse rejectRequest(UUID tenantId, UUID requestId, String reason) {
-    Request request = findRequest(tenantId, requestId);
-    validatePending(request);
-
-    request.setStatus(RequestStatus.rejected);
-    request.setRejectionReason(reason);
-
     return mapToResponse(requestRepository.save(request));
   }
 
-  public void abandonRequest(UUID tenantId, UUID requesterId, UUID requestId) {
+  @Transactional
+  public void abandonRequest(Long tenantId, Long requesterId, Long requestId) {
     Request request = findRequest(tenantId, requestId);
-    if (!request.getRequesterId().equals(requesterId)) {
+    if (!request.getRequester().getId().equals(requesterId)) {
       throw new IllegalStateException("Only the requester can abandon the request");
     }
     validatePending(request);
@@ -142,10 +113,10 @@ public class RequestService {
     requestRepository.save(request);
   }
 
-  private Request findRequest(UUID tenantId, UUID requestId) {
+  private Request findRequest(Long tenantId, Long requestId) {
     return requestRepository
-        .findByRequestId(requestId)
-        .filter(r -> r.getTenantId().equals(tenantId))
+        .findById(requestId)
+        .filter(r -> r.getTenant().getId().equals(tenantId))
         .orElseThrow(() -> new IllegalArgumentException("Request not found"));
   }
 
@@ -157,14 +128,14 @@ public class RequestService {
 
   private RequestResponse mapToResponse(Request request) {
     return new RequestResponse(
-        request.getRequestId(),
+        request.getId().toString(),
         request.getStatus(),
         request.getType(),
         request.getName(),
         request.getContext(),
         request.getRequiredMetadata(),
         request.getRequiredFieldsInSecretValue(),
-        request.getMappedSecretId(),
+        request.getMappedSecretId() != null ? request.getMappedSecretId().toString() : null,
         request.getRejectionReason(),
         request.getFulfillmentUrl(),
         request.getCreatedAt(),

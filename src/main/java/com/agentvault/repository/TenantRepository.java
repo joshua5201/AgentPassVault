@@ -16,12 +16,8 @@
 package com.agentvault.repository;
 
 import com.agentvault.model.Tenant;
-import java.util.Optional;
-import java.util.UUID;
-import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface TenantRepository extends MongoRepository<Tenant, String> {
-  Optional<Tenant> findByTenantId(UUID tenantId);
-}
+public interface TenantRepository extends JpaRepository<Tenant, Long> {}

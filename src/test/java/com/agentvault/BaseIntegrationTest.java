@@ -15,19 +15,14 @@
  */
 package com.agentvault;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
 import com.agentvault.model.Tenant;
+import com.agentvault.repository.LeaseRepository;
 import com.agentvault.repository.RequestRepository;
 import com.agentvault.repository.SecretRepository;
 import com.agentvault.repository.TenantRepository;
 import com.agentvault.repository.UserRepository;
-import com.agentvault.service.crypto.KeyManagementService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -36,8 +31,6 @@ import org.springframework.test.web.servlet.MockMvc;
 @SpringBootTest
 @AutoConfigureMockMvc
 public abstract class BaseIntegrationTest {
-
-  private static final Logger log = LoggerFactory.getLogger(BaseIntegrationTest.class);
 
   @Autowired protected MockMvc mockMvc;
 
@@ -51,32 +44,22 @@ public abstract class BaseIntegrationTest {
 
   @Autowired protected RequestRepository requestRepository;
 
-  @Autowired protected KeyManagementService keyManagementService;
-
-  @Autowired protected org.springframework.data.mongodb.core.MongoTemplate mongoTemplate;
+  @Autowired protected LeaseRepository leaseRepository;
 
   @BeforeEach
   void clearDatabase() {
-    mongoTemplate.dropCollection(com.agentvault.model.User.class);
-    mongoTemplate.dropCollection(com.agentvault.model.Tenant.class);
-    mongoTemplate.dropCollection(com.agentvault.model.Secret.class);
-    mongoTemplate.dropCollection(com.agentvault.model.Request.class);
+    leaseRepository.deleteAll();
+    requestRepository.deleteAll();
+    secretRepository.deleteAll();
+    userRepository.deleteAll();
+    tenantRepository.deleteAll();
   }
 
-  protected UUID createTenant() {
-    UUID tenantId = UUID.randomUUID();
+  protected Long createTenant() {
     Tenant tenant = new Tenant();
-    tenant.setId(tenantId.toString());
-    tenant.setTenantId(tenantId);
-    tenant.setName("Test Tenant");
+    tenant.setName("Test Tenant " + java.util.UUID.randomUUID());
     tenant.setStatus("active");
 
-    byte[] encryptedTenantKey = keyManagementService.generateEncryptedTenantKey();
-    assertNotNull(encryptedTenantKey, "Encrypted tenant key should not be null");
-    log.info("Generated encryptedTenantKey with length: {}", encryptedTenantKey.length);
-
-    tenant.setEncryptedTenantKey(encryptedTenantKey);
-    tenantRepository.save(tenant);
-    return tenantId;
+    return tenantRepository.save(tenant).getId();
   }
 }

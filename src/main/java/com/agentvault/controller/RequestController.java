@@ -19,7 +19,6 @@ import com.agentvault.dto.*;
 import com.agentvault.security.AgentVaultAuthentication;
 import com.agentvault.service.RequestService;
 import jakarta.validation.Valid;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -39,62 +38,31 @@ public class RequestController {
   public RequestResponse createRequest(
       AgentVaultAuthentication authentication, @Valid @RequestBody CreateRequestDTO dto) {
     return requestService.createRequest(
-        authentication.getTenantId(), (UUID) authentication.getPrincipal(), dto);
+        authentication.getTenantId(), (Long) authentication.getPrincipal(), dto);
   }
 
   @GetMapping("/{id}")
   @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
   public RequestResponse getRequest(
-      AgentVaultAuthentication authentication, @PathVariable UUID id) {
+      AgentVaultAuthentication authentication, @PathVariable Long id) {
     return requestService.getRequest(authentication.getTenantId(), id);
   }
 
   @DeleteMapping("/{id}")
   @PreAuthorize("hasRole('AGENT')")
   public ResponseEntity<Void> abandonRequest(
-      AgentVaultAuthentication authentication, @PathVariable UUID id) {
+      AgentVaultAuthentication authentication, @PathVariable Long id) {
     requestService.abandonRequest(
-        authentication.getTenantId(), (UUID) authentication.getPrincipal(), id);
+        authentication.getTenantId(), (Long) authentication.getPrincipal(), id);
     return ResponseEntity.noContent().build();
   }
 
   @PatchMapping("/{id}")
   @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<?> updateRequest(
+  public RequestResponse updateRequest(
       AgentVaultAuthentication authentication,
-      @PathVariable UUID id,
+      @PathVariable Long id,
       @Valid @RequestBody UpdateRequestDTO dto) {
-    switch (dto.action()) {
-      case FULFILL:
-        if (dto.name() == null || dto.value() == null) {
-          return ResponseEntity.badRequest().body("Name and value are required for FULFILL");
-        }
-        return ResponseEntity.ok(
-            requestService.fulfillRequest(
-                authentication.getTenantId(),
-                id,
-                new FulfillRequestDTO(dto.name(), dto.value(), dto.metadata())));
-      case MAP:
-        if (dto.secretId() == null) {
-          return ResponseEntity.badRequest().body("Secret ID is required for MAP");
-        }
-        return ResponseEntity.ok(
-            requestService.mapRequest(
-                authentication.getTenantId(),
-                id,
-                new MapRequestDTO(dto.secretId(), dto.newVisibility())));
-      case REJECT:
-        if (dto.reason() == null) {
-          return ResponseEntity.badRequest().body("Reason is required for REJECT");
-        }
-        return ResponseEntity.ok(
-            requestService.rejectRequest(authentication.getTenantId(), id, dto.reason()));
-      case APPROVE_LEASE:
-        ApproveLeaseResponseDTO leaseResponse =
-            requestService.approveLease(
-                authentication.getTenantId(), id, authentication.getPrincipal().toString());
-        return ResponseEntity.ok(leaseResponse);
-    }
-    return ResponseEntity.badRequest().build();
+    return requestService.updateRequestStatus(authentication.getTenantId(), id, dto);
   }
 }

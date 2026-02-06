@@ -19,11 +19,11 @@ import com.agentvault.dto.CreateSecretRequest;
 import com.agentvault.dto.SearchSecretRequest;
 import com.agentvault.dto.SecretMetadataResponse;
 import com.agentvault.dto.SecretResponse;
+import com.agentvault.dto.UpdateSecretRequest;
 import com.agentvault.security.AgentVaultAuthentication;
 import com.agentvault.service.SecretService;
 import jakarta.validation.Valid;
 import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -48,17 +48,26 @@ public class SecretController {
   @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
   public SecretResponse getSecret(
       AgentVaultAuthentication authentication,
-      @PathVariable UUID id,
+      @PathVariable Long id,
       @RequestParam(required = false) String leaseToken) {
     if (leaseToken != null) {
       return secretService.getSecretWithLease(authentication.getTenantId(), id, leaseToken);
     }
-    return secretService.getSecret(authentication.getTenantId(), id);
+    return secretService.getSecret(authentication, id);
+  }
+
+  @PatchMapping("/{id}")
+  @PreAuthorize("hasRole('ADMIN')")
+  public SecretMetadataResponse updateSecret(
+      AgentVaultAuthentication authentication,
+      @PathVariable Long id,
+      @Valid @RequestBody UpdateSecretRequest request) {
+    return secretService.updateSecret(authentication.getTenantId(), id, request);
   }
 
   @DeleteMapping("/{id}")
   @PreAuthorize("hasRole('ADMIN')")
-  public void deleteSecret(AgentVaultAuthentication authentication, @PathVariable UUID id) {
+  public void deleteSecret(AgentVaultAuthentication authentication, @PathVariable Long id) {
     secretService.deleteSecret(authentication.getTenantId(), id);
   }
 

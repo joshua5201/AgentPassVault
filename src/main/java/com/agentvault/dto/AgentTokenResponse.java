@@ -15,6 +15,4 @@
  */
 package com.agentvault.dto;
 
-import java.util.UUID;
-
-public record AgentTokenResponse(UUID agentId, String appToken) {}
+public record AgentTokenResponse(String agentId, String appToken) {}

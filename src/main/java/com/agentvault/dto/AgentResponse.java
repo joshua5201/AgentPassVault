@@ -15,8 +15,7 @@
  */
 package com.agentvault.dto;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
+import java.time.Instant;
 
 public record AgentResponse(
-    UUID agentId, String name, String displayName, LocalDateTime createdAt) {}
+    String agentId, String name, String displayName, String publicKey, Instant createdAt) {}

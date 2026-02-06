@@ -15,46 +15,59 @@
  */
 package com.agentvault.model;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import java.time.Instant;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
-import org.springframework.data.mongodb.core.mapping.FieldType;
 
 @Data
+@Entity
+@Table(name = "users")
 @EqualsAndHashCode(callSuper = true)
-@Document(collection = "users")
 public class User extends BaseEntity {
 
-  @Id private String id; // ObjectId
+  @ManyToOne(fetch = FetchType.EAGER)
+  @JoinColumn(name = "tenant_id", nullable = false)
+  private Tenant tenant;
 
-  @Indexed(unique = true)
-  private UUID userId;
-
-  @Indexed private UUID tenantId;
-
-  @Indexed(unique = true)
+  @Column(name = "username", unique = true, nullable = false)
   private String username;
 
+  @Column(name = "display_name")
   private String displayName;
+
+  @Column(name = "password_hash")
   private String passwordHash;
 
-  @Field(targetType = FieldType.STRING)
+  @Enumerated(EnumType.STRING)
+  @Column(name = "role", nullable = false)
   private Role role;
 
+  @Column(name = "app_token_hash")
   private String appTokenHash;
-  @Indexed private String resetPasswordToken;
-  private LocalDateTime resetPasswordExpiresAt;
-  private LocalDateTime resetPasswordTokenCreatedAt;
-  private LocalDateTime passwordLastUpdatedAt;
 
-  @CreatedDate private LocalDateTime createdAt;
+  @Column(name = "reset_password_token")
+  private String resetPasswordToken;
 
-  @LastModifiedDate private LocalDateTime updatedAt;
+  @Column(name = "reset_password_expires_at")
+  private Instant resetPasswordExpiresAt;
+
+  @Column(name = "reset_password_token_created_at")
+  private Instant resetPasswordTokenCreatedAt;
+
+  @Column(name = "password_last_updated_at")
+  private Instant passwordLastUpdatedAt;
+
+  @Column(name = "public_key", columnDefinition = "TEXT")
+  private String publicKey;
+
+  @Column(name = "encrypted_master_key_salt")
+  private String encryptedMasterKeySalt;
 }

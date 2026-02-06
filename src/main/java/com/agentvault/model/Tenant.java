@@ -15,31 +15,21 @@
  */
 package com.agentvault.model;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
+@Entity
+@Table(name = "tenants")
 @EqualsAndHashCode(callSuper = true)
-@Document(collection = "tenants")
 public class Tenant extends BaseEntity {
 
-  @Id private String id; // ObjectId
-
-  @Indexed(unique = true)
-  private UUID tenantId;
-
+  @Column(name = "name", nullable = false)
   private String name;
-  private byte[] encryptedTenantKey;
+
+  @Column(name = "status")
   private String status;
-
-  @CreatedDate private LocalDateTime createdAt;
-
-  @LastModifiedDate private LocalDateTime updatedAt;
 }

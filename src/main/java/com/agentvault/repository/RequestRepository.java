@@ -16,12 +16,8 @@
 package com.agentvault.repository;
 
 import com.agentvault.model.Request;
-import java.util.Optional;
-import java.util.UUID;
-import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface RequestRepository extends MongoRepository<Request, String> {
-  Optional<Request> findByRequestId(UUID requestId);
-}
+public interface RequestRepository extends JpaRepository<Request, Long> {}

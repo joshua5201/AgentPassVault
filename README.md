@@ -14,6 +14,13 @@ AgentVault addresses this critical gap by providing a secure and auditable mecha
 - **Request-Response Workflow**: Agents "ask" for secrets; Admins fulfill them securely.
 - **Audit Ready**: Tracks secret creation and access.
 
+## 📏 Constraints
+To prevent abuse and ensure optimal performance, AgentVault enforces the following limits:
+- **Secret Size**: Maximum **64 KB** for encrypted secret values.
+- **Metadata Size**: Maximum **8 KB** for combined metadata.
+- **Request Context**: Maximum **2 KB** for request descriptions.
+- **Idempotency**: All `POST` and `PATCH` operations support the `Idempotency-Key` header (UUID) to prevent duplicate actions.
+
 ## 🛠️ Development Setup
 
 ### Prerequisites
@@ -21,9 +28,9 @@ AgentVault addresses this critical gap by providing a secure and auditable mecha
 - Docker & Docker Compose
 
 ### Quick Start
-1.  **Start Infrastructure (MongoDB):**
+1.  **Start Infrastructure (MySQL):**
     ```bash
-    docker-compose up -d
+    ./scripts/management/dev-env.sh
     ```
 2.  **Run the Application (Dev Profile):**
     ```bash
@@ -33,7 +40,7 @@ AgentVault addresses this critical gap by providing a secure and auditable mecha
 
 3.  **Get Credentials:**
     ```bash
-    ./get-dev-tenant.sh
+    ./scripts/management/get-dev-tenant.sh
     # Outputs: Tenant ID and Username
     ```
 

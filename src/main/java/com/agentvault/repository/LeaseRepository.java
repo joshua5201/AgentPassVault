@@ -13,10 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.agentvault.model;
+package com.agentvault.repository;
 
-public enum SecretVisibility {
-  VISIBLE,
-  LEASE_REQUIRED,
-  HIDDEN
+import com.agentvault.model.Lease;
+import java.util.List;
+import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface LeaseRepository extends JpaRepository<Lease, Long> {
+  List<Lease> findBySecret_IdAndAgent_Id(Long secretId, Long agentId);
+
+  List<Lease> findBySecret_Id(Long secretId);
+
+  Optional<Lease> findBySecret_IdAndAgent_IdAndPublicKey(
+      Long secretId, Long agentId, String publicKey);
 }

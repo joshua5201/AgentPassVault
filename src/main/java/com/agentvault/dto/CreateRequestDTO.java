@@ -18,17 +18,18 @@ package com.agentvault.dto;
 import com.agentvault.model.RequestType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 public record CreateRequestDTO(
     @NotBlank(message = "Request name cannot be blank") String name,
-    String context,
+    @Size(max = 2048, message = "Context must not exceed 2 KB") String context,
     Map<String, Object> requiredMetadata,
     List<String> requiredFieldsInSecretValue,
     @NotNull RequestType type,
-    UUID secretId) {
+    @Pattern(regexp = "^[0-9]+$", message = "Secret ID must be numeric") String secretId) {
 
   // Constructor for CREATE requests
   public CreateRequestDTO(

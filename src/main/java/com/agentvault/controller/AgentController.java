@@ -18,12 +18,14 @@ package com.agentvault.controller;
 import com.agentvault.dto.AgentResponse;
 import com.agentvault.dto.AgentTokenResponse;
 import com.agentvault.dto.CreateAgentRequest;
+import com.agentvault.dto.RegisterAgentRequest;
+import com.agentvault.model.Role;
 import com.agentvault.security.AgentVaultAuthentication;
 import com.agentvault.service.AgentService;
 import jakarta.validation.Valid;
 import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -31,31 +33,57 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/agents")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
 @Validated
 public class AgentController {
 
   private final AgentService agentService;
 
   @GetMapping
+  @PreAuthorize("hasRole('ADMIN')")
   public List<AgentResponse> listAgents(AgentVaultAuthentication authentication) {
     return agentService.listAgents(authentication.getTenantId());
   }
 
+  @GetMapping("/{id}")
+  @PreAuthorize("hasRole('ADMIN')")
+  public AgentResponse getAgent(AgentVaultAuthentication authentication, @PathVariable Long id) {
+    // Re-use listAgents filtering logic via mapToResponse helper in service
+    // or better, add getAgent to service. I'll add it to service.
+    return agentService.getAgentResponse(authentication.getTenantId(), id);
+  }
+
   @PostMapping
+  @PreAuthorize("hasRole('ADMIN')")
   public AgentTokenResponse createAgent(
       AgentVaultAuthentication authentication, @Valid @RequestBody CreateAgentRequest request) {
     return agentService.createAgent(authentication.getTenantId(), request.name());
   }
 
   @PostMapping("/{id}/rotate")
+  @PreAuthorize("hasRole('ADMIN')")
   public AgentTokenResponse rotateToken(
-      AgentVaultAuthentication authentication, @PathVariable UUID id) {
+      AgentVaultAuthentication authentication, @PathVariable Long id) {
     return agentService.rotateToken(authentication.getTenantId(), id);
   }
 
   @DeleteMapping("/{id}")
-  public void deleteAgent(AgentVaultAuthentication authentication, @PathVariable UUID id) {
+  @PreAuthorize("hasRole('ADMIN')")
+  public void deleteAgent(AgentVaultAuthentication authentication, @PathVariable Long id) {
     agentService.deleteAgent(authentication.getTenantId(), id);
+  }
+
+  @PostMapping("/{id}/register")
+  @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
+  public void registerAgent(
+      AgentVaultAuthentication authentication,
+      @PathVariable Long id,
+      @Valid @RequestBody RegisterAgentRequest request) {
+
+    // Security check: if role is AGENT, they can only register for themselves
+    if (Role.AGENT.equals(authentication.getRole()) && !id.equals(authentication.getPrincipal())) {
+      throw new AccessDeniedException("Agents can only register their own public key");
+    }
+
+    agentService.registerPublicKey(authentication.getTenantId(), id, request.publicKey());
   }
 }

@@ -21,12 +21,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.agentvault.BaseIntegrationTest;
 import com.agentvault.dto.*;
-import com.agentvault.model.Tenant;
 import com.agentvault.service.UserService;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Base64;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -35,19 +33,9 @@ class AuthControllerTest extends BaseIntegrationTest {
 
   @Autowired private UserService userService;
 
-  private void createTenant(UUID id) {
-    Tenant tenant = new Tenant();
-    tenant.setId(id.toString());
-    tenant.setTenantId(id);
-    tenant.setName("Test Tenant");
-    tenant.setStatus("active");
-    tenantRepository.save(tenant);
-  }
-
   @Test
   void changePassword_WithValidCredentials_Success() throws Exception {
-    UUID tenantId = UUID.randomUUID();
-    createTenant(tenantId);
+    Long tenantId = createTenant();
 
     // Create user with known password
     userService.createAdminUser(tenantId, "change_pass_user", "oldPass123");
@@ -92,8 +80,7 @@ class AuthControllerTest extends BaseIntegrationTest {
 
   @Test
   void forgotAndResetPassword_Flow_Success() throws Exception {
-    UUID tenantId = UUID.randomUUID();
-    createTenant(tenantId);
+    Long tenantId = createTenant();
     userService.createAdminUser(tenantId, "reset_user", "oldPass");
 
     // 1. Forgot Password
@@ -136,8 +123,7 @@ class AuthControllerTest extends BaseIntegrationTest {
 
   @Test
   void resetPassword_TokenIssuedBeforeLastUpdate_ReturnsError() throws Exception {
-    UUID tenantId = UUID.randomUUID();
-    createTenant(tenantId);
+    Long tenantId = createTenant();
     userService.createAdminUser(tenantId, "security_user", "pass");
 
     // 1. Forgot Password -> get token
@@ -160,8 +146,7 @@ class AuthControllerTest extends BaseIntegrationTest {
 
     // 2. Manually simulate password update AFTER token was issued
     com.agentvault.model.User user = userRepository.findByUsername("security_user").get();
-    user.setPasswordLastUpdatedAt(
-        java.time.LocalDateTime.now(java.time.ZoneId.of("UTC")).plusSeconds(1));
+    user.setPasswordLastUpdatedAt(java.time.Instant.now().plusSeconds(1));
     userRepository.save(user);
 
     // 3. Attempt to reset password with the now "old" token
@@ -182,8 +167,7 @@ class AuthControllerTest extends BaseIntegrationTest {
 
   @Test
   void ping_WithValidToken_ReturnsPong() throws Exception {
-    UUID tenantId = UUID.randomUUID();
-    createTenant(tenantId);
+    Long tenantId = createTenant();
 
     userService.createAdminUser(tenantId, "testuser", "password");
 
@@ -213,8 +197,7 @@ class AuthControllerTest extends BaseIntegrationTest {
 
   @Test
   void login_WithValidAdminCredentials_ReturnsToken() throws Exception {
-    UUID tenantId = UUID.randomUUID();
-    createTenant(tenantId);
+    Long tenantId = createTenant();
 
     userService.createAdminUser(tenantId, "admin", "password");
 
@@ -227,13 +210,13 @@ class AuthControllerTest extends BaseIntegrationTest {
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.accessToken").exists())
-        .andExpect(jsonPath("$.tokenType").value("Bearer"));
+        .andExpect(jsonPath("$.tokenType").value("Bearer"))
+        .andExpect(jsonPath("$.refreshTokenExpiresIn").exists());
   }
 
   @Test
   void login_WithValidAgentToken_ReturnsToken() throws Exception {
-    UUID tenantId = UUID.randomUUID();
-    createTenant(tenantId);
+    Long tenantId = createTenant();
 
     String rawToken = "agent-token-123";
 
@@ -243,7 +226,7 @@ class AuthControllerTest extends BaseIntegrationTest {
 
     userService.createAgentUser(tenantId, tokenHash);
 
-    AgentLoginRequest request = new AgentLoginRequest(tenantId, rawToken);
+    AgentLoginRequest request = new AgentLoginRequest(tenantId.toString(), rawToken);
 
     mockMvc
         .perform(
@@ -251,7 +234,8 @@ class AuthControllerTest extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.accessToken").exists());
+        .andExpect(jsonPath("$.accessToken").exists())
+        .andExpect(jsonPath("$.refreshTokenExpiresIn").exists());
   }
 
   @Test
@@ -263,6 +247,53 @@ class AuthControllerTest extends BaseIntegrationTest {
             post("/api/v1/auth/login/user")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void refreshToken_WithValidToken_Success() throws Exception {
+    Long tenantId = createTenant();
+    userService.createAdminUser(tenantId, "refresh_user", "password");
+
+    // 1. Login to get refresh token
+    String loginResponse =
+        mockMvc
+            .perform(
+                post("/api/v1/auth/login/user")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        objectMapper.writeValueAsString(
+                            new UserLoginRequest("refresh_user", "password"))))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    String refreshToken = objectMapper.readTree(loginResponse).get("refreshToken").asText();
+
+    // 2. Refresh token
+    RefreshTokenRequest refreshRequest = new RefreshTokenRequest(refreshToken);
+
+    mockMvc
+        .perform(
+            post("/api/v1/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(refreshRequest)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.accessToken").exists())
+        .andExpect(jsonPath("$.refreshToken").exists())
+        .andExpect(jsonPath("$.refreshTokenExpiresIn").exists());
+  }
+
+  @Test
+  void refreshToken_WithInvalidToken_Returns401() throws Exception {
+    RefreshTokenRequest refreshRequest = new RefreshTokenRequest("invalid_token");
+
+    mockMvc
+        .perform(
+            post("/api/v1/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(refreshRequest)))
         .andExpect(status().isUnauthorized());
   }
 }
