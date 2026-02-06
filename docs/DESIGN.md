@@ -1,7 +1,7 @@
-# AgentVault Design Document
+# AgentPassVault Design Document
 
 ## Overview
-AgentVault is a lightweight, standalone password and secret manager designed for automated agents (e.g., OpenClaw). It bridges the gap between autonomous agents and secure credential management by allowing agents to retrieve secrets and, crucially, request new ones from human admins asynchronously without exposing sensitive data in chat logs.
+AgentPassVault is a lightweight, standalone password and secret manager designed for automated agents (e.g., OpenClaw). It bridges the gap between autonomous agents and secure credential management by allowing agents to retrieve secrets and, crucially, request new ones from human admins asynchronously without exposing sensitive data in chat logs.
 
 ## Core Philosophy
 *   **Agent-Centric:** APIs are designed for machine consumption.
@@ -35,7 +35,7 @@ To prevent the service from being used as a general-purpose storage or for large
 *   **Request Context:** The context field in secret requests is limited to **2 KB**.
 
 ## Idempotency
-To prevent duplicate records and ensure reliable operations over unstable networks, AgentVault supports idempotency for all state-changing operations (`POST` and `PATCH`):
+To prevent duplicate records and ensure reliable operations over unstable networks, AgentPassVault supports idempotency for all state-changing operations (`POST` and `PATCH`):
 *   **Idempotency-Key Header:** Clients should provide a unique UUID in the `Idempotency-Key` HTTP header.
 *   **Behavior:** If the server receives a second request with the same `Idempotency-Key` within a 24-hour window, it will return the same response as the first successful request without performing the action again.
 *   **Scope:** Idempotency keys are scoped to the `tenant_id`.
@@ -91,7 +91,7 @@ All features except the features listed in other sections.
 ### Agent Registration
 When the first time (or reset) the Agent want to use the API via the CLI, it has to do the registration.
 
-1.  Create a set of public key and private key. They should be stored in persistent storage (possibly .agentvault/) and set the permission to 600.
+1.  Create a set of public key and private key. They should be stored in persistent storage (possibly .agentpassvault/) and set the permission to 600.
 2.  Register the public key to the system. The system saves or overwrites the public key to the DB field.
 
 ### Secret Retrieval (Standard)

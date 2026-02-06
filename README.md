@@ -1,9 +1,9 @@
-# AgentVault
+# AgentPassVault
 
-**AgentVault** is a secure, standalone secret manager designed specifically for autonomous AI agents (like OpenClaw, formerly Moltbot, ClawdBot). It provides a bridge between human owners and automated workers, ensuring agents can access credentials without exposing sensitive data in chat logs or LLM context.
+**AgentPassVault** is a secure, standalone secret manager designed specifically for autonomous AI agents (like OpenClaw, formerly Moltbot, ClawdBot). It provides a bridge between human owners and automated workers, ensuring agents can access credentials without exposing sensitive data in chat logs or LLM context.
 
-## Why AgentVault?
-*   **Prevent Secret Leakage:** AI agents often need credentials. Sharing them directly in chat or system prompts is a massive security risk. AgentVault keeps secrets out of the LLM context.
+## Why AgentPassVault?
+*   **Prevent Secret Leakage:** AI agents often need credentials. Sharing them directly in chat or system prompts is a massive security risk. AgentPassVault keeps secrets out of the LLM context.
 *   **Asynchronous Approval:** Agents can request secrets they don't have. Humans fulfill these requests via a secure UI.
 *   **Zero Knowledge:** The server never sees your plaintext secrets. Everything is encrypted/decrypted on the client side.
 
@@ -23,7 +23,7 @@ Access is managed through **Leases**:
 4.  **Rotation Integrity:** If a secret is updated or an agent rotates its key, old leases are invalidated.
 
 ## Why It Is Safe
-AgentVault uses a **Zero-Knowledge Architecture**:
+AgentPassVault uses a **Zero-Knowledge Architecture**:
 *   **Master Key:** Secrets are encrypted with a Master Key derived from the human's password (which never leaves the browser).
 *   **Agent-Specific Encryption:** When a lease is created, the Web UI decrypts the secret and re-encrypts it with the agent's public key.
 *   **No Plaintext on Server:** The database only stores data that the server itself cannot decrypt. Even if the server is compromised, your secrets remain safe.

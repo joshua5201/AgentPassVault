@@ -1,1 +1,1 @@
-rootProject.name = "agentvault"
+rootProject.name = "agentpassvault"

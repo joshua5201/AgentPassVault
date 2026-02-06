@@ -1,12 +1,12 @@
 # New Implementation Plan: Client-Side Encryption Architecture
 
 ## Overview
-This plan outlines the transition of AgentVault from a server-side encryption model to a zero-knowledge architecture where the server only stores pre-encrypted blobs. The server will no longer possess any keys to decrypt user secrets.
+This plan outlines the transition of AgentPassVault from a server-side encryption model to a zero-knowledge architecture where the server only stores pre-encrypted blobs. The server will no longer possess any keys to decrypt user secrets.
 
 ## [x] 1. Remove Server-Side Encryption
-*   **Action:** Delete `src/main/java/com/agentvault/service/crypto/EncryptionService.java` and its tests.
-*   **Action:** Delete `src/main/java/com/agentvault/service/crypto/KeyManagementService.java` and its tests.
-*   **Action:** Delete `src/main/java/com/agentvault/service/crypto/MasterKeyProvider.java` and `EnvVarMasterKeyProvider.java`.
+*   **Action:** Delete `src/main/java/com/agentpassvault/service/crypto/EncryptionService.java` and its tests.
+*   **Action:** Delete `src/main/java/com/agentpassvault/service/crypto/KeyManagementService.java` and its tests.
+*   **Action:** Delete `src/main/java/com/agentpassvault/service/crypto/MasterKeyProvider.java` and `EnvVarMasterKeyProvider.java`.
 *   **Action:** Remove `encryptedTenantKey` from the `Tenant` model.
 *   **Action:** Remove dependencies on these services in `SecretService`, `UserService`, and `DataSeeder`.
 
@@ -43,7 +43,7 @@ The project transitioned from MongoDB to MySQL 8 to leverage robust relational i
 *   **Docker Compose (`docker-compose.yml`):**
     *   **Remove:** `mongodb` service and `mongodb_data` volume.
     *   **Add:** `mysql` service (MySQL 8.0).
-        *   Environment variables: `MYSQL_ROOT_PASSWORD`, `MYSQL_DATABASE=agentvault`, `MYSQL_USER`, `MYSQL_PASSWORD`.
+        *   Environment variables: `MYSQL_ROOT_PASSWORD`, `MYSQL_DATABASE=agentpassvault`, `MYSQL_USER`, `MYSQL_PASSWORD`.
         *   Ports: `3306:3306`.
         *   Volume: `mysql_data:/var/lib/mysql`.
 *   **Configuration (`application.properties`):**
@@ -165,7 +165,7 @@ Replace UUID primary keys and separate public IDs with a single TSID (Time-Sorte
     *   If utilizing the "Lease" concept, the lease object will store the encrypted-for-agent blob.
 
 ## [x] 6. Cleanup & Configuration
-*   Remove `agentvault.system.key` from `application.properties` and environment variables.
+*   Remove `agentpassvault.system.key` from `application.properties` and environment variables.
 *   Update `DataSeeder` to stop generating tenant keys.
 
 ## [x] 7. Verification

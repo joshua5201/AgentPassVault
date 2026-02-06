@@ -1,6 +1,6 @@
 openapi: 3.1.0
 info:
-  title: AgentVault API
+  title: AgentPassVault API
   description: Secure Secret Manager for Automated Agents
   version: 0.0.1
 servers:

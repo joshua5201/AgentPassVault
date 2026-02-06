@@ -1,0 +1,67 @@
+/*
+ * Copyright 2026 Tsung-en Hsiao
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.agentpassvault.config;
+
+import com.agentpassvault.model.Tenant;
+import com.agentpassvault.repository.TenantRepository;
+import com.agentpassvault.service.UserService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
+
+@Component
+@Profile("dev")
+@RequiredArgsConstructor
+@Slf4j
+public class DataSeeder implements CommandLineRunner {
+
+  private final TenantRepository tenantRepository;
+  private final UserService userService;
+
+  @Override
+  public void run(String... args) {
+    if (tenantRepository.count() > 0) {
+      log.info("Database already seeded. Skipping initialization.");
+      return;
+    }
+
+    log.info("Seeding database with default tenant and admin user...");
+
+    // Create Tenant
+    Tenant tenant = new Tenant();
+    tenant.setName("Dev Tenant");
+    tenant.setStatus("active");
+    tenant = tenantRepository.save(tenant);
+    log.info("Created Default Tenant: ID={}", tenant.getId());
+
+    // Create Admin User
+    String username = "devadmin";
+    String rawPassword = System.getenv("AGENTPASSVAULT_DEV_PASSWORD");
+
+    if (rawPassword == null || rawPassword.isBlank()) {
+      throw new IllegalStateException(
+          "AGENTPASSVAULT_DEV_PASSWORD environment variable is required for data seeding in dev profile.");
+    }
+
+    rawPassword = rawPassword.trim();
+
+    userService.createAdminUser(tenant.getId(), username, rawPassword, "Default Admin");
+
+    log.info("Created Admin User: username={}", username);
+  }
+}

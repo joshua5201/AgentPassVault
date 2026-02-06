@@ -8,9 +8,9 @@ plugins {
 	id("com.diffplug.spotless") version "6.25.0"
 }
 
-group = "com.agentvault"
+group = "com.agentpassvault"
 version = "0.0.1-SNAPSHOT"
-description = "AgentVault - Secure Secret Manager for Agents"
+description = "AgentPassVault - Secure Secret Manager for Agents"
 
 java {
 	toolchain {
