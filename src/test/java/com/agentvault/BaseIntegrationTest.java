@@ -22,10 +22,7 @@ import com.agentvault.repository.SecretRepository;
 import com.agentvault.repository.TenantRepository;
 import com.agentvault.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -58,17 +55,11 @@ public abstract class BaseIntegrationTest {
     tenantRepository.deleteAll();
   }
 
-  protected UUID createTenant() {
-    return createTenant(UUID.randomUUID());
-  }
-
-  protected UUID createTenant(UUID tenantId) {
+  protected Long createTenant() {
     Tenant tenant = new Tenant();
-    tenant.setTenantId(tenantId);
-    tenant.setName("Test Tenant " + tenantId);
+    tenant.setName("Test Tenant " + java.util.UUID.randomUUID());
     tenant.setStatus("active");
 
-    tenantRepository.save(tenant);
-    return tenantId;
+    return tenantRepository.save(tenant).getId();
   }
 }

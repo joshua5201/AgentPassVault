@@ -45,6 +45,7 @@ dependencies {
 	// MySQL and JSON support
 	runtimeOnly("com.mysql:mysql-connector-j")
 	implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.9.0")
+	implementation("io.hypersistence:hypersistence-tsid:2.1.1")
 
  	// JJWT for JWT generation and validation
  	implementation("io.jsonwebtoken:jjwt-api:0.12.3")

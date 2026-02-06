@@ -23,7 +23,6 @@ import com.agentvault.BaseIntegrationTest;
 import com.agentvault.dto.CreateAgentRequest;
 import com.agentvault.dto.UserLoginRequest;
 import com.agentvault.service.UserService;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -49,7 +48,7 @@ class AgentControllerTest extends BaseIntegrationTest {
 
   @Test
   void createAndListAgent_Success() throws Exception {
-    UUID tenantId = createTenant();
+    Long tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin", "password");
     String token = getAuthToken("admin", "password");
 
@@ -75,7 +74,7 @@ class AgentControllerTest extends BaseIntegrationTest {
 
   @Test
   void rotateToken_Success() throws Exception {
-    UUID tenantId = createTenant();
+    Long tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin", "password");
     String token = getAuthToken("admin", "password");
 
@@ -105,7 +104,7 @@ class AgentControllerTest extends BaseIntegrationTest {
 
   @Test
   void deleteAgent_Success() throws Exception {
-    UUID tenantId = createTenant();
+    Long tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin", "password");
     String token = getAuthToken("admin", "password");
 

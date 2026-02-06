@@ -22,7 +22,6 @@ import io.jsonwebtoken.Jwts;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.UUID;
 import javax.crypto.SecretKey;
 import org.springframework.stereotype.Service;
 
@@ -42,8 +41,8 @@ public class TokenService {
   public String generateToken(User user) {
     Instant now = Instant.now();
     return Jwts.builder()
-        .subject(user.getUserId().toString())
-        .claim("tenant_id", user.getTenant().getTenantId().toString())
+        .subject(user.getId().toString())
+        .claim("tenant_id", user.getTenant().getId().toString())
         .claim("role", user.getRole().name())
         .issuedAt(Date.from(now))
         .expiration(Date.from(now.plus(expirationMinutes, ChronoUnit.MINUTES)))
@@ -52,7 +51,7 @@ public class TokenService {
   }
 
   public String generateLeaseToken(
-      UUID tenantId,
+      Long tenantId,
       String agentUserId,
       String approvedByUserId,
       String secretId,
@@ -60,7 +59,7 @@ public class TokenService {
     Instant now = Instant.now();
     return Jwts.builder()
         .subject(agentUserId)
-        .claim("tenantId", tenantId)
+        .claim("tenant_id", tenantId.toString())
         .claim("approvedBy", approvedByUserId)
         .claim("secretId", secretId)
         .claim("requestId", requestId)

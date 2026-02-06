@@ -25,7 +25,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.util.Map;
-import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
@@ -35,9 +34,6 @@ import org.hibernate.annotations.Type;
 @Table(name = "secrets")
 @EqualsAndHashCode(callSuper = true)
 public class Secret extends BaseEntity {
-
-  @Column(name = "secret_id", unique = true, nullable = false)
-  private UUID secretId;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "tenant_id", nullable = false)

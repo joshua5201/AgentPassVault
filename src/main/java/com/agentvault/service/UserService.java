@@ -22,7 +22,6 @@ import com.agentvault.repository.TenantRepository;
 import com.agentvault.repository.UserRepository;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -39,11 +38,10 @@ public class UserService {
 
   @Transactional
   public User createAdminUser(
-      UUID tenantId, String username, String rawPassword, String displayName) {
+      Long tenantId, String username, String rawPassword, String displayName) {
     Tenant tenant = validateAndGetTenant(tenantId);
 
     User user = new User();
-    user.setUserId(UUID.randomUUID());
     user.setTenant(tenant);
     user.setUsername(username);
     user.setDisplayName(displayName);
@@ -54,17 +52,17 @@ public class UserService {
   }
 
   @Transactional
-  public User createAdminUser(UUID tenantId, String username, String rawPassword) {
+  public User createAdminUser(Long tenantId, String username, String rawPassword) {
     return createAdminUser(tenantId, username, rawPassword, null);
   }
 
   @Transactional
-  public User createAgentUser(UUID tenantId, String appTokenHash, String displayName) {
+  public User createAgentUser(Long tenantId, String appTokenHash, String displayName) {
     Tenant tenant = validateAndGetTenant(tenantId);
 
     User user = new User();
-    user.setUserId(UUID.randomUUID());
     user.setTenant(tenant);
+    user.setUsername("agent-" + java.util.UUID.randomUUID());
     user.setDisplayName(displayName);
     user.setRole(Role.AGENT);
     user.setAppTokenHash(appTokenHash);
@@ -73,15 +71,15 @@ public class UserService {
   }
 
   @Transactional
-  public User createAgentUser(UUID tenantId, String appTokenHash) {
+  public User createAgentUser(Long tenantId, String appTokenHash) {
     return createAgentUser(tenantId, appTokenHash, null);
   }
 
   @Transactional
-  public void changePassword(UUID userId, String oldPassword, String newPassword) {
+  public void changePassword(Long userId, String oldPassword, String newPassword) {
     User user =
         userRepository
-            .findByUserId(userId)
+            .findById(userId)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
     if (!passwordEncoder.matches(oldPassword, user.getPasswordHash())) {
@@ -100,7 +98,7 @@ public class UserService {
             .findByUsername(username)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-    String token = UUID.randomUUID().toString();
+    String token = java.util.UUID.randomUUID().toString();
     user.setResetPasswordToken(token);
     // Token expires in 15 minutes
     Instant now = Instant.now();
@@ -140,12 +138,12 @@ public class UserService {
     userRepository.save(user);
   }
 
-  private Tenant validateAndGetTenant(UUID tenantId) {
+  private Tenant validateAndGetTenant(Long tenantId) {
     if (tenantId == null) {
       throw new IllegalArgumentException("Tenant ID cannot be null");
     }
     return tenantRepository
-        .findByTenantId(tenantId)
+        .findById(tenantId)
         .orElseThrow(() -> new IllegalArgumentException("Tenant not found with ID: " + tenantId));
   }
 }

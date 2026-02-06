@@ -16,9 +16,19 @@
 package com.agentvault.dto;
 
 import jakarta.validation.constraints.NotBlank;
+
 import jakarta.validation.constraints.NotNull;
-import java.util.UUID;
+
+import jakarta.validation.constraints.Pattern;
+
+
 
 public record AgentLoginRequest(
-    @NotNull(message = "Tenant ID is required") UUID tenantId,
+
+    @NotNull(message = "Tenant ID is required")
+
+    @Pattern(regexp = "^[0-9]+$", message = "Tenant ID must be numeric")
+
+    String tenantId,
+
     @NotBlank(message = "App token is required") String appToken) {}

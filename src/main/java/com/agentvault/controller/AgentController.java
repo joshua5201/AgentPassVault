@@ -22,7 +22,6 @@ import com.agentvault.security.AgentVaultAuthentication;
 import com.agentvault.service.AgentService;
 import jakarta.validation.Valid;
 import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -50,12 +49,12 @@ public class AgentController {
 
   @PostMapping("/{id}/rotate")
   public AgentTokenResponse rotateToken(
-      AgentVaultAuthentication authentication, @PathVariable UUID id) {
+      AgentVaultAuthentication authentication, @PathVariable Long id) {
     return agentService.rotateToken(authentication.getTenantId(), id);
   }
 
   @DeleteMapping("/{id}")
-  public void deleteAgent(AgentVaultAuthentication authentication, @PathVariable UUID id) {
+  public void deleteAgent(AgentVaultAuthentication authentication, @PathVariable Long id) {
     agentService.deleteAgent(authentication.getTenantId(), id);
   }
 }

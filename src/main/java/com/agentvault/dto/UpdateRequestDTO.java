@@ -17,7 +17,7 @@ package com.agentvault.dto;
 
 import com.agentvault.model.SecretVisibility;
 import jakarta.validation.constraints.NotNull;
-import java.util.UUID;
+import jakarta.validation.constraints.Pattern;
 
 public record UpdateRequestDTO(
     @NotNull Action action,
@@ -26,7 +26,8 @@ public record UpdateRequestDTO(
     String value,
     java.util.Map<String, Object> metadata,
     // For MAP
-    UUID secretId,
+    @Pattern(regexp = "^[0-9]+$", message = "Secret ID must be numeric")
+    String secretId,
     SecretVisibility newVisibility,
     // For REJECT
     String reason) {

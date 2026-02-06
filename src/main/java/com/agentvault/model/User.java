@@ -24,7 +24,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
-import java.util.UUID;
+import java.time.LocalDateTime;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -33,9 +33,6 @@ import lombok.EqualsAndHashCode;
 @Table(name = "users")
 @EqualsAndHashCode(callSuper = true)
 public class User extends BaseEntity {
-
-  @Column(name = "user_id", unique = true, nullable = false)
-  private UUID userId;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "tenant_id", nullable = false)

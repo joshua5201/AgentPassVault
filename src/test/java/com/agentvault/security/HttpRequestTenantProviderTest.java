@@ -21,7 +21,6 @@ import com.agentvault.model.Role;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Map;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -38,8 +37,8 @@ class HttpRequestTenantProviderTest {
 
   @Test
   void getTenantContext_Authenticated_ReturnsContext() {
-    UUID tenantId = UUID.randomUUID();
-    UUID userId = UUID.randomUUID();
+    Long tenantId = 123L;
+    Long userId = 456L;
 
     Jwt jwt =
         new Jwt(

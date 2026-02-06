@@ -26,7 +26,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
@@ -36,9 +35,6 @@ import org.hibernate.annotations.Type;
 @Table(name = "requests")
 @EqualsAndHashCode(callSuper = true)
 public class Request extends BaseEntity {
-
-  @Column(name = "request_id", unique = true, nullable = false)
-  private UUID requestId;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "tenant_id", nullable = false)
@@ -71,10 +67,10 @@ public class Request extends BaseEntity {
   private List<String> requiredFieldsInSecretValue;
 
   @Column(name = "mapped_secret_id")
-  private UUID mappedSecretId;
+  private Long mappedSecretId;
 
   @Column(name = "requested_secret_id")
-  private UUID secretId;
+  private Long secretId;
 
   @Column(name = "rejection_reason")
   private String rejectionReason;

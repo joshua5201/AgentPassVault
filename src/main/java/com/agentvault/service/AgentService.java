@@ -26,7 +26,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -40,25 +39,23 @@ public class AgentService {
   private final UserService userService;
 
   @Transactional
-  public AgentTokenResponse createAgent(UUID tenantId, String name) {
+  public AgentTokenResponse createAgent(Long tenantId, String name) {
     String appToken = generateAppToken();
     String tokenHash = hashToken(appToken);
 
     User agent = userService.createAgentUser(tenantId, tokenHash, name);
-    agent.setUsername("agent-" + UUID.randomUUID()); // Random unique username
-    userRepository.save(agent);
 
-    return new AgentTokenResponse(agent.getUserId(), appToken);
+    return new AgentTokenResponse(agent.getId().toString(), appToken);
   }
 
-  public List<AgentResponse> listAgents(UUID tenantId) {
-    return userRepository.findByTenant_TenantIdAndRole(tenantId, Role.AGENT).stream()
+  public List<AgentResponse> listAgents(Long tenantId) {
+    return userRepository.findByTenant_IdAndRole(tenantId, Role.AGENT).stream()
         .map(this::mapToResponse)
         .collect(Collectors.toList());
   }
 
   @Transactional
-  public AgentTokenResponse rotateToken(UUID tenantId, UUID agentId) {
+  public AgentTokenResponse rotateToken(Long tenantId, Long agentId) {
     User agent = getAgent(tenantId, agentId);
 
     String newAppToken = generateAppToken();
@@ -67,25 +64,25 @@ public class AgentService {
     agent.setAppTokenHash(tokenHash);
     userRepository.save(agent);
 
-    return new AgentTokenResponse(agent.getUserId(), newAppToken);
+    return new AgentTokenResponse(agent.getId().toString(), newAppToken);
   }
 
   @Transactional
-  public void deleteAgent(UUID tenantId, UUID agentId) {
+  public void deleteAgent(Long tenantId, Long agentId) {
     User agent = getAgent(tenantId, agentId);
     userRepository.delete(agent);
   }
 
-  private User getAgent(UUID tenantId, UUID agentId) {
+  private User getAgent(Long tenantId, Long agentId) {
     return userRepository
-        .findByUserId(agentId)
-        .filter(u -> u.getTenant().getTenantId().equals(tenantId) && Role.AGENT.equals(u.getRole()))
+        .findById(agentId)
+        .filter(u -> u.getTenant().getId().equals(tenantId) && Role.AGENT.equals(u.getRole()))
         .orElseThrow(() -> new IllegalArgumentException("Agent not found"));
   }
 
   private AgentResponse mapToResponse(User user) {
     return new AgentResponse(
-        user.getUserId(), user.getUsername(), user.getDisplayName(), user.getCreatedAt());
+        user.getId().toString(), user.getUsername(), user.getDisplayName(), user.getCreatedAt());
   }
 
   private String generateAppToken() {
