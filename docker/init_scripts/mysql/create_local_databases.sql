@@ -1,0 +1,2 @@
+CREATE DATABASE IF NOT EXISTS `agentvault_dev`;
+CREATE DATABASE IF NOT EXISTS `agentvault_test`;
