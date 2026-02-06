@@ -3,14 +3,14 @@
 ## Overview
 This plan outlines the transition of AgentVault from a server-side encryption model to a zero-knowledge architecture where the server only stores pre-encrypted blobs. The server will no longer possess any keys to decrypt user secrets.
 
-## 1. Remove Server-Side Encryption
+## [x] 1. Remove Server-Side Encryption
 *   **Action:** Delete `src/main/java/com/agentvault/service/crypto/EncryptionService.java` and its tests.
 *   **Action:** Delete `src/main/java/com/agentvault/service/crypto/KeyManagementService.java` and its tests.
 *   **Action:** Delete `src/main/java/com/agentvault/service/crypto/MasterKeyProvider.java` and `EnvVarMasterKeyProvider.java`.
 *   **Action:** Remove `encryptedTenantKey` from the `Tenant` model.
 *   **Action:** Remove dependencies on these services in `SecretService`, `UserService`, and `DataSeeder`.
 
-## 2. Update Data Models
+## [x] 2. Update Data Models
 *   **Secret Model:**
     *   Rename `encryptedValue` to `encryptedData` (or similar) to indicate it's an opaque blob.
     *   Change the type to `String` (Base64 encoded)
@@ -30,27 +30,99 @@ This plan outlines the transition of AgentVault from a server-side encryption mo
         *   `expiry` (LocalDateTime): When the lease expires. Null if no expiry
     *   Relationships: A Secret can have multiple Leases (one per agent). The Secret object itself stores the owner's copy (if any), while Leases store the agent copies.
 
-## 3. Update API DTOs
+### 2.1 Detailed Migration Steps (MySQL)
+The project transitioned from MongoDB to MySQL 8 to leverage robust relational integrity, ACID compliance, and mature tooling while retaining metadata flexibility via MySQL's native JSON support.
+
+#### 2.1.1. Build & Infrastructure Changes
+*   **Gradle Dependencies (`build.gradle.kts`):**
+    *   **Remove:** `org.springframework.boot:spring-boot-starter-data-mongodb`
+    *   **Add:**
+        *   `org.springframework.boot:spring-boot-starter-data-jpa`
+        *   `com.mysql:mysql-connector-j` (runtimeOnly)
+        *   `io.hypersistence:hypersistence-utils-hibernate-63` (For convenient JSON type support)
+*   **Docker Compose (`docker-compose.yml`):**
+    *   **Remove:** `mongodb` service and `mongodb_data` volume.
+    *   **Add:** `mysql` service (MySQL 8.0).
+        *   Environment variables: `MYSQL_ROOT_PASSWORD`, `MYSQL_DATABASE=agentvault`, `MYSQL_USER`, `MYSQL_PASSWORD`.
+        *   Ports: `3306:3306`.
+        *   Volume: `mysql_data:/var/lib/mysql`.
+*   **Configuration (`application.properties`):**
+    *   Remove MongoDB configurations.
+    *   Add Datasource config: `spring.datasource.url`, `username`, `password`.
+    *   Add JPA config: `spring.jpa.hibernate.ddl-auto=update` (dev), `spring.jpa.open-in-view=false`.
+
+#### 2.1.2. Entity & Data Model Migration (JPA)
+*   **BaseEntity:**
+    *   Annotate with `@MappedSuperclass`.
+    *   Use `@Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;`
+    *   Add `@Version` for optimistic locking if needed.
+    *   Add `@CreatedDate`, `@LastModifiedDate` (requires `@EntityListeners(AuditingEntityListener.class)`).
+*   **Tenant (`tenants` table):**
+    *   `@Entity @Table(name = "tenants")`.
+    *   Fields: `name` (unique).
+*   **User (`users` table):**
+    *   `@Entity @Table(name = "users")`.
+    *   `@ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "tenant_id") private Tenant tenant;`
+    *   Fields: `username`, `passwordHash`, `role` (EnumString), `publicKey` (TEXT/CLOB), `encryptedMasterKeySalt`.
+*   **Secret (`secrets` table):**
+    *   `@Entity @Table(name = "secrets")`.
+    *   `@ManyToOne(fetch = FetchType.LAZY) private Tenant tenant;`
+    *   `@Column(columnDefinition = "json") private Map<String, String> metadata;` (Use Hypersistence `JsonType`).
+    *   Fields: `encryptedData` (TEXT/CLOB), `hash` (for uniqueness checks if needed).
+*   **Lease (`leases` table):**
+    *   `@Entity @Table(name = "leases")`.
+    *   `@ManyToOne(fetch = FetchType.LAZY) private Secret secret;`
+    *   `@ManyToOne(fetch = FetchType.LAZY) private User agent;`
+    *   Fields: `encryptedData` (TEXT/CLOB), `expiry` (LocalDateTime).
+*   **Request (`requests` table):**
+    *   `@Entity @Table(name = "requests")`.
+    *   `@Column(columnDefinition = "json") private Map<String, String> requiredMetadata;`
+    *   `@Column(columnDefinition = "json") private List<String> requiredFields;`
+
+#### 2.1.3. Repository Layer
+*   Convert all `MongoRepository` interfaces to `JpaRepository<Entity, UUID>`.
+*   **Refactor Queries:**
+    *   Replace MongoDB JSON queries with JPQL or Native SQL for JSON fields.
+    *   Example: `SELECT s FROM Secret s WHERE function('json_extract', s.metadata, '$.service') = :serviceName`
+    *   Or use JPA Specifications.
+
+#### 2.1.4. Script Updates
+*   **`scripts/management/dev-env.sh`**:
+    *   Wait for MySQL port 3306 instead of 27017.
+    *   Check for `mysqladmin ping`.
+*   **`scripts/management/clear-db.sh`**:
+    *   Replace `mongosh` commands with `mysql` commands to truncate/drop tables.
+*   **`scripts/management/setup-dev-user.sh`**:
+    *   Adapt to insert into SQL tables (or rely on API/DataSeeder).
+
+#### 2.1.5. Code Cleanup
+*   Remove `spring-boot-starter-data-mongodb` usage in all service classes.
+
+## [ ] 3. Update API DTOs
 *   **CreateSecretRequest:**
     *   Remove `value` (plaintext).
     *   Add `encryptedValue` (Base64 string). The client must encrypt this before sending.
+    *   **Enforce Size Limit:** Implement validation to reject `encryptedValue` larger than **64 KB** (approx. 87,381 Base64 characters).
 *   **SecretResponse:**
     *   Remove `value` (decrypted).
     *   Add `encryptedValue` (Base64 string). The client must decrypt this.
 *   **Agent Registration:**
     *   Update `POST /api/v1/agents` or a new endpoint to accept the agent's public key.
 
-## 4. Refactor SecretService
+## [ ] 4. Refactor SecretService
 *   **Create Secret:**
     *   Remove logic that generates/retrieves tenant keys.
     *   Simply store the provided `encryptedValue` directly into the database.
+    *   **Validation:** Ensure metadata combined size does not exceed **8 KB**.
 *   **Get Secret:**
     *   Return the stored `encryptedValue` without any decryption.
     *   Remove checks that depended on server-side decryption (e.g., verifying visibility might still apply, but access control relies on the client having the private key).
 
-## 5. Refactor Request/Lease Flow (The "Missing Secret" Flow)
+## [ ] 5. Refactor Request/Lease Flow (The "Missing Secret" Flow)
 *   The server currently facilitates the "handshake".
-*   **Request:** Agent requests a secret.
+*   **Request:** 
+    *   Agent requests a secret.
+    *   **Validation:** Enforce **2 KB** limit on `context` field.
 *   **Fulfillment:**
     *   Admin retrieves the agent's public key from the server (via `GET /api/v1/agents/{id}`).
     *   Admin encrypts the secret value with the agent's public key **on their client**.
@@ -59,13 +131,28 @@ This plan outlines the transition of AgentVault from a server-side encryption mo
 *   **Lease:**
     *   If utilizing the "Lease" concept, the lease object will store the encrypted-for-agent blob.
 
-## 6. Cleanup & Configuration
+## [ ] 6. Cleanup & Configuration
 *   Remove `agentvault.system.key` from `application.properties` and environment variables.
 *   Update `DataSeeder` to stop generating tenant keys.
 
-## 7. Verification
+## [ ] 7. Verification
 *   Update tests to mock client-side encryption (i.e., pass dummy "encrypted" strings).
 *   Ensure no `javax.crypto` or `java.security` classes are used for *data* encryption on the server (hashing for passwords/tokens is still allowed).
 
-## 8. Documentation
+## [ ] 8. Documentation
 *   Update `openapi.yaml` to reflect the new API contract (encrypted fields).
+
+## [ ] 9. Implement Idempotency
+*   **Data Model:** Create `IdempotencyRecord` entity:
+    *   `id`: String (TenantId + IdempotencyKey).
+    *   `responseBody`: String (Serialized response).
+    *   `responseStatus`: Integer (HTTP status code).
+    *   `createdAt`: LocalDateTime (For TTL expiration).
+*   **Interceptor/Filter:**
+    *   Implement a Spring `HandlerInterceptor` or a Servlet `Filter`.
+    *   Intercept all `POST` and `PATCH` requests.
+    *   Check for `Idempotency-Key` header.
+    *   If present, check MongoDB for an existing record.
+    *   If record exists, return the cached response immediately.
+    *   If not, proceed with the request and store the result in the `postHandle` or `afterCompletion` phase.
+*   **TTL Index:** Add a TTL index to the `createdAt` field in MongoDB to automatically clear records after 24 hours.

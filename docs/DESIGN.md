@@ -14,7 +14,7 @@ AgentVault is a lightweight, standalone password and secret manager designed for
 
 ### Components
 *   **Vault Server:** A lightweight HTTP server hosting the REST API.
-*   **Database:** **MongoDB** (NoSQL for flexible metadata and schema-less secrets).
+*   **Database:** **MySQL 8** (Relational database with JSON support for flexible metadata).
 *   **Web UI:** A simple interface for "Secret Owners". This UI does all the encryption/decryption.
 *   **Admin Panel:** A simple interface to manage the secrets, manage the agents, see the log, change passwords, etc.
 *   **Agent CLI tool:** A CLI tool for the agent to decrypt secrets and interact with the server.
@@ -28,6 +28,18 @@ AgentVault is a lightweight, standalone password and secret manager designed for
 *   **Tenant Agent (Secret User, the AI Agent such as OpenClaw):**
     *   **Auth:** `tenant_id` + `app_token`.
 
+## System Limits
+To prevent the service from being used as a general-purpose storage or for large file hosting (which could lead to denial of service or high storage costs), strict size limits are enforced:
+*   **Secret Value Size:** Both the Web UI and Backend enforce a maximum limit of **64 KB** for the encrypted secret value.
+*   **Metadata Size:** The combined size of all metadata keys and values for a single secret is limited to **8 KB**.
+*   **Request Context:** The context field in secret requests is limited to **2 KB**.
+
+## Idempotency
+To prevent duplicate records and ensure reliable operations over unstable networks, AgentVault supports idempotency for all state-changing operations (`POST` and `PATCH`):
+*   **Idempotency-Key Header:** Clients should provide a unique UUID in the `Idempotency-Key` HTTP header.
+*   **Behavior:** If the server receives a second request with the same `Idempotency-Key` within a 24-hour window, it will return the same response as the first successful request without performing the action again.
+*   **Scope:** Idempotency keys are scoped to the `tenant_id`.
+
 ## Roadmap
 ### MVP 0.1
 All features except the features listed in other sections.
@@ -39,7 +51,7 @@ All features except the features listed in other sections.
 *   Admin panel.
 *   Audit log:
     *   Log every secret operation using integrated log tools in the cloud platform such as Cloudwatch.
-    *   Log major operations such as agent registration, creation, lease, revoke in to mongo db and expose to the human user.
+    *   Log major operations such as agent registration, creation, lease, revoke in to MySQL and expose to the human user.
 
 ### Version 1.1
 *   OAuth using Google.
@@ -191,17 +203,16 @@ When the user approves (sometimes upon creation), the system goes through a leas
 ## Technology Stack
 *   **Backend:** Java 21 with **Spring Boot 3**.
 *   **Security:** **Spring Security** with **Spring Boot Starter OAuth2 Resource Server** for JWT and Bearer token management.
-*   **Database:** **MongoDB 6.0+**.
-*   **Data Access:** **Spring Data MongoDB** (Repository pattern and object mapping).
+*   **Database:** **MySQL 8.0+**.
+*   **Data Access:** **Spring Data JPA** (Repository pattern and object mapping).
 *   **CLI:** Python utility for the agent to use.
 *   **Web UI:** JS application utilizing Web Crypto API, WebAuthN and Indexed DB.
 
 ## Flexible Metadata Implementation
 To support agent-provided metadata while maintaining performance and control, the system uses:
-*   **Mapping:** The `metadata` field in `Secret` and `Request` objects is mapped as `Map<String, Object>` or `org.bson.Document`.
-*   **Indexing:** **Predefined Keys Only.** We will strictly index specific, high-value keys (e.g., `metadata.service`, `metadata.env`, `metadata.url`) rather than using a wildcard index.
-*   **Deferral:** Full `@WildcardIndexed` support is deferred until advanced, arbitrary search capabilities are explicitly required.
-*   **Search:** Queries use Spring Data MongoDB's `Criteria` to match against these known keys (e.g., `where("metadata.service").is("aws")`).
+*   **Mapping:** The `metadata` field in `Secret` and `Request` objects is mapped as a `Map<String, String>` and stored in a MySQL `JSON` column.
+*   **Indexing:** **JSON Extracts.** We utilize MySQL's functional indexes on specific JSON paths (e.g., `(CAST(metadata->>'$.service' AS CHAR(255)))`) to ensure fast searches for high-value keys.
+*   **Search:** Queries leverage JPA specifications or JPQL with native JSON functions to match against metadata keys.
 
 ## Tenant Context
 *   **Explicit Identification:** The `tenant_id` must be provided explicitly during the initial login/authentication phase.
@@ -221,5 +232,4 @@ Scripts to:
 *   Setup self-signed SSL cert.
 
 ### Cloud deployment
-Docker engine with managed mongo and a log platform.
-Probably I will choose AWS ECS + DocumentDB.
+Cloud Run + Cloud SQL + Cloudflare

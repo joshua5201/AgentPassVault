@@ -12,6 +12,12 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  headers:
+    Idempotency-Key:
+      description: A unique identifier for the request to prevent duplicate operations.
+      schema:
+        type: string
+        format: uuid
 security:
   - bearerAuth: []
 paths:
@@ -19,6 +25,12 @@ paths:
     post:
       summary: User Login (Admin/Human)
       security: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            $ref: '#/components/headers/Idempotency-Key/schema'
       requestBody:
         content:
           application/json:
@@ -36,6 +48,12 @@ paths:
     post:
       summary: Agent Login
       security: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            $ref: '#/components/headers/Idempotency-Key/schema'
       requestBody:
         content:
           application/json:
@@ -53,6 +71,12 @@ paths:
     post:
       summary: Initiate Password Reset
       security: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            $ref: '#/components/headers/Idempotency-Key/schema'
       requestBody:
         content:
           application/json:
@@ -72,6 +96,12 @@ paths:
     post:
       summary: Reset Password
       security: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            $ref: '#/components/headers/Idempotency-Key/schema'
       requestBody:
         content:
           application/json:
@@ -100,6 +130,12 @@ paths:
   /secrets:
     post:
       summary: Create Secret (Admin/Agent)
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            $ref: '#/components/headers/Idempotency-Key/schema'
       requestBody:
         content:
           application/json:
@@ -116,6 +152,12 @@ paths:
   /secrets/search:
     post:
       summary: Search Secrets
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            $ref: '#/components/headers/Idempotency-Key/schema'
       requestBody:
         content:
           application/json:
@@ -166,6 +208,12 @@ paths:
   /requests:
     post:
       summary: Create Secret Request
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            $ref: '#/components/headers/Idempotency-Key/schema'
       requestBody:
         content:
           application/json:
@@ -201,6 +249,11 @@ paths:
           in: path
           required: true
           schema: { type: string, format: uuid }
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            $ref: '#/components/headers/Idempotency-Key/schema'
       requestBody:
         content:
           application/json:
@@ -245,6 +298,12 @@ paths:
                   $ref: '#/components/schemas/AgentResponse'
     post:
       summary: Create Agent (Admin)
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            $ref: '#/components/headers/Idempotency-Key/schema'
       requestBody:
         content:
           application/json:
@@ -269,6 +328,11 @@ paths:
           in: path
           required: true
           schema: { type: string, format: uuid }
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            $ref: '#/components/headers/Idempotency-Key/schema'
       responses:
         '200':
           description: Rotated
@@ -289,6 +353,7 @@ paths:
         '204':
           description: Deleted
 
+
 components:
   schemas:
     SecretVisibility:
@@ -300,7 +365,9 @@ components:
       properties:
         secretId: { type: string, format: uuid }
         name: { type: string }
-        metadata: { type: object }
+        metadata:
+          type: object
+          description: Combined size of metadata keys and values must not exceed 8 KB.
         visibility: { $ref: '#/components/schemas/SecretVisibility' }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
@@ -310,15 +377,23 @@ components:
         - $ref: '#/components/schemas/SecretMetadata'
         - type: object
           properties:
-            value: { type: string }
+            value:
+              type: string
+              maxLength: 87381
+              description: Encrypted secret value (max 64 KB before Base64 encoding).
 
     CreateSecretRequest:
       type: object
       required: [name, value]
       properties:
         name: { type: string }
-        value: { type: string }
-        metadata: { type: object }
+        value:
+          type: string
+          maxLength: 87381
+          description: Encrypted secret value (max 64 KB before Base64 encoding).
+        metadata:
+          type: object
+          description: Combined size of metadata keys and values must not exceed 8 KB.
 
     RequestStatus:
       type: string
@@ -335,8 +410,13 @@ components:
         status: { $ref: '#/components/schemas/RequestStatus' }
         type: { $ref: '#/components/schemas/RequestType' }
         name: { type: string }
-        context: { type: string }
-        requiredMetadata: { type: object }
+        context:
+          type: string
+          maxLength: 2048
+          description: Context for the request (max 2 KB).
+        requiredMetadata:
+          type: object
+          description: Combined size must not exceed 8 KB.
         requiredFieldsInSecretValue: { type: array, items: { type: string } }
         mappedSecretId: { type: string, format: uuid }
         rejectionReason: { type: string }
@@ -349,8 +429,13 @@ components:
       required: [name]
       properties:
         name: { type: string }
-        context: { type: string }
-        requiredMetadata: { type: object }
+        context:
+          type: string
+          maxLength: 2048
+          description: Context for the request (max 2 KB).
+        requiredMetadata:
+          type: object
+          description: Combined size must not exceed 8 KB.
         requiredFieldsInSecretValue: { type: array, items: { type: string } }
         type: { $ref: '#/components/schemas/RequestType' }
         secretId: { type: string, format: uuid }
@@ -363,8 +448,13 @@ components:
           type: string
           enum: [FULFILL, MAP, REJECT, APPROVE_LEASE]
         name: { type: string }
-        value: { type: string }
-        metadata: { type: object }
+        value:
+          type: string
+          maxLength: 87381
+          description: Encrypted secret value (max 64 KB before Base64 encoding).
+        metadata:
+          type: object
+          description: Combined size must not exceed 8 KB.
         secretId: { type: string, format: uuid }
         newVisibility: { $ref: '#/components/schemas/SecretVisibility' }
         reason: { type: string }
