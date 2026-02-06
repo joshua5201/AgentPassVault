@@ -1,5 +1,8 @@
 # AgentPassVault
 
+> [!IMPORTANT]
+> This is a hobby project and is currently under active development.
+
 **AgentPassVault** is a secure, standalone secret manager designed specifically for autonomous AI agents (like OpenClaw, formerly Moltbot, ClawdBot). It provides a bridge between human owners and automated workers, ensuring agents can access credentials without exposing sensitive data in chat logs or LLM context.
 
 ## Why AgentPassVault?
