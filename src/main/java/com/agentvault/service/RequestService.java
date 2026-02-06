@@ -18,7 +18,6 @@ package com.agentvault.service;
 import com.agentvault.dto.*;
 import com.agentvault.model.*;
 import com.agentvault.repository.*;
-import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,8 +30,6 @@ public class RequestService {
   private final SecretRepository secretRepository;
   private final TenantRepository tenantRepository;
   private final UserRepository userRepository;
-  private final LeaseRepository leaseRepository;
-  private final SecretService secretService;
   private final FulfillmentUrlService fulfillmentUrlService;
 
   @Transactional
@@ -71,82 +68,35 @@ public class RequestService {
   }
 
   @Transactional
-  public RequestResponse fulfillRequest(Long tenantId, Long requestId, FulfillRequestDTO dto) {
+  public RequestResponse updateRequestStatus(Long tenantId, Long requestId, UpdateRequestDTO dto) {
     Request request = findRequest(tenantId, requestId);
     validatePending(request);
 
-    // 1. Create the secret (owner's copy)
-    CreateSecretRequest secretRequest =
-        new CreateSecretRequest(dto.name(), dto.ownerEncryptedData(), dto.metadata());
-    SecretMetadataResponse secretMeta = secretService.createSecret(tenantId, secretRequest);
+    if (dto.status() == RequestStatus.fulfilled) {
+      if (dto.secretId() == null) {
+        throw new IllegalArgumentException("Secret ID is required for fulfilling request");
+      }
+      Long secretId = Long.valueOf(dto.secretId());
+      // Verify secret exists and belongs to tenant
+      @SuppressWarnings("unused")
+      Secret unused =
+          secretRepository
+              .findById(secretId)
+              .filter(s -> s.getTenant().getId().equals(tenantId))
+              .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
 
-    Secret secret =
-        secretRepository
-            .findById(Long.valueOf(secretMeta.secretId()))
-            .orElseThrow(() -> new IllegalStateException("Failed to retrieve created secret"));
-
-    // 2. Create the lease (agent's copy)
-    createLease(secret, request.getRequester(), dto.agentEncryptedData(), dto.expiry());
-
-    request.setStatus(RequestStatus.fulfilled);
-    request.setMappedSecretId(secret.getId());
-
-    return mapToResponse(requestRepository.save(request));
-  }
-
-  @Transactional
-  public RequestResponse mapRequest(Long tenantId, Long requestId, MapRequestDTO dto) {
-    Request request = findRequest(tenantId, requestId);
-    validatePending(request);
-
-    Long secretId = Long.valueOf(dto.secretId());
-
-    // Verify secret exists and belongs to tenant
-    @SuppressWarnings("unused")
-    Secret unused =
-        secretRepository
-            .findById(secretId)
-            .filter(s -> s.getTenant().getId().equals(tenantId))
-            .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
-
-    request.setStatus(RequestStatus.fulfilled);
-    request.setMappedSecretId(secretId);
-
-    return mapToResponse(requestRepository.save(request));
-  }
-
-  @Transactional
-  public ApproveLeaseResponseDTO approveLease(
-      Long tenantId, Long requestId, String agentEncryptedData, Instant expiry) {
-    Request request = findRequest(tenantId, requestId);
-    validatePending(request);
-
-    if (request.getType() != RequestType.LEASE) {
-      throw new IllegalStateException("Request is not a lease request");
+      request.setStatus(RequestStatus.fulfilled);
+      request.setMappedSecretId(secretId);
+    } else if (dto.status() == RequestStatus.rejected) {
+      if (dto.rejectionReason() == null) {
+        throw new IllegalArgumentException("Rejection reason is required");
+      }
+      request.setStatus(RequestStatus.rejected);
+      request.setRejectionReason(dto.rejectionReason());
+    } else {
+      throw new IllegalArgumentException(
+          "Invalid status update. Only fulfilled or rejected allowed.");
     }
-
-    Secret secret =
-        secretRepository
-            .findById(request.getSecretId())
-            .filter(s -> s.getTenant().getId().equals(tenantId))
-            .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
-
-    // Create the lease (agent's copy)
-    createLease(secret, request.getRequester(), agentEncryptedData, expiry);
-
-    request.setStatus(RequestStatus.fulfilled);
-    requestRepository.save(request);
-
-    return new ApproveLeaseResponseDTO("LEASE_FULFILLED_SUCCESSFULLY");
-  }
-
-  @Transactional
-  public RequestResponse rejectRequest(Long tenantId, Long requestId, String reason) {
-    Request request = findRequest(tenantId, requestId);
-    validatePending(request);
-
-    request.setStatus(RequestStatus.rejected);
-    request.setRejectionReason(reason);
 
     return mapToResponse(requestRepository.save(request));
   }
@@ -161,15 +111,6 @@ public class RequestService {
 
     request.setStatus(RequestStatus.abandoned);
     requestRepository.save(request);
-  }
-
-  private void createLease(Secret secret, User agent, String encryptedData, Instant expiry) {
-    Lease lease = new Lease();
-    lease.setSecret(secret);
-    lease.setAgent(agent);
-    lease.setEncryptedData(encryptedData);
-    lease.setExpiry(expiry);
-    leaseRepository.save(lease);
   }
 
   private Request findRequest(Long tenantId, Long requestId) {

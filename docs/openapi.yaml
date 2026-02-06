@@ -333,6 +333,27 @@ paths:
       responses:
         "200":
           description: OK
+  /api/v1/secrets/{id}/leases:
+    post:
+      tags:
+      - secret-controller
+      operationId: createLease
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLeaseRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
   /api/v1/auth/ping:
     get:
       tags:
@@ -520,6 +541,9 @@ components:
         expiresIn:
           type: integer
           format: int64
+        refreshTokenExpiresIn:
+          type: integer
+          format: int64
     UserLoginRequest:
       type: object
       properties:
@@ -582,33 +606,34 @@ components:
     UpdateRequestDTO:
       type: object
       properties:
-        action:
+        status:
           type: string
           enum:
-          - FULFILL
-          - MAP
-          - REJECT
-          - APPROVE_LEASE
-        name:
+          - pending
+          - fulfilled
+          - rejected
+          - abandoned
+        secretId:
           type: string
-        ownerEncryptedData:
+          pattern: "^[0-9]+$"
+        rejectionReason:
           type: string
-        agentEncryptedData:
+      required:
+      - status
+    CreateLeaseRequest:
+      type: object
+      properties:
+        agentId:
+          type: string
+          pattern: "^[0-9]+$"
+        encryptedData:
           type: string
         expiry:
           type: string
           format: date-time
-        metadata:
-          type: object
-          additionalProperties:
-            type: object
-        secretId:
-          type: string
-          pattern: "^[0-9]+$"
-        reason:
-          type: string
       required:
-      - action
+      - agentId
+      - encryptedData
     SecretResponse:
       type: object
       properties:

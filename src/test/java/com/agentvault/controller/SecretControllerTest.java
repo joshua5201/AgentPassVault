@@ -203,8 +203,25 @@ class SecretControllerTest extends BaseIntegrationTest {
     // 1. Create a secret
     String secretId = createSecret(adminToken, "Lease Me");
 
-    // 2. Agent creates a LEASE request
-    String agentJwt = createAgentAndGetJwt(tenantId);
+    // 2. Create Agent and get ID/Token
+    AgentTokenResponse agentResp = agentService.createAgent(tenantId, "test-agent");
+    String agentAppToken = agentResp.appToken();
+    String agentId = agentResp.agentId();
+
+    String agentLoginResp =
+        mockMvc
+            .perform(
+                post("/api/v1/auth/login/agent")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        objectMapper.writeValueAsString(
+                            new AgentLoginRequest(tenantId.toString(), agentAppToken))))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    String agentJwt = objectMapper.readTree(agentLoginResp).get("accessToken").asText();
+
+    // 3. Agent creates a LEASE request
     CreateRequestDTO createReq =
         new CreateRequestDTO(
             "Request for " + secretId,
@@ -227,27 +244,29 @@ class SecretControllerTest extends BaseIntegrationTest {
             .getContentAsString();
     String requestId = objectMapper.readTree(reqResponse).get("requestId").asText();
 
-    // 3. Admin approves the lease
-    UpdateRequestDTO approveReq =
-        new UpdateRequestDTO(
-            UpdateRequestDTO.Action.APPROVE_LEASE,
-            null,
-            null,
-            "agent_encrypted_val",
-            null,
-            null,
-            null,
-            null);
+    // 4. Admin creates the lease
+    CreateLeaseRequest leaseReq = new CreateLeaseRequest(agentId, "agent_encrypted_val", null);
+    mockMvc
+        .perform(
+            post("/api/v1/secrets/" + secretId + "/leases")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(leaseReq)))
+        .andExpect(status().isOk());
+
+    // 5. Admin fulfills the request (updates status)
+    UpdateRequestDTO fulfillReq =
+        new UpdateRequestDTO(com.agentvault.model.RequestStatus.fulfilled, secretId, null);
 
     mockMvc
         .perform(
             patch("/api/v1/requests/" + requestId)
                 .header("Authorization", "Bearer " + adminToken)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(approveReq)))
+                .content(objectMapper.writeValueAsString(fulfillReq)))
         .andExpect(status().isOk());
 
-    // 4. Agent uses lease token to get the secret
+    // 6. Agent uses lease token to get the secret
     mockMvc
         .perform(get("/api/v1/secrets/" + secretId).header("Authorization", "Bearer " + agentJwt))
         .andExpect(status().isOk())

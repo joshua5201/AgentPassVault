@@ -15,6 +15,7 @@
  */
 package com.agentvault.controller;
 
+import com.agentvault.dto.CreateLeaseRequest;
 import com.agentvault.dto.CreateSecretRequest;
 import com.agentvault.dto.SearchSecretRequest;
 import com.agentvault.dto.SecretMetadataResponse;
@@ -41,6 +42,15 @@ public class SecretController {
   public SecretMetadataResponse createSecret(
       AgentVaultAuthentication authentication, @Valid @RequestBody CreateSecretRequest request) {
     return secretService.createSecret(authentication.getTenantId(), request);
+  }
+
+  @PostMapping("/{id}/leases")
+  @PreAuthorize("hasRole('ADMIN')")
+  public void createLease(
+      AgentVaultAuthentication authentication,
+      @PathVariable Long id,
+      @Valid @RequestBody CreateLeaseRequest request) {
+    secretService.createLease(authentication.getTenantId(), id, request);
   }
 
   @GetMapping("/{id}")

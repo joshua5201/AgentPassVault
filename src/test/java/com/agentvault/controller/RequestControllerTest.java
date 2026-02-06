@@ -24,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.agentvault.BaseIntegrationTest;
 import com.agentvault.dto.*;
+import com.agentvault.model.RequestStatus;
 import com.agentvault.service.AgentService;
 import com.agentvault.service.UserService;
 import java.util.List;
@@ -51,10 +52,11 @@ class RequestControllerTest extends BaseIntegrationTest {
     return objectMapper.readTree(loginResponse).get("accessToken").asText();
   }
 
-  private String createAgentAndGetJwt(Long tenantId) throws Exception {
-    AgentTokenResponse agentResp = agentService.createAgent(tenantId, "test-agent");
-    String agentAppToken = agentResp.appToken();
+  private AgentTokenResponse createAgentAndGetJwt(Long tenantId) throws Exception {
+    return agentService.createAgent(tenantId, "test-agent");
+  }
 
+  private String getAgentJwt(Long tenantId, String agentAppToken) throws Exception {
     String agentLoginResp =
         mockMvc
             .perform(
@@ -96,17 +98,24 @@ class RequestControllerTest extends BaseIntegrationTest {
             .getContentAsString();
     String requestId = objectMapper.readTree(reqResponse).get("requestId").asText();
 
-    // 2. Fulfill Request
-    UpdateRequestDTO fulfillReq =
-        new UpdateRequestDTO(
-            UpdateRequestDTO.Action.FULFILL,
-            "AWS Secret",
-            "ownerEncVal",
-            "agentEncVal",
-            null,
-            Map.of("env", "prod"),
-            null,
-            null);
+    // 2. Create Secret
+    CreateSecretRequest createSecretReq =
+        new CreateSecretRequest("AWS Secret", "ownerEncVal", Map.of("env", "prod"));
+    String secretResp =
+        mockMvc
+            .perform(
+                post("/api/v1/secrets")
+                    .header("Authorization", "Bearer " + token)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(createSecretReq)))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    String secretId = objectMapper.readTree(secretResp).get("secretId").asText();
+
+    // 3. Fulfill Request (Update status and link secret)
+    UpdateRequestDTO fulfillReq = new UpdateRequestDTO(RequestStatus.fulfilled, secretId, null);
 
     mockMvc
         .perform(
@@ -116,7 +125,7 @@ class RequestControllerTest extends BaseIntegrationTest {
                 .content(objectMapper.writeValueAsString(fulfillReq)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("fulfilled"))
-        .andExpect(jsonPath("$.mappedSecretId").exists());
+        .andExpect(jsonPath("$.mappedSecretId").value(secretId));
   }
 
   @Test
@@ -138,9 +147,7 @@ class RequestControllerTest extends BaseIntegrationTest {
             .getContentAsString();
     String requestId = objectMapper.readTree(reqResponse).get("requestId").asText();
 
-    UpdateRequestDTO rejectReq =
-        new UpdateRequestDTO(
-            UpdateRequestDTO.Action.REJECT, null, null, null, null, null, null, "Denied");
+    UpdateRequestDTO rejectReq = new UpdateRequestDTO(RequestStatus.rejected, null, "Denied");
 
     mockMvc
         .perform(
@@ -156,7 +163,8 @@ class RequestControllerTest extends BaseIntegrationTest {
   @Test
   void abandonRequest_Success() throws Exception {
     Long tenantId = createTenant();
-    String agentJwt = createAgentAndGetJwt(tenantId);
+    AgentTokenResponse agentTokenResp = createAgentAndGetJwt(tenantId);
+    String agentJwt = getAgentJwt(tenantId, agentTokenResp.appToken());
 
     // 1. Create Request as Agent
     CreateRequestDTO createReq = new CreateRequestDTO("Agent Req", "Context", null, null);
@@ -223,10 +231,8 @@ class RequestControllerTest extends BaseIntegrationTest {
             .getContentAsString();
     String requestId = objectMapper.readTree(reqResponse).get("requestId").asText();
 
-    // 3. Map Request
-    UpdateRequestDTO mapReq =
-        new UpdateRequestDTO(
-            UpdateRequestDTO.Action.MAP, null, null, null, null, null, secretId, null);
+    // 3. Map Request (Same as Fulfill in new API, just linking existing secret)
+    UpdateRequestDTO mapReq = new UpdateRequestDTO(RequestStatus.fulfilled, secretId, null);
 
     mockMvc
         .perform(

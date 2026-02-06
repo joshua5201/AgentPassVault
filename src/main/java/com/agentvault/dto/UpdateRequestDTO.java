@@ -15,27 +15,13 @@
  */
 package com.agentvault.dto;
 
+import com.agentvault.model.RequestStatus;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
-import java.time.Instant;
-import java.util.Map;
 
 public record UpdateRequestDTO(
-    @NotNull Action action,
-    // For FULFILL (CREATE)
-    String name,
-    String ownerEncryptedData,
-    String agentEncryptedData,
-    Instant expiry,
-    Map<String, Object> metadata,
-    // For MAP or APPROVE_LEASE (Existing Secret)
+    @NotNull(message = "Status is required") RequestStatus status,
+    // For FULFILL (Existing Secret)
     @Pattern(regexp = "^[0-9]+$", message = "Secret ID must be numeric") String secretId,
     // For REJECT
-    String reason) {
-  public enum Action {
-    FULFILL,
-    MAP,
-    REJECT,
-    APPROVE_LEASE
-  }
-}
+    String rejectionReason) {}

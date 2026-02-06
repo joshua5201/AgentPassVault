@@ -21,6 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.agentvault.BaseIntegrationTest;
 import com.agentvault.dto.*;
+import com.agentvault.model.RequestStatus;
 import com.agentvault.service.AgentService;
 import com.agentvault.service.UserService;
 import java.util.List;
@@ -46,6 +47,7 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
     // Setup Agent
     AgentTokenResponse agentResp = agentService.createAgent(tenantId, "deploy-agent");
     String agentAppToken = agentResp.appToken();
+    String agentId = agentResp.agentId();
 
     // Agent Login to get JWT
     String agentLoginResp =
@@ -106,16 +108,35 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
         .andExpect(jsonPath("$.name").value("Prod DB Credentials"));
 
     // 5. Admin Fulfills Request
-    UpdateRequestDTO fulfillReq =
-        new UpdateRequestDTO(
-            UpdateRequestDTO.Action.FULFILL,
-            "Prod DB Credentials",
-            "owner-enc-pass",
-            "agent-enc-pass",
-            null,
-            Map.of("service", "db", "env", "prod"),
-            null,
-            null);
+    // 5a. Create Secret
+    CreateSecretRequest createSecretReq =
+        new CreateSecretRequest(
+            "Prod DB Credentials", "owner-enc-pass", Map.of("service", "db", "env", "prod"));
+    String secretResp =
+        mockMvc
+            .perform(
+                post("/api/v1/secrets")
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(createSecretReq)))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    String secretId = objectMapper.readTree(secretResp).get("secretId").asText();
+
+    // 5b. Create Lease
+    CreateLeaseRequest createLeaseReq = new CreateLeaseRequest(agentId, "agent-enc-pass", null);
+    mockMvc
+        .perform(
+            post("/api/v1/secrets/" + secretId + "/leases")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createLeaseReq)))
+        .andExpect(status().isOk());
+
+    // 5c. Update Request Status
+    UpdateRequestDTO fulfillReq = new UpdateRequestDTO(RequestStatus.fulfilled, secretId, null);
 
     mockMvc
         .perform(
@@ -140,11 +161,12 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
             .getResponse()
             .getContentAsString();
 
-    String secretId = objectMapper.readTree(searchResp).get(0).get("secretId").asText();
+    String foundSecretId = objectMapper.readTree(searchResp).get(0).get("secretId").asText();
 
     // 7. Agent Gets Secret (Returns encrypted value)
     mockMvc
-        .perform(get("/api/v1/secrets/" + secretId).header("Authorization", "Bearer " + agentJwt))
+        .perform(
+            get("/api/v1/secrets/" + foundSecretId).header("Authorization", "Bearer " + agentJwt))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.encryptedValue").value("agent-enc-pass"));
   }

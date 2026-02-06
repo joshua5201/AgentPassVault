@@ -15,10 +15,14 @@
  */
 package com.agentvault.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import java.time.Instant;
 
-public record MapRequestDTO(
-    @NotNull(message = "Secret ID cannot be null")
-        @Pattern(regexp = "^[0-9]+$", message = "Secret ID must be numeric")
-        String secretId) {}
+public record CreateLeaseRequest(
+    @NotNull(message = "Agent ID is required")
+        @Pattern(regexp = "^[0-9]+$", message = "Agent ID must be numeric")
+        String agentId,
+    @NotBlank(message = "Encrypted data cannot be blank") String encryptedData,
+    Instant expiry) {}

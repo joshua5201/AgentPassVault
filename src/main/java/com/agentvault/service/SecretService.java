@@ -15,6 +15,7 @@
  */
 package com.agentvault.service;
 
+import com.agentvault.dto.CreateLeaseRequest;
 import com.agentvault.dto.CreateSecretRequest;
 import com.agentvault.dto.SecretMetadataResponse;
 import com.agentvault.dto.SecretResponse;
@@ -22,6 +23,7 @@ import com.agentvault.model.*;
 import com.agentvault.repository.LeaseRepository;
 import com.agentvault.repository.SecretRepository;
 import com.agentvault.repository.TenantRepository;
+import com.agentvault.repository.UserRepository;
 import com.agentvault.security.AgentVaultAuthentication;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -45,6 +47,7 @@ public class SecretService {
   private final SecretRepository secretRepository;
   private final TenantRepository tenantRepository;
   private final LeaseRepository leaseRepository;
+  private final UserRepository userRepository;
   private final EntityManager entityManager;
   private final TokenService tokenService;
   private final ObjectMapper objectMapper;
@@ -67,6 +70,34 @@ public class SecretService {
     Secret saved = secretRepository.save(secret);
 
     return mapToMetadataResponse(saved);
+  }
+
+  @Transactional
+  public void createLease(Long tenantId, Long secretId, CreateLeaseRequest request) {
+    Secret secret =
+        secretRepository
+            .findById(secretId)
+            .filter(s -> s.getTenant().getId().equals(tenantId))
+            .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
+
+    User agent =
+        userRepository
+            .findById(Long.valueOf(request.agentId()))
+            .filter(u -> u.getTenant().getId().equals(tenantId))
+            .orElseThrow(() -> new IllegalArgumentException("Agent not found"));
+
+    Lease lease =
+        leaseRepository.findBySecret_IdAndAgent_Id(secretId, agent.getId()).orElse(new Lease());
+
+    if (lease.getId() == null) {
+      lease.setSecret(secret);
+      lease.setAgent(agent);
+    }
+
+    lease.setEncryptedData(request.encryptedData());
+    lease.setExpiry(request.expiry());
+
+    leaseRepository.save(lease);
   }
 
   public SecretResponse getSecret(AgentVaultAuthentication auth, Long secretId) {
