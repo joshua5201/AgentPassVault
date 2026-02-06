@@ -54,5 +54,5 @@ docker compose up -d
 The API will be available at `http://localhost:8080`.
 
 ## License
-This project is licensed under the **Apache License 2.0**. See the `LICENSE` file for details.
-All source files must contain the standard Apache License header.
+This project is licensed under the **GNU Affero General Public License v3.0**. See the `LICENSE` file for details.
+All source files must contain the standard AGPL v3.0 license header.
