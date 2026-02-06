@@ -20,29 +20,38 @@ import com.agentvault.dto.SecretMetadataResponse;
 import com.agentvault.dto.SecretResponse;
 import com.agentvault.model.Secret;
 import com.agentvault.model.SecretVisibility;
+import com.agentvault.model.Tenant;
 import com.agentvault.repository.SecretRepository;
+import com.agentvault.repository.TenantRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class SecretService {
 
   private final SecretRepository secretRepository;
-  private final MongoTemplate mongoTemplate; // For dynamic search queries
+  private final TenantRepository tenantRepository;
+  private final EntityManager entityManager;
   private final TokenService tokenService;
 
+  @Transactional
   public SecretMetadataResponse createSecret(UUID tenantId, CreateSecretRequest request) {
+    Tenant tenant =
+        tenantRepository
+            .findByTenantId(tenantId)
+            .orElseThrow(() -> new IllegalArgumentException("Tenant not found"));
+
     Secret secret = new Secret();
     secret.setSecretId(UUID.randomUUID());
-    secret.setTenantId(tenantId);
+    secret.setTenant(tenant);
     secret.setName(request.name());
     secret.setEncryptedData(request.encryptedValue());
     secret.setMetadata(request.metadata());
@@ -56,7 +65,7 @@ public class SecretService {
     Secret secret =
         secretRepository
             .findBySecretId(secretId)
-            .filter(s -> s.getTenantId().equals(tenantId))
+            .filter(s -> s.getTenant().getTenantId().equals(tenantId))
             .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
 
     if (secret.getVisibility() == SecretVisibility.LEASE_REQUIRED) {
@@ -75,38 +84,58 @@ public class SecretService {
     Secret secret =
         secretRepository
             .findBySecretId(secretId)
-            .filter(s -> s.getTenantId().equals(tenantId))
+            .filter(s -> s.getTenant().getTenantId().equals(tenantId))
             .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
 
     return mapToResponse(secret);
   }
 
+  @Transactional
   public void deleteSecret(UUID tenantId, UUID secretId) {
     Secret secret =
         secretRepository
             .findBySecretId(secretId)
-            .filter(s -> s.getTenantId().equals(tenantId))
+            .filter(s -> s.getTenant().getTenantId().equals(tenantId))
             .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
 
     secretRepository.delete(secret);
   }
 
+  @SuppressWarnings("unchecked")
   public List<SecretMetadataResponse> searchSecrets(
       UUID tenantId, Map<String, Object> metadataQuery) {
-    Query query = new Query();
-    query.addCriteria(Criteria.where("tenantId").is(tenantId));
-    // Exclude hidden secrets from agent searches
-    query.addCriteria(Criteria.where("visibility").ne(SecretVisibility.HIDDEN));
+    StringBuilder sql = new StringBuilder("SELECT s.* FROM secrets s ");
+    sql.append("JOIN tenants t ON s.tenant_id = t.id ");
+    sql.append("WHERE t.tenant_id = :tenantId ");
+    sql.append("AND s.visibility != 'HIDDEN' ");
 
-    if (metadataQuery != null) {
+    if (metadataQuery != null && !metadataQuery.isEmpty()) {
       metadataQuery.forEach(
           (key, value) -> {
-            // Assuming exact match for metadata values
-            query.addCriteria(Criteria.where("metadata." + key).is(value));
+            sql.append("AND JSON_EXTRACT(s.metadata, '$.")
+                .append(key)
+                .append("') = :")
+                .append(key.replace(".", "_"))
+                .append(" ");
           });
     }
 
-    List<Secret> secrets = mongoTemplate.find(query, Secret.class);
+    Query query = entityManager.createNativeQuery(sql.toString(), Secret.class);
+    query.setParameter("tenantId", tenantId.toString().replace("-", "")); // MySQL UUID as binary/string might need handling
+
+    // Actually JPA UUID handling depends on configuration.
+    // If using strategy = GenerationType.UUID, it might be stored as binary(16).
+    // For native query, it's safer to use the UUID object if the driver supports it.
+    query.setParameter("tenantId", tenantId);
+
+    if (metadataQuery != null && !metadataQuery.isEmpty()) {
+      metadataQuery.forEach(
+          (key, value) -> {
+            query.setParameter(key.replace(".", "_"), value.toString());
+          });
+    }
+
+    List<Secret> secrets = query.getResultList();
 
     return secrets.stream().map(this::mapToMetadataResponse).collect(Collectors.toList());
   }

@@ -15,58 +15,70 @@
  */
 package com.agentvault.model;
 
-import java.time.LocalDateTime;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
-import org.springframework.data.mongodb.core.mapping.FieldType;
+import org.hibernate.annotations.Type;
 
 @Data
+@Entity
+@Table(name = "requests")
 @EqualsAndHashCode(callSuper = true)
-@Document(collection = "requests")
 public class Request extends BaseEntity {
 
-  @Id private String id; // ObjectId
+  @Column(name = "request_id", unique = true, nullable = false)
+  private UUID requestId;
 
-  @Indexed(unique = true)
-  private UUID requestId; // Public UUID
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "tenant_id", nullable = false)
+  private Tenant tenant;
 
-  @Indexed private UUID tenantId;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "requester_id", nullable = false)
+  private User requester;
 
-  private UUID requesterId;
-
-  @Indexed
-  @Field(targetType = FieldType.STRING)
+  @Enumerated(EnumType.STRING)
+  @Column(name = "status", nullable = false)
   private RequestStatus status;
 
-  @Field(targetType = FieldType.STRING)
+  @Enumerated(EnumType.STRING)
+  @Column(name = "type", nullable = false)
   private RequestType type = RequestType.CREATE;
 
+  @Column(name = "name")
   private String name;
 
+  @Column(name = "context", columnDefinition = "TEXT")
   private String context;
 
+  @Type(JsonType.class)
+  @Column(name = "required_metadata", columnDefinition = "json")
   private Map<String, Object> requiredMetadata;
 
+  @Type(JsonType.class)
+  @Column(name = "required_fields", columnDefinition = "json")
   private List<String> requiredFieldsInSecretValue;
 
-  private UUID mappedSecretId; // public secretId of the secret fulfilling this request
+  @Column(name = "mapped_secret_id")
+  private UUID mappedSecretId;
 
-  private UUID secretId; // public secretId of the secret being requested for lease
+  @Column(name = "requested_secret_id")
+  private UUID secretId;
 
+  @Column(name = "rejection_reason")
   private String rejectionReason;
 
+  @Column(name = "fulfillment_url")
   private String fulfillmentUrl;
-
-  @CreatedDate private LocalDateTime createdAt;
-
-  @LastModifiedDate private LocalDateTime updatedAt;
 }

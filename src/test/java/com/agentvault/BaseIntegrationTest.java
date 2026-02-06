@@ -15,14 +15,12 @@
  */
 package com.agentvault;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
 import com.agentvault.model.Tenant;
+import com.agentvault.repository.LeaseRepository;
 import com.agentvault.repository.RequestRepository;
 import com.agentvault.repository.SecretRepository;
 import com.agentvault.repository.TenantRepository;
 import com.agentvault.repository.UserRepository;
-import com.agentvault.service.crypto.KeyManagementService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,8 +35,6 @@ import org.springframework.test.web.servlet.MockMvc;
 @AutoConfigureMockMvc
 public abstract class BaseIntegrationTest {
 
-  private static final Logger log = LoggerFactory.getLogger(BaseIntegrationTest.class);
-
   @Autowired protected MockMvc mockMvc;
 
   @Autowired protected ObjectMapper objectMapper;
@@ -51,22 +47,25 @@ public abstract class BaseIntegrationTest {
 
   @Autowired protected RequestRepository requestRepository;
 
-  @Autowired protected org.springframework.data.mongodb.core.MongoTemplate mongoTemplate;
+  @Autowired protected LeaseRepository leaseRepository;
 
   @BeforeEach
   void clearDatabase() {
-    mongoTemplate.dropCollection(com.agentvault.model.User.class);
-    mongoTemplate.dropCollection(com.agentvault.model.Tenant.class);
-    mongoTemplate.dropCollection(com.agentvault.model.Secret.class);
-    mongoTemplate.dropCollection(com.agentvault.model.Request.class);
+    leaseRepository.deleteAll();
+    requestRepository.deleteAll();
+    secretRepository.deleteAll();
+    userRepository.deleteAll();
+    tenantRepository.deleteAll();
   }
 
   protected UUID createTenant() {
-    UUID tenantId = UUID.randomUUID();
+    return createTenant(UUID.randomUUID());
+  }
+
+  protected UUID createTenant(UUID tenantId) {
     Tenant tenant = new Tenant();
-    tenant.setId(tenantId.toString());
     tenant.setTenantId(tenantId);
-    tenant.setName("Test Tenant");
+    tenant.setName("Test Tenant " + tenantId);
     tenant.setStatus("active");
 
     tenantRepository.save(tenant);

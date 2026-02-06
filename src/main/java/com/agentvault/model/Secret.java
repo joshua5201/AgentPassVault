@@ -15,47 +15,45 @@
  */
 package com.agentvault.model;
 
-import java.time.LocalDateTime;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import java.util.Map;
 import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.mongodb.core.index.CompoundIndex;
-import org.springframework.data.mongodb.core.index.CompoundIndexes;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.index.TextIndexed;
-import org.springframework.data.mongodb.core.mapping.Document;
+import org.hibernate.annotations.Type;
 
 @Data
+@Entity
+@Table(name = "secrets")
 @EqualsAndHashCode(callSuper = true)
-@Document(collection = "secrets")
-@CompoundIndexes({
-  @CompoundIndex(name = "metadata_service_idx", def = "{'metadata.service': 1}"),
-  @CompoundIndex(name = "metadata_env_idx", def = "{'metadata.env': 1}"),
-  @CompoundIndex(name = "metadata_url_idx", def = "{'metadata.url': 1}")
-})
 public class Secret extends BaseEntity {
 
-  @Id private String id; // ObjectId
-
-  @Indexed(unique = true)
+  @Column(name = "secret_id", unique = true, nullable = false)
   private UUID secretId;
 
-  @Indexed private UUID tenantId;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "tenant_id", nullable = false)
+  private Tenant tenant;
 
-  @TextIndexed private String name;
+  @Column(name = "name", nullable = false)
+  private String name;
 
-  private String encryptedData; // Opaque Base64 blob from client
+  @Column(name = "encrypted_data", columnDefinition = "TEXT")
+  private String encryptedData;
 
-  // Flexible metadata map, specific keys indexed via @CompoundIndexes above
+  @Type(JsonType.class)
+  @Column(name = "metadata", columnDefinition = "json")
   private Map<String, Object> metadata;
 
+  @Enumerated(EnumType.STRING)
+  @Column(name = "visibility", nullable = false)
   private SecretVisibility visibility = SecretVisibility.VISIBLE;
-
-  @CreatedDate private LocalDateTime createdAt;
-
-  @LastModifiedDate private LocalDateTime updatedAt;
 }

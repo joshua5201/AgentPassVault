@@ -32,7 +32,7 @@ class AgentControllerTest extends BaseIntegrationTest {
 
   @Autowired private UserService userService;
 
-  private String getAuthToken(UUID tenantId, String username, String password) throws Exception {
+  private String getAuthToken(String username, String password) throws Exception {
     String loginResponse =
         mockMvc
             .perform(
@@ -51,7 +51,7 @@ class AgentControllerTest extends BaseIntegrationTest {
   void createAndListAgent_Success() throws Exception {
     UUID tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin", "password");
-    String token = getAuthToken(tenantId, "admin", "password");
+    String token = getAuthToken("admin", "password");
 
     // Create Agent
     CreateAgentRequest createReq = new CreateAgentRequest("CI Runner");
@@ -77,7 +77,7 @@ class AgentControllerTest extends BaseIntegrationTest {
   void rotateToken_Success() throws Exception {
     UUID tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin", "password");
-    String token = getAuthToken(tenantId, "admin", "password");
+    String token = getAuthToken("admin", "password");
 
     // Create Agent
     CreateAgentRequest createReq = new CreateAgentRequest("Agent 1");
@@ -107,7 +107,7 @@ class AgentControllerTest extends BaseIntegrationTest {
   void deleteAgent_Success() throws Exception {
     UUID tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin", "password");
-    String token = getAuthToken(tenantId, "admin", "password");
+    String token = getAuthToken("admin", "password");
 
     // Create Agent
     CreateAgentRequest createReq = new CreateAgentRequest("Agent 1");

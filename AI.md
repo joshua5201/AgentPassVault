@@ -20,8 +20,8 @@ Agents working on this project must adhere to the specifications and workflows d
 ## Java Implementation Context (feat/java)
 - **Primary Branch:** `feat/java` is the main development branch for the Java implementation.
 - **Feature Branching:** Until a new working version is finished, all new work must branch out from `feat/java`.
-- **Architecture:** Spring Boot 3 (Java 21) + MongoDB.
-- **Security:** Multi-tenant isolation using 2-tier key hierarchy (SMK + TK).
+- **Architecture:** Spring Boot 3 (Java 21) + MySQL 8.
+- **Security:** Multi-tenant isolation using zero-knowledge architecture (Client-side encryption).
 - **Coding Standards:** NEVER use `java.util.Date`. Always use `java.time` APIs (e.g., `Instant`, `LocalDateTime`, `OffsetDateTime`).
 
 ## License Header

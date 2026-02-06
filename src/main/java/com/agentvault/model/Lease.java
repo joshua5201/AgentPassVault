@@ -15,37 +15,37 @@
  */
 package com.agentvault.model;
 
-import java.time.LocalDateTime;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import java.time.Instant;
 import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
+@Entity
+@Table(name = "leases")
 @EqualsAndHashCode(callSuper = true)
-@Document(collection = "leases")
 public class Lease extends BaseEntity {
 
-  @Id private String id; // ObjectId
-
-  @Indexed(unique = true)
+  @Column(name = "lease_id", unique = true, nullable = false)
   private UUID leaseId;
 
-  @Indexed
-  private UUID secretId; // FK to Secret.secretId
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "secret_id", nullable = false)
+  private Secret secret;
 
-  @Indexed
-  private UUID agentId; // FK to User.userId (the agent)
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "agent_id", nullable = false)
+  private User agent;
 
-  private String encryptedData; // Secret value encrypted with Agent's public key
+  @Column(name = "encrypted_data", columnDefinition = "TEXT")
+  private String encryptedData;
 
-  private LocalDateTime expiry;
-
-  @CreatedDate private LocalDateTime createdAt;
-
-  @LastModifiedDate private LocalDateTime updatedAt;
+  @Column(name = "expiry")
+  private Instant expiry;
 }
