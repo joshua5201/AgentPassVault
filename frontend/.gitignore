@@ -1,0 +1,10 @@
+repos/
+node_modules/
+dist/
+.turbo/
+.vercel
+*.log
+package-lock.json
+pnpm-lock.yaml
+.env
+.DS_Store
