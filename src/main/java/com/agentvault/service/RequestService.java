@@ -18,8 +18,12 @@ package com.agentvault.service;
 import com.agentvault.dto.*;
 import com.agentvault.model.Request;
 import com.agentvault.model.RequestStatus;
+import com.agentvault.model.Tenant;
+import com.agentvault.model.User;
 import com.agentvault.repository.RequestRepository;
 import com.agentvault.repository.SecretRepository;
+import com.agentvault.repository.TenantRepository;
+import com.agentvault.repository.UserRepository;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,14 +35,27 @@ public class RequestService {
 
   private final RequestRepository requestRepository;
   private final SecretRepository secretRepository;
+  private final TenantRepository tenantRepository;
+  private final UserRepository userRepository;
   private final SecretService secretService;
   private final FulfillmentUrlService fulfillmentUrlService;
   private final TokenService tokenService;
 
+  @Transactional
   public RequestResponse createRequest(UUID tenantId, UUID requesterId, CreateRequestDTO dto) {
+    Tenant tenant =
+        tenantRepository
+            .findByTenantId(tenantId)
+            .orElseThrow(() -> new IllegalArgumentException("Tenant not found"));
+
+    User requester =
+        userRepository
+            .findByUserId(requesterId)
+            .orElseThrow(() -> new IllegalArgumentException("Requester not found"));
+
     Request request = new Request();
-    request.setTenantId(tenantId);
-    request.setRequesterId(requesterId);
+    request.setTenant(tenant);
+    request.setRequester(requester);
     request.setRequestId(UUID.randomUUID());
     request.setStatus(RequestStatus.pending);
     request.setName(dto.name());
@@ -74,6 +91,7 @@ public class RequestService {
     return mapToResponse(requestRepository.save(request));
   }
 
+  @Transactional
   public RequestResponse mapRequest(UUID tenantId, UUID requestId, MapRequestDTO dto) {
     Request request = findRequest(tenantId, requestId);
     validatePending(request);
@@ -81,7 +99,7 @@ public class RequestService {
     // Verify secret exists and belongs to tenant
     secretRepository
         .findBySecretId(dto.secretId())
-        .filter(s -> s.getTenantId().equals(tenantId))
+        .filter(s -> s.getTenant().getTenantId().equals(tenantId))
         .ifPresentOrElse(
             secret -> {
               if (dto.newVisibility() != null) {
@@ -99,6 +117,7 @@ public class RequestService {
     return mapToResponse(requestRepository.save(request));
   }
 
+  @Transactional
   public ApproveLeaseResponseDTO approveLease(UUID tenantId, UUID requestId, String approverId) {
     Request request = findRequest(tenantId, requestId);
     validatePending(request);
@@ -110,7 +129,7 @@ public class RequestService {
     String leaseToken =
         tokenService.generateLeaseToken(
             tenantId,
-            request.getRequesterId().toString(),
+            request.getRequester().getUserId().toString(),
             approverId,
             request.getSecretId().toString(),
             request.getRequestId().toString());
@@ -121,6 +140,7 @@ public class RequestService {
     return new ApproveLeaseResponseDTO(leaseToken);
   }
 
+  @Transactional
   public RequestResponse rejectRequest(UUID tenantId, UUID requestId, String reason) {
     Request request = findRequest(tenantId, requestId);
     validatePending(request);
@@ -131,9 +151,10 @@ public class RequestService {
     return mapToResponse(requestRepository.save(request));
   }
 
+  @Transactional
   public void abandonRequest(UUID tenantId, UUID requesterId, UUID requestId) {
     Request request = findRequest(tenantId, requestId);
-    if (!request.getRequesterId().equals(requesterId)) {
+    if (!request.getRequester().getUserId().equals(requesterId)) {
       throw new IllegalStateException("Only the requester can abandon the request");
     }
     validatePending(request);
@@ -145,7 +166,7 @@ public class RequestService {
   private Request findRequest(UUID tenantId, UUID requestId) {
     return requestRepository
         .findByRequestId(requestId)
-        .filter(r -> r.getTenantId().equals(tenantId))
+        .filter(r -> r.getTenant().getTenantId().equals(tenantId))
         .orElseThrow(() -> new IllegalArgumentException("Request not found"));
   }
 

@@ -1,13 +1,16 @@
 services:
-  mongodb:
-    image: mongo:6.0
-    container_name: agentvault-mongodb
+  mysql:
+    image: mysql:8.0
+    container_name: agentvault-mysql
     ports:
-      - "127.0.0.1:${MONGODB_PORT_27017:-27017}:27017"
+      - "127.0.0.1:3306:3306"
     volumes:
-      - mongodb_data:/data/db
+      - mysql_data:/var/lib/mysql
     environment:
-      MONGO_INITDB_DATABASE: agentvault
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: agentvault
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
 
 volumes:
-  mongodb_data:
+  mysql_data:

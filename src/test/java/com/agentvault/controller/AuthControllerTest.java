@@ -21,7 +21,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.agentvault.BaseIntegrationTest;
 import com.agentvault.dto.*;
-import com.agentvault.model.Tenant;
 import com.agentvault.service.UserService;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -34,15 +33,6 @@ import org.springframework.http.MediaType;
 class AuthControllerTest extends BaseIntegrationTest {
 
   @Autowired private UserService userService;
-
-  private void createTenant(UUID id) {
-    Tenant tenant = new Tenant();
-    tenant.setId(id.toString());
-    tenant.setTenantId(id);
-    tenant.setName("Test Tenant");
-    tenant.setStatus("active");
-    tenantRepository.save(tenant);
-  }
 
   @Test
   void changePassword_WithValidCredentials_Success() throws Exception {
@@ -161,7 +151,7 @@ class AuthControllerTest extends BaseIntegrationTest {
     // 2. Manually simulate password update AFTER token was issued
     com.agentvault.model.User user = userRepository.findByUsername("security_user").get();
     user.setPasswordLastUpdatedAt(
-        java.time.LocalDateTime.now(java.time.ZoneId.of("UTC")).plusSeconds(1));
+        java.time.Instant.now().plusSeconds(1));
     userRepository.save(user);
 
     // 3. Attempt to reset password with the now "old" token

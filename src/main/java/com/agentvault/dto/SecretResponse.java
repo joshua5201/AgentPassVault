@@ -16,7 +16,7 @@
 package com.agentvault.dto;
 
 import com.agentvault.model.SecretVisibility;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
@@ -26,5 +26,5 @@ public record SecretResponse(
     String encryptedValue, // Encrypted Base64 value
     Map<String, Object> metadata,
     SecretVisibility visibility,
-    LocalDateTime createdAt,
-    LocalDateTime updatedAt) {}
+    Instant createdAt,
+    Instant updatedAt) {}

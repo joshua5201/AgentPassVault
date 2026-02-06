@@ -25,7 +25,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.agentvault.BaseIntegrationTest;
 import com.agentvault.dto.*;
 import com.agentvault.model.SecretVisibility;
-import com.agentvault.repository.SecretRepository;
 import com.agentvault.service.AgentService;
 import com.agentvault.service.UserService;
 import java.util.List;
@@ -39,9 +38,8 @@ class RequestControllerTest extends BaseIntegrationTest {
 
   @Autowired private UserService userService;
   @Autowired private AgentService agentService;
-  @Autowired private SecretRepository secretRepository;
 
-  private String getAuthToken(UUID tenantId, String username, String password) throws Exception {
+  private String getAuthToken(String username, String password) throws Exception {
     String loginResponse =
         mockMvc
             .perform(
@@ -78,7 +76,7 @@ class RequestControllerTest extends BaseIntegrationTest {
   void createAndFulfillRequest_Success() throws Exception {
     UUID tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin", "password");
-    String token = getAuthToken(tenantId, "admin", "password");
+    String token = getAuthToken("admin", "password");
 
     // 1. Create Request
     CreateRequestDTO createReq =
@@ -126,7 +124,7 @@ class RequestControllerTest extends BaseIntegrationTest {
   void rejectRequest_Success() throws Exception {
     UUID tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin", "password");
-    String token = getAuthToken(tenantId, "admin", "password");
+    String token = getAuthToken("admin", "password");
 
     CreateRequestDTO createReq = new CreateRequestDTO("Bad Req", "Context", null, null);
     String reqResponse =
@@ -184,7 +182,7 @@ class RequestControllerTest extends BaseIntegrationTest {
 
     // 3. Verify status is abandoned
     userService.createAdminUser(tenantId, "admin", "password");
-    String adminToken = getAuthToken(tenantId, "admin", "password");
+    String adminToken = getAuthToken("admin", "password");
     mockMvc
         .perform(
             get("/api/v1/requests/" + requestId).header("Authorization", "Bearer " + adminToken))
@@ -196,7 +194,7 @@ class RequestControllerTest extends BaseIntegrationTest {
   void mapRequest_WithNewVisibility_Success() throws Exception {
     UUID tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin", "password");
-    String adminToken = getAuthToken(tenantId, "admin", "password");
+    String adminToken = getAuthToken("admin", "password");
 
     // 1. Create a HIDDEN secret
     CreateSecretRequest createSecretReq =

@@ -30,6 +30,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +39,7 @@ public class AgentService {
   private final UserRepository userRepository;
   private final UserService userService;
 
+  @Transactional
   public AgentTokenResponse createAgent(UUID tenantId, String name) {
     String appToken = generateAppToken();
     String tokenHash = hashToken(appToken);
@@ -50,13 +52,12 @@ public class AgentService {
   }
 
   public List<AgentResponse> listAgents(UUID tenantId) {
-    // Assuming agents are Users with role "AGENT"
-    return userRepository.findAll().stream()
-        .filter(u -> u.getTenantId().equals(tenantId) && Role.AGENT.equals(u.getRole()))
+    return userRepository.findByTenant_TenantIdAndRole(tenantId, Role.AGENT).stream()
         .map(this::mapToResponse)
         .collect(Collectors.toList());
   }
 
+  @Transactional
   public AgentTokenResponse rotateToken(UUID tenantId, UUID agentId) {
     User agent = getAgent(tenantId, agentId);
 
@@ -69,6 +70,7 @@ public class AgentService {
     return new AgentTokenResponse(agent.getUserId(), newAppToken);
   }
 
+  @Transactional
   public void deleteAgent(UUID tenantId, UUID agentId) {
     User agent = getAgent(tenantId, agentId);
     userRepository.delete(agent);
@@ -77,7 +79,7 @@ public class AgentService {
   private User getAgent(UUID tenantId, UUID agentId) {
     return userRepository
         .findByUserId(agentId)
-        .filter(u -> u.getTenantId().equals(tenantId) && Role.AGENT.equals(u.getRole()))
+        .filter(u -> u.getTenant().getTenantId().equals(tenantId) && Role.AGENT.equals(u.getRole()))
         .orElseThrow(() -> new IllegalArgumentException("Agent not found"));
   }
 

@@ -28,9 +28,9 @@ To prevent abuse and ensure optimal performance, AgentVault enforces the followi
 - Docker & Docker Compose
 
 ### Quick Start
-1.  **Start Infrastructure (MongoDB):**
+1.  **Start Infrastructure (MySQL):**
     ```bash
-    docker-compose up -d
+    ./scripts/management/dev-env.sh
     ```
 2.  **Run the Application (Dev Profile):**
     ```bash
@@ -40,7 +40,7 @@ To prevent abuse and ensure optimal performance, AgentVault enforces the followi
 
 3.  **Get Credentials:**
     ```bash
-    ./get-dev-tenant.sh
+    ./scripts/management/get-dev-tenant.sh
     # Outputs: Tenant ID and Username
     ```
 

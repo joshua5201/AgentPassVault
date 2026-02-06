@@ -2,7 +2,7 @@
 # Starts the development environment
 
 # Default port if not set
-export MONGODB_PORT_27017=${MONGODB_PORT_27017:-27017}
+export MYSQL_PORT_3306=${MYSQL_PORT_3306:-3306}
 
-echo "Starting MongoDB on 127.0.0.1:$MONGODB_PORT_27017..."
+echo "Starting MySQL on 127.0.0.1:$MYSQL_PORT_3306..."
 docker compose up -d

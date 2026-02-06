@@ -30,10 +30,10 @@ This plan outlines the transition of AgentVault from a server-side encryption mo
         *   `expiry` (LocalDateTime): When the lease expires. Null if no expiry
     *   Relationships: A Secret can have multiple Leases (one per agent). The Secret object itself stores the owner's copy (if any), while Leases store the agent copies.
 
-### 2.1 Detailed Migration Steps (MySQL)
+### [x] 2.1 Detailed Migration Steps (MySQL)
 The project transitioned from MongoDB to MySQL 8 to leverage robust relational integrity, ACID compliance, and mature tooling while retaining metadata flexibility via MySQL's native JSON support.
 
-#### 2.1.1. Build & Infrastructure Changes
+#### [x] 2.1.1. Build & Infrastructure Changes
 *   **Gradle Dependencies (`build.gradle.kts`):**
     *   **Remove:** `org.springframework.boot:spring-boot-starter-data-mongodb`
     *   **Add:**
@@ -51,7 +51,7 @@ The project transitioned from MongoDB to MySQL 8 to leverage robust relational i
     *   Add Datasource config: `spring.datasource.url`, `username`, `password`.
     *   Add JPA config: `spring.jpa.hibernate.ddl-auto=update` (dev), `spring.jpa.open-in-view=false`.
 
-#### 2.1.2. Entity & Data Model Migration (JPA)
+#### [x] 2.1.2. Entity & Data Model Migration (JPA)
 *   **BaseEntity:**
     *   Annotate with `@MappedSuperclass`.
     *   Use `@Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;`
@@ -79,14 +79,14 @@ The project transitioned from MongoDB to MySQL 8 to leverage robust relational i
     *   `@Column(columnDefinition = "json") private Map<String, String> requiredMetadata;`
     *   `@Column(columnDefinition = "json") private List<String> requiredFields;`
 
-#### 2.1.3. Repository Layer
+#### [x] 2.1.3. Repository Layer
 *   Convert all `MongoRepository` interfaces to `JpaRepository<Entity, UUID>`.
 *   **Refactor Queries:**
     *   Replace MongoDB JSON queries with JPQL or Native SQL for JSON fields.
     *   Example: `SELECT s FROM Secret s WHERE function('json_extract', s.metadata, '$.service') = :serviceName`
     *   Or use JPA Specifications.
 
-#### 2.1.4. Script Updates
+#### [x] 2.1.4. Script Updates
 *   **`scripts/management/dev-env.sh`**:
     *   Wait for MySQL port 3306 instead of 27017.
     *   Check for `mysqladmin ping`.
@@ -95,7 +95,7 @@ The project transitioned from MongoDB to MySQL 8 to leverage robust relational i
 *   **`scripts/management/setup-dev-user.sh`**:
     *   Adapt to insert into SQL tables (or rely on API/DataSeeder).
 
-#### 2.1.5. Code Cleanup
+#### [x] 2.1.5. Code Cleanup
 *   Remove `spring-boot-starter-data-mongodb` usage in all service classes.
 
 ## [ ] 3. Update API DTOs

@@ -44,12 +44,11 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
     tenant.setTenantId(tenantId);
     tenant.setName("E2E Tenant");
     tenant.setStatus("active");
-    tenant.setEncryptedTenantKey(keyManagementService.generateEncryptedTenantKey());
     tenantRepository.save(tenant);
 
     // Setup Admin
     userService.createAdminUser(tenantId, "admin", "password");
-    String adminToken = getAuthToken(tenantId, "admin", "password");
+    String adminToken = getAuthToken("admin", "password");
 
     // Setup Agent
     AgentTokenResponse agentResp = agentService.createAgent(tenantId, "deploy-agent");
@@ -156,17 +155,32 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
         .andExpect(jsonPath("$.encryptedValue").value("encrypted-super-secret-password"));
   }
 
-  private String getAuthToken(UUID tenantId, String username, String password) throws Exception {
-    String loginResponse =
-        mockMvc
-            .perform(
-                post("/api/v1/auth/login/user")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(
-                        objectMapper.writeValueAsString(new UserLoginRequest(username, password))))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    return objectMapper.readTree(loginResponse).get("accessToken").asText();
+    private String getAuthToken(String username, String password) throws Exception {
+
+      String loginResponse =
+
+          mockMvc
+
+              .perform(
+
+                  post("/api/v1/auth/login/user")
+
+                      .contentType(MediaType.APPLICATION_JSON)
+
+                      .content(
+
+                          objectMapper.writeValueAsString(new UserLoginRequest(username, password))))
+
+              .andReturn()
+
+              .getResponse()
+
+              .getContentAsString();
+
+      return objectMapper.readTree(loginResponse).get("accessToken").asText();
+
+    }
+
   }
-}
+
+  

@@ -16,16 +16,18 @@
 package com.agentvault.service;
 
 import com.agentvault.model.Role;
+import com.agentvault.model.Tenant;
 import com.agentvault.model.User;
 import com.agentvault.repository.TenantRepository;
 import com.agentvault.repository.UserRepository;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -35,13 +37,14 @@ public class UserService {
   private final TenantRepository tenantRepository;
   private final PasswordEncoder passwordEncoder;
 
+  @Transactional
   public User createAdminUser(
       UUID tenantId, String username, String rawPassword, String displayName) {
-    validateTenant(tenantId);
+    Tenant tenant = validateAndGetTenant(tenantId);
 
     User user = new User();
     user.setUserId(UUID.randomUUID());
-    user.setTenantId(tenantId);
+    user.setTenant(tenant);
     user.setUsername(username);
     user.setDisplayName(displayName);
     user.setPasswordHash(passwordEncoder.encode(rawPassword));
@@ -50,18 +53,18 @@ public class UserService {
     return userRepository.save(user);
   }
 
-  // Keep old signature for compatibility if needed, or update all callers.
-  // I'll update all callers.
+  @Transactional
   public User createAdminUser(UUID tenantId, String username, String rawPassword) {
     return createAdminUser(tenantId, username, rawPassword, null);
   }
 
+  @Transactional
   public User createAgentUser(UUID tenantId, String appTokenHash, String displayName) {
-    validateTenant(tenantId);
+    Tenant tenant = validateAndGetTenant(tenantId);
 
     User user = new User();
     user.setUserId(UUID.randomUUID());
-    user.setTenantId(tenantId);
+    user.setTenant(tenant);
     user.setDisplayName(displayName);
     user.setRole(Role.AGENT);
     user.setAppTokenHash(appTokenHash);
@@ -69,10 +72,12 @@ public class UserService {
     return userRepository.save(user);
   }
 
+  @Transactional
   public User createAgentUser(UUID tenantId, String appTokenHash) {
     return createAgentUser(tenantId, appTokenHash, null);
   }
 
+  @Transactional
   public void changePassword(UUID userId, String oldPassword, String newPassword) {
     User user =
         userRepository
@@ -84,10 +89,11 @@ public class UserService {
     }
 
     user.setPasswordHash(passwordEncoder.encode(newPassword));
-    user.setPasswordLastUpdatedAt(LocalDateTime.now(ZoneId.of("UTC")));
+    user.setPasswordLastUpdatedAt(Instant.now());
     userRepository.save(user);
   }
 
+  @Transactional
   public String initiatePasswordReset(String username) {
     User user =
         userRepository
@@ -97,21 +103,22 @@ public class UserService {
     String token = UUID.randomUUID().toString();
     user.setResetPasswordToken(token);
     // Token expires in 15 minutes
-    LocalDateTime now = LocalDateTime.now(ZoneId.of("UTC"));
+    Instant now = Instant.now();
     user.setResetPasswordTokenCreatedAt(now);
-    user.setResetPasswordExpiresAt(now.plusMinutes(15));
+    user.setResetPasswordExpiresAt(now.plus(15, ChronoUnit.MINUTES));
     userRepository.save(user);
 
     return token;
   }
 
+  @Transactional
   public void resetPassword(String token, String newPassword) {
     User user =
         userRepository
             .findByResetPasswordToken(token)
             .orElseThrow(() -> new IllegalArgumentException("Invalid or expired reset token"));
 
-    LocalDateTime now = LocalDateTime.now(ZoneId.of("UTC"));
+    Instant now = Instant.now();
     if (user.getResetPasswordExpiresAt() == null
         || user.getResetPasswordExpiresAt().isBefore(now)) {
       throw new IllegalArgumentException("Invalid or expired reset token");
@@ -133,12 +140,12 @@ public class UserService {
     userRepository.save(user);
   }
 
-  private void validateTenant(UUID tenantId) {
+  private Tenant validateAndGetTenant(UUID tenantId) {
     if (tenantId == null) {
       throw new IllegalArgumentException("Tenant ID cannot be null");
     }
-    if (tenantRepository.findByTenantId(tenantId).isEmpty()) {
-      throw new IllegalArgumentException("Tenant not found with ID: " + tenantId);
-    }
+    return tenantRepository
+        .findByTenantId(tenantId)
+        .orElseThrow(() -> new IllegalArgumentException("Tenant not found with ID: " + tenantId));
   }
 }

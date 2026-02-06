@@ -43,7 +43,7 @@ public class TokenService {
     Instant now = Instant.now();
     return Jwts.builder()
         .subject(user.getUserId().toString())
-        .claim("tenant_id", user.getTenantId().toString())
+        .claim("tenant_id", user.getTenant().getTenantId().toString())
         .claim("role", user.getRole().name())
         .issuedAt(Date.from(now))
         .expiration(Date.from(now.plus(expirationMinutes, ChronoUnit.MINUTES)))

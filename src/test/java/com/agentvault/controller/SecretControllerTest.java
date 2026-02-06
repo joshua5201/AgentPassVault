@@ -23,7 +23,6 @@ import com.agentvault.BaseIntegrationTest;
 import com.agentvault.dto.*;
 import com.agentvault.model.Secret;
 import com.agentvault.model.SecretVisibility;
-import com.agentvault.repository.SecretRepository;
 import com.agentvault.service.AgentService;
 import com.agentvault.service.UserService;
 import java.util.Map;
@@ -37,9 +36,8 @@ class SecretControllerTest extends BaseIntegrationTest {
 
   @Autowired private UserService userService;
   @Autowired private AgentService agentService;
-  @Autowired private SecretRepository secretRepository;
 
-  private String getAuthToken(UUID tenantId, String username, String password) throws Exception {
+  private String getAuthToken(String username, String password) throws Exception {
     String loginResponse =
         mockMvc
             .perform(
@@ -57,7 +55,7 @@ class SecretControllerTest extends BaseIntegrationTest {
   void createAndGetSecret_Success() throws Exception {
     UUID tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin", "password");
-    String token = getAuthToken(tenantId, "admin", "password");
+    String token = getAuthToken("admin", "password");
 
     // Create
     CreateSecretRequest createReq =
@@ -91,7 +89,7 @@ class SecretControllerTest extends BaseIntegrationTest {
   void deleteSecret_Success() throws Exception {
     UUID tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin", "password");
-    String token = getAuthToken(tenantId, "admin", "password");
+    String token = getAuthToken("admin", "password");
 
     CreateSecretRequest createReq = new CreateSecretRequest("Delete Me", "val", null);
     String createResponse =
@@ -111,8 +109,7 @@ class SecretControllerTest extends BaseIntegrationTest {
         .perform(delete("/api/v1/secrets/" + secretId).header("Authorization", "Bearer " + token))
         .andExpect(status().isOk());
 
-    // Get should fail (assumed 500 or 400 for now based on service exception)
-    // Service throws IllegalArgumentException -> GlobalExceptionHandler maps to 500 currently
+    // Get should fail
     mockMvc
         .perform(get("/api/v1/secrets/" + secretId).header("Authorization", "Bearer " + token))
         .andExpect(status().isInternalServerError());
@@ -122,7 +119,7 @@ class SecretControllerTest extends BaseIntegrationTest {
   void searchSecrets_Success() throws Exception {
     UUID tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin", "password");
-    String token = getAuthToken(tenantId, "admin", "password");
+    String token = getAuthToken("admin", "password");
 
     // Create two secrets
     mockMvc.perform(
@@ -171,12 +168,12 @@ class SecretControllerTest extends BaseIntegrationTest {
     // Tenant A
     UUID tenantA = createTenant();
     userService.createAdminUser(tenantA, "adminA", "pass");
-    String tokenA = getAuthToken(tenantA, "adminA", "pass");
+    String tokenA = getAuthToken("adminA", "pass");
 
     // Tenant B
     UUID tenantB = createTenant();
     userService.createAdminUser(tenantB, "adminB", "pass");
-    String tokenB = getAuthToken(tenantB, "adminB", "pass");
+    String tokenB = getAuthToken("adminB", "pass");
 
     // A creates secret
     CreateSecretRequest createReq = new CreateSecretRequest("Secret A", "valA", null);
@@ -202,7 +199,7 @@ class SecretControllerTest extends BaseIntegrationTest {
   void searchSecrets_RespectsVisibility() throws Exception {
     UUID tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin", "password");
-    String token = getAuthToken(tenantId, "admin", "password");
+    String token = getAuthToken("admin", "password");
 
     createSecret(token, "Visible", SecretVisibility.VISIBLE);
     createSecret(token, "LeaseRequired", SecretVisibility.LEASE_REQUIRED);
@@ -223,7 +220,7 @@ class SecretControllerTest extends BaseIntegrationTest {
   void testGetSecret_HandlesVisibility() throws Exception {
     UUID tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin", "password");
-    String token = getAuthToken(tenantId, "admin", "password");
+    String token = getAuthToken("admin", "password");
 
     String leaseId = createSecret(token, "Lease", SecretVisibility.LEASE_REQUIRED);
     String hiddenId = createSecret(token, "Hidden", SecretVisibility.HIDDEN);
@@ -243,7 +240,7 @@ class SecretControllerTest extends BaseIntegrationTest {
   void testGetSecret_WithLease_Success() throws Exception {
     UUID tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin", "password");
-    String adminToken = getAuthToken(tenantId, "admin", "password");
+    String adminToken = getAuthToken("admin", "password");
 
     // 1. Create a LEASE_REQUIRED secret
     String secretId = createSecret(adminToken, "Lease Me", SecretVisibility.LEASE_REQUIRED);
@@ -266,6 +263,7 @@ class SecretControllerTest extends BaseIntegrationTest {
                     .header("Authorization", "Bearer " + agentJwt)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(createReq)))
+            .andExpect(status().isOk())
             .andReturn()
             .getResponse()
             .getContentAsString();
@@ -295,7 +293,7 @@ class SecretControllerTest extends BaseIntegrationTest {
             get("/api/v1/secrets/" + secretId + "?leaseToken=" + leaseToken)
                 .header("Authorization", "Bearer " + agentJwt))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.value").value("secret_value"));
+        .andExpect(jsonPath("$.encryptedValue").value("secret_value"));
   }
 
   // Helper methods

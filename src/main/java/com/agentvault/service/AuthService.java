@@ -62,7 +62,7 @@ public class AuthService {
     String tokenHash = hashToken(request.appToken());
     User user =
         userRepository
-            .findByTenantIdAndAppTokenHash(request.tenantId(), tokenHash)
+            .findByTenant_TenantIdAndAppTokenHash(request.tenantId(), tokenHash)
             .orElseThrow(() -> new BadCredentialsException("Invalid token"));
 
     String token = tokenService.generateToken(user);

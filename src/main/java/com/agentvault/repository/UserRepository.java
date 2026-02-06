@@ -15,19 +15,23 @@
  */
 package com.agentvault.repository;
 
+import com.agentvault.model.Role;
 import com.agentvault.model.User;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface UserRepository extends MongoRepository<User, String> {
+public interface UserRepository extends JpaRepository<User, UUID> {
   Optional<User> findByUserId(UUID userId);
 
   Optional<User> findByUsername(String username);
 
-  Optional<User> findByTenantIdAndAppTokenHash(UUID tenantId, String appTokenHash);
+  Optional<User> findByTenant_TenantIdAndAppTokenHash(UUID tenantId, String appTokenHash);
 
   Optional<User> findByResetPasswordToken(String resetPasswordToken);
+
+  List<User> findByTenant_TenantIdAndRole(UUID tenantId, Role role);
 }
