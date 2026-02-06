@@ -1,99 +1,55 @@
 # AgentVault
 
-AgentVault is a lightweight, standalone password and secret manager designed for automated agents. It bridges the gap between autonomous agents and secure credential management by allowing agents to retrieve secrets and request new ones from human admins asynchronously.
+**AgentVault** is a secure, standalone secret manager designed specifically for autonomous AI agents (like OpenClaw, formerly Moltbot, ClawdBot). It provides a bridge between human owners and automated workers, ensuring agents can access credentials without exposing sensitive data in chat logs or LLM context.
 
-## 🤔 Why AgentVault?
+## Why AgentVault?
+*   **Prevent Secret Leakage:** AI agents often need credentials. Sharing them directly in chat or system prompts is a massive security risk. AgentVault keeps secrets out of the LLM context.
+*   **Asynchronous Approval:** Agents can request secrets they don't have. Humans fulfill these requests via a secure UI.
+*   **Zero Knowledge:** The server never sees your plaintext secrets. Everything is encrypted/decrypted on the client side.
 
-Bots and automated agents, such as OpenClaw (formerly Moltbot, Clawdbot), often require access to sensitive information like API keys or login credentials to interact with external websites and services. Currently, there isn't an easy or secure method to provide these secrets to automated agents. Directly embedding secrets in code or configuration files is insecure, and manually inputting them for each use is impractical for automated workflows.
+## How It Works
 
-AgentVault addresses this critical gap by providing a secure and auditable mechanism for agents to request and receive secrets from human administrators. Instead of directly handling sensitive credentials, agents initiate a **secure request** for a secret, which a human admin can then fulfill through a **one-time fulfillment URL**. This ensures that secrets are never exposed to the agent in transit and are only accessible through a controlled, auditable process after secure storage within the vault.
+### 1. The "Ask" Pattern (Missing Secret)
+When an agent needs a secret it doesn't have:
+1.  **Agent Request:** The agent creates a request for a specific service (e.g., "AWS Production").
+2.  **Human Notification:** The agent provides a secure link to the human: *"I need AWS credentials. Please provide them here: [LINK]"*.
+3.  **Fulfillment:** The human clicks the link, enters the secret, and the agent is granted access via a secure lease.
 
-## 🚀 Features
-- **Agent-Centric API**: Designed for machine consumption.
-- **Secure by Default**: Secrets are encrypted at rest (AES-256 GCM) with tenant isolation.
-- **Request-Response Workflow**: Agents "ask" for secrets; Admins fulfill them securely.
-- **Audit Ready**: Tracks secret creation and access.
+### 2. The Lease Flow (Retreival)
+Access is managed through **Leases**:
+1.  **Public Key Auth:** Agents register a public key.
+2.  **Encrypted Delivery:** The server provides secrets previous encrypted specifically by the **web client** for the agent's public key.
+3.  **Local Decryption:** The Agent CLI tool decrypts the secret locally using the private key.
+4.  **Rotation Integrity:** If a secret is updated or an agent rotates its key, old leases are invalidated.
 
-## 📏 Constraints
-To prevent abuse and ensure optimal performance, AgentVault enforces the following limits:
-- **Secret Size**: Maximum **64 KB** for encrypted secret values.
-- **Metadata Size**: Maximum **8 KB** for combined metadata.
-- **Request Context**: Maximum **2 KB** for request descriptions.
-- **Idempotency**: All `POST` and `PATCH` operations support the `Idempotency-Key` header (UUID) to prevent duplicate actions.
+## Why It Is Safe
+AgentVault uses a **Zero-Knowledge Architecture**:
+*   **Master Key:** Secrets are encrypted with a Master Key derived from the human's password (which never leaves the browser).
+*   **Agent-Specific Encryption:** When a lease is created, the Web UI decrypts the secret and re-encrypts it with the agent's public key.
+*   **No Plaintext on Server:** The database only stores data that the server itself cannot decrypt. Even if the server is compromised, your secrets remain safe.
 
-## 🛠️ Development Setup
+## Quick Start (Local Dev)
 
 ### Prerequisites
-- Java 21
-- Docker & Docker Compose
+*   Docker & Docker Compose
+*   Java 21 (for native execution)
 
-### Quick Start
-1.  **Start Infrastructure (MySQL):**
-    ```bash
-    ./scripts/management/dev-env.sh
-    ```
-2.  **Run the Application (Dev Profile):**
-    ```bash
-    ./gradlew bootRun
-    ```
-    *This will auto-seed a "Dev Tenant" and "devadmin" user.*
-
-3.  **Get Credentials:**
-    ```bash
-    ./scripts/management/get-dev-tenant.sh
-    # Outputs: Tenant ID and Username
-    ```
-
-## 🔑 Security Setup (Production)
-
-AgentVault uses a 2-tier key hierarchy (SMK + TK).
-
-### 1. Generate the System Master Key (SMK)
-Generate a 32-byte Base64 key:
+### 1. Start the Infrastructure
 ```bash
-openssl rand -base64 32
+docker compose up -d
 ```
 
-### 2. Generate JWT Secret
-Generate a strong secret for signing JWTs:
+### 2. Setup Database
 ```bash
-openssl rand -base64 64
+./scripts/database/flyway.sh migrate
 ```
 
-### 3. Environment Configuration
-Set these environment variables (or use `.env` file):
+### 3. Run the Application
 ```bash
-export AGENTVAULT_SYSTEM_KEY="your-smk..."
-export AGENTVAULT_JWT_SECRET="your-jwt-secret..."
+./run_dev_app.sh
 ```
+The API will be available at `http://localhost:8080`.
 
-## 📚 API Overview
-
-### Authentication
-- `POST /api/v1/auth/login`: Admin (user/pass) or Agent (app_token) login. Returns JWT.
-- `POST /api/v1/auth/change-password`: Change password.
-- `POST /api/v1/auth/forgot-password`: Initiate reset flow.
-
-### Secrets (Encrypted)
-- `POST /api/v1/secrets/search`: Search by metadata (e.g., `{"metadata.env": "prod"}`). Returns metadata only.
-- `GET /api/v1/secrets/{id}`: Retrieve decrypted secret value.
-- `POST /api/v1/secrets`: Create a secret.
-- `DELETE /api/v1/secrets/{id}`: Delete a secret.
-
-### Requests (The "Ask" Pattern)
-- `POST /api/v1/requests`: Agent creates a request for a missing secret.
-- `GET /api/v1/requests/{id}`: Check status.
-- `POST /api/v1/requests/{id}/fulfill`: Admin provides the secret.
-- `POST /api/v1/requests/{id}/reject`: Admin denies request.
-
-### Agents
-- `POST /api/v1/agents`: Create a new agent (returns app_token).
-- `GET /api/v1/agents`: List agents.
-- `POST /api/v1/agents/{id}/rotate`: Rotate app_token.
-
-## 🧪 Testing
-Run unit and integration tests:
-```bash
-./gradlew test
-```
-Includes an End-to-End test `MissingSecretFlowTest` simulating the full Agent-Admin interaction loop.
+## License
+This project is licensed under the **Apache License 2.0**. See the `LICENSE` file for details.
+All source files must contain the standard Apache License header.
