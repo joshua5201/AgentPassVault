@@ -15,7 +15,6 @@
  */
 package com.agentvault.dto;
 
-import com.agentvault.model.SecretVisibility;
 import java.time.Instant;
 import java.util.Map;
 
@@ -23,6 +22,5 @@ public record SecretMetadataResponse(
     String secretId,
     String name,
     Map<String, Object> metadata,
-    SecretVisibility visibility,
     Instant createdAt,
     Instant updatedAt) {}

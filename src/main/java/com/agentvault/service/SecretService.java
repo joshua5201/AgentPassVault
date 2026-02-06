@@ -82,10 +82,6 @@ public class SecretService {
     }
 
     // Agent access
-    if (secret.getVisibility() == SecretVisibility.HIDDEN) {
-      throw new AccessDeniedException("Secret is hidden");
-    }
-
     // Find lease for this agent
     return leaseRepository
         .findBySecret_IdAndAgent_Id(secretId, (Long) auth.getPrincipal())
@@ -123,7 +119,6 @@ public class SecretService {
     StringBuilder sql = new StringBuilder("SELECT s.* FROM secrets s ");
     sql.append("JOIN tenants t ON s.tenant_id = t.id ");
     sql.append("WHERE t.id = :tenantId ");
-    sql.append("AND s.visibility != 'HIDDEN' ");
 
     if (metadataQuery != null && !metadataQuery.isEmpty()) {
       metadataQuery.forEach(
@@ -171,7 +166,6 @@ public class SecretService {
         secret.getName(),
         encryptedData,
         secret.getMetadata(),
-        secret.getVisibility(),
         secret.getCreatedAt(),
         secret.getUpdatedAt());
   }
@@ -181,7 +175,6 @@ public class SecretService {
         secret.getId().toString(),
         secret.getName(),
         secret.getMetadata(),
-        secret.getVisibility(),
         secret.getCreatedAt(),
         secret.getUpdatedAt());
   }

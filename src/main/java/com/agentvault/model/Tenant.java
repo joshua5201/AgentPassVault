@@ -27,7 +27,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class Tenant extends BaseEntity {
 
-  @Column(name = "name", unique = true, nullable = false)
+  @Column(name = "name", nullable = false)
   private String name;
 
   @Column(name = "status")

@@ -22,7 +22,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.agentvault.BaseIntegrationTest;
 import com.agentvault.dto.*;
 import com.agentvault.model.Secret;
-import com.agentvault.model.SecretVisibility;
 import com.agentvault.service.AgentService;
 import com.agentvault.service.UserService;
 import java.util.Map;
@@ -195,58 +194,13 @@ class SecretControllerTest extends BaseIntegrationTest {
   }
 
   @Test
-  void searchSecrets_RespectsVisibility() throws Exception {
-    Long tenantId = createTenant();
-    userService.createAdminUser(tenantId, "admin", "password");
-    String token = getAuthToken("admin", "password");
-
-    createSecret(token, "Visible", SecretVisibility.VISIBLE);
-    createSecret(token, "LeaseRequired", SecretVisibility.LEASE_REQUIRED);
-    createSecret(token, "Hidden", SecretVisibility.HIDDEN);
-
-    mockMvc
-        .perform(
-            post("/api/v1/secrets/search")
-                .header("Authorization", "Bearer " + token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(new SearchSecretRequest(null))))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$", hasSize(2)))
-        .andExpect(jsonPath("$[?(@.name == 'Hidden')]", empty()));
-  }
-
-  @Test
-  void testGetSecret_HandlesVisibility() throws Exception {
-    Long tenantId = createTenant();
-    userService.createAdminUser(tenantId, "admin", "password");
-    String token = getAuthToken("admin", "password");
-
-    String leaseId = createSecret(token, "Lease", SecretVisibility.LEASE_REQUIRED);
-    String hiddenId = createSecret(token, "Hidden", SecretVisibility.HIDDEN);
-
-    // Admins can see LEASE_REQUIRED secrets
-    mockMvc
-        .perform(get("/api/v1/secrets/" + leaseId).header("Authorization", "Bearer " + token))
-        .andExpect(status().isOk());
-
-    // Attempt to get HIDDEN should still fail or be allowed for admin?
-    // Current service logic: admins see all including HIDDEN if they have the ID.
-    // Wait, let's check SecretService.getSecret
-    // Actually current logic says: if (Role.ADMIN.equals(auth.getRole())) return ...;
-    // So admins see HIDDEN too.
-    mockMvc
-        .perform(get("/api/v1/secrets/" + hiddenId).header("Authorization", "Bearer " + token))
-        .andExpect(status().isOk());
-  }
-
-  @Test
   void testGetSecret_WithLease_Success() throws Exception {
     Long tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin", "password");
     String adminToken = getAuthToken("admin", "password");
 
-    // 1. Create a LEASE_REQUIRED secret
-    String secretId = createSecret(adminToken, "Lease Me", SecretVisibility.LEASE_REQUIRED);
+    // 1. Create a secret
+    String secretId = createSecret(adminToken, "Lease Me");
 
     // 2. Agent creates a LEASE request
     String agentJwt = createAgentAndGetJwt(tenantId);
@@ -282,7 +236,6 @@ class SecretControllerTest extends BaseIntegrationTest {
             null,
             null,
             null,
-            null,
             null);
 
     mockMvc
@@ -301,7 +254,7 @@ class SecretControllerTest extends BaseIntegrationTest {
   }
 
   // Helper methods
-  private String createSecret(String token, String name, SecretVisibility visibility)
+  private String createSecret(String token, String name)
       throws Exception {
     CreateSecretRequest createReq = new CreateSecretRequest(name, "secret_value", null);
     String createResponse =
@@ -315,14 +268,7 @@ class SecretControllerTest extends BaseIntegrationTest {
             .getResponse()
             .getContentAsString();
 
-    String secretId = objectMapper.readTree(createResponse).get("secretId").asText();
-
-    // Manually update visibility as there is no API for it
-    Secret secret = secretRepository.findById(Long.valueOf(secretId)).get();
-    secret.setVisibility(visibility);
-    secretRepository.save(secret);
-
-    return secretId;
+    return objectMapper.readTree(createResponse).get("secretId").asText();
   }
 
   private String createAgentAndGetJwt(Long tenantId) throws Exception {

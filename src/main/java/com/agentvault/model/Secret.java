@@ -35,7 +35,7 @@ import org.hibernate.annotations.Type;
 @EqualsAndHashCode(callSuper = true)
 public class Secret extends BaseEntity {
 
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = "tenant_id", nullable = false)
   private Tenant tenant;
 
@@ -48,8 +48,4 @@ public class Secret extends BaseEntity {
   @Type(JsonType.class)
   @Column(name = "metadata", columnDefinition = "json")
   private Map<String, Object> metadata;
-
-  @Enumerated(EnumType.STRING)
-  @Column(name = "visibility", nullable = false)
-  private SecretVisibility visibility = SecretVisibility.VISIBLE;
 }

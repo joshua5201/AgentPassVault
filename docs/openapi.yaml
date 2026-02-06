@@ -1,549 +1,622 @@
-openapi: 3.0.3
+openapi: 3.1.0
 info:
   title: AgentVault API
-  description: Secure Secret Manager for Automated Agents (Zero-Knowledge Architecture)
+  description: Secure Secret Manager for Automated Agents
   version: 0.0.1
 servers:
-  - url: http://localhost:8080/api/v1
-    description: Local Dev
+- url: http://localhost
+  description: Generated server url
+security:
+- bearerAuth: []
+paths:
+  /api/v1/secrets:
+    post:
+      tags:
+      - secret-controller
+      operationId: createSecret
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSecretRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SecretMetadataResponse"
+  /api/v1/secrets/search:
+    post:
+      tags:
+      - secret-controller
+      operationId: searchSecrets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchSecretRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SecretMetadataResponse"
+  /api/v1/requests:
+    post:
+      tags:
+      - request-controller
+      operationId: createRequest
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRequestDTO"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RequestResponse"
+  /api/v1/auth/reset-password:
+    post:
+      tags:
+      - auth-controller
+      operationId: resetPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+  /api/v1/auth/login/user:
+    post:
+      tags:
+      - auth-controller
+      operationId: userLogin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserLoginRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+  /api/v1/auth/login/agent:
+    post:
+      tags:
+      - auth-controller
+      operationId: agentLogin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentLoginRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+  /api/v1/auth/forgot-password:
+    post:
+      tags:
+      - auth-controller
+      operationId: forgotPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForgotPasswordRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+  /api/v1/auth/change-password:
+    post:
+      tags:
+      - auth-controller
+      operationId: changePassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+  /api/v1/agents:
+    get:
+      tags:
+      - agent-controller
+      operationId: listAgents
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AgentResponse"
+    post:
+      tags:
+      - agent-controller
+      operationId: createAgent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAgentRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AgentTokenResponse"
+  /api/v1/agents/{id}/rotate:
+    post:
+      tags:
+      - agent-controller
+      operationId: rotateToken
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AgentTokenResponse"
+  /api/v1/agents/{id}/register:
+    post:
+      tags:
+      - agent-controller
+      operationId: registerAgent
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterAgentRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+  /api/v1/requests/{id}:
+    get:
+      tags:
+      - request-controller
+      operationId: getRequest
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RequestResponse"
+    delete:
+      tags:
+      - request-controller
+      operationId: abandonRequest
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+    patch:
+      tags:
+      - request-controller
+      operationId: updateRequest
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRequestDTO"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+  /api/v1/secrets/{id}:
+    get:
+      tags:
+      - secret-controller
+      operationId: getSecret
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: leaseToken
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SecretResponse"
+    delete:
+      tags:
+      - secret-controller
+      operationId: deleteSecret
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+  /api/v1/auth/ping:
+    get:
+      tags:
+      - auth-controller
+      operationId: ping
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+  /api/v1/agents/{id}:
+    get:
+      tags:
+      - agent-controller
+      operationId: getAgent
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AgentResponse"
+    delete:
+      tags:
+      - agent-controller
+      operationId: deleteAgent
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
 components:
+  schemas:
+    CreateSecretRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        encryptedValue:
+          type: string
+          maxLength: 87381
+          minLength: 0
+        metadata:
+          type: object
+          additionalProperties:
+            type: object
+      required:
+      - encryptedValue
+      - name
+    SecretMetadataResponse:
+      type: object
+      properties:
+        secretId:
+          type: string
+        name:
+          type: string
+        metadata:
+          type: object
+          additionalProperties:
+            type: object
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    SearchSecretRequest:
+      type: object
+      properties:
+        metadata:
+          type: object
+          additionalProperties:
+            type: object
+    CreateRequestDTO:
+      type: object
+      properties:
+        name:
+          type: string
+        context:
+          type: string
+          maxLength: 2048
+          minLength: 0
+        requiredMetadata:
+          type: object
+          additionalProperties:
+            type: object
+        requiredFieldsInSecretValue:
+          type: array
+          items:
+            type: string
+        type:
+          type: string
+          enum:
+          - CREATE
+          - LEASE
+        secretId:
+          type: string
+          pattern: "^[0-9]+$"
+      required:
+      - name
+      - type
+    RequestResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+        status:
+          type: string
+          enum:
+          - pending
+          - fulfilled
+          - rejected
+          - abandoned
+        type:
+          type: string
+          enum:
+          - CREATE
+          - LEASE
+        name:
+          type: string
+        context:
+          type: string
+        requiredMetadata:
+          type: object
+          additionalProperties:
+            type: object
+        requiredFieldsInSecretValue:
+          type: array
+          items:
+            type: string
+        mappedSecretId:
+          type: string
+        rejectionReason:
+          type: string
+        fulfillmentUrl:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ResetPasswordRequest:
+      type: object
+      properties:
+        token:
+          type: string
+        newPassword:
+          type: string
+      required:
+      - newPassword
+      - token
+    UserLoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required:
+      - password
+      - username
+    LoginResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        tokenType:
+          type: string
+        expiresIn:
+          type: integer
+          format: int64
+    AgentLoginRequest:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          pattern: "^[0-9]+$"
+        appToken:
+          type: string
+      required:
+      - appToken
+      - tenantId
+    ForgotPasswordRequest:
+      type: object
+      properties:
+        username:
+          type: string
+      required:
+      - username
+    ChangePasswordRequest:
+      type: object
+      properties:
+        oldPassword:
+          type: string
+        newPassword:
+          type: string
+      required:
+      - newPassword
+      - oldPassword
+    CreateAgentRequest:
+      type: object
+      properties:
+        name:
+          type: string
+      required:
+      - name
+    AgentTokenResponse:
+      type: object
+      properties:
+        agentId:
+          type: string
+        appToken:
+          type: string
+    RegisterAgentRequest:
+      type: object
+      properties:
+        publicKey:
+          type: string
+      required:
+      - publicKey
+    UpdateRequestDTO:
+      type: object
+      properties:
+        action:
+          type: string
+          enum:
+          - FULFILL
+          - MAP
+          - REJECT
+          - APPROVE_LEASE
+        name:
+          type: string
+        ownerEncryptedData:
+          type: string
+        agentEncryptedData:
+          type: string
+        expiry:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          additionalProperties:
+            type: object
+        secretId:
+          type: string
+          pattern: "^[0-9]+$"
+        reason:
+          type: string
+      required:
+      - action
+    SecretResponse:
+      type: object
+      properties:
+        secretId:
+          type: string
+        name:
+          type: string
+        encryptedValue:
+          type: string
+        metadata:
+          type: object
+          additionalProperties:
+            type: object
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    AgentResponse:
+      type: object
+      properties:
+        agentId:
+          type: string
+        name:
+          type: string
+        displayName:
+          type: string
+        publicKey:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-  headers:
-    Idempotency-Key:
-      description: A unique identifier for the request to prevent duplicate operations.
-      schema:
-        type: string
-        format: uuid
-security:
-  - bearerAuth: []
-paths:
-  /auth/login/user:
-    post:
-      summary: User Login (Admin/Human)
-      security: []
-      parameters:
-        - name: Idempotency-Key
-          in: header
-          required: false
-          schema:
-            $ref: '#/components/headers/Idempotency-Key/schema'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserLoginRequest'
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LoginResponse'
-
-  /auth/login/agent:
-    post:
-      summary: Agent Login
-      security: []
-      parameters:
-        - name: Idempotency-Key
-          in: header
-          required: false
-          schema:
-            $ref: '#/components/headers/Idempotency-Key/schema'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AgentLoginRequest'
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LoginResponse'
-
-  /auth/forgot-password:
-    post:
-      summary: Initiate Password Reset
-      security: []
-      parameters:
-        - name: Idempotency-Key
-          in: header
-          required: false
-          schema:
-            $ref: '#/components/headers/Idempotency-Key/schema'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ForgotPasswordRequest'
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  resetToken: { type: string }
-
-  /auth/reset-password:
-    post:
-      summary: Reset Password
-      security: []
-      parameters:
-        - name: Idempotency-Key
-          in: header
-          required: false
-          schema:
-            $ref: '#/components/headers/Idempotency-Key/schema'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ResetPasswordRequest'
-      responses:
-        '200':
-          description: OK
-
-  /auth/ping:
-    get:
-      summary: Ping (Auth check)
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message: { type: string }
-                  tenantId: { type: string }
-                  userId: { type: string }
-                  role: { type: string, enum: [ADMIN, AGENT] }
-
-  /secrets:
-    post:
-      summary: Create Secret (Admin/Agent)
-      parameters:
-        - name: Idempotency-Key
-          in: header
-          required: false
-          schema:
-            $ref: '#/components/headers/Idempotency-Key/schema'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateSecretRequest'
-      responses:
-        '200':
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SecretMetadata'
-
-  /secrets/search:
-    post:
-      summary: Search Secrets
-      parameters:
-        - name: Idempotency-Key
-          in: header
-          required: false
-          schema:
-            $ref: '#/components/headers/Idempotency-Key/schema'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                metadata: { type: object }
-      responses:
-        '200':
-          description: Metadata list (values hidden)
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SecretMetadata'
-
-  /secrets/{id}:
-    get:
-      summary: Get Secret Value (Owner's copy for Admin, Agent's copy for Agent)
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        '200':
-          description: Encrypted Secret Blob
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Secret'
-    delete:
-      summary: Delete Secret (Admin)
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        '204':
-          description: Deleted
-
-  /requests:
-    post:
-      summary: Create Secret Request
-      parameters:
-        - name: Idempotency-Key
-          in: header
-          required: false
-          schema:
-            $ref: '#/components/headers/Idempotency-Key/schema'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateRequestDTO'
-      responses:
-        '200':
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Request'
-
-  /requests/{id}:
-    get:
-      summary: Get Request Details
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Request'
-    patch:
-      summary: Update Request (Admin: Fulfill, Map, Reject, Approve Lease)
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: string }
-        - name: Idempotency-Key
-          in: header
-          required: false
-          schema:
-            $ref: '#/components/headers/Idempotency-Key/schema'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateRequestDTO'
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - $ref: '#/components/schemas/Request'
-                  - $ref: '#/components/schemas/ApproveLeaseResponse'
-    delete:
-      summary: Abandon Request (Agent)
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        '204':
-          description: Abandoned
-
-  /agents:
-    get:
-      summary: List Agents (Admin)
-      responses:
-        '200':
-          description: Agent list
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AgentResponse'
-    post:
-      summary: Create Agent (Admin)
-      parameters:
-        - name: Idempotency-Key
-          in: header
-          required: false
-          schema:
-            $ref: '#/components/headers/Idempotency-Key/schema'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateAgentRequest'
-      responses:
-        '200':
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AgentTokenResponse'
-
-  /agents/{id}:
-    get:
-      summary: Get Agent Details (Admin)
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AgentResponse'
-    delete:
-      summary: Delete Agent (Admin)
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        '204':
-          description: Deleted
-
-  /agents/{id}/rotate:
-    post:
-      summary: Rotate Agent Token (Admin)
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: string }
-        - name: Idempotency-Key
-          in: header
-          required: false
-          schema:
-            $ref: '#/components/headers/Idempotency-Key/schema'
-      responses:
-        '200':
-          description: Rotated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AgentTokenResponse'
-
-  /agents/{id}/register:
-    post:
-      summary: Register Agent Public Key (Admin or the Agent themselves)
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: string }
-        - name: Idempotency-Key
-          in: header
-          required: false
-          schema:
-            $ref: '#/components/headers/Idempotency-Key/schema'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RegisterAgentRequest'
-      responses:
-        '204':
-          description: Registered
-
-
-components:
-  schemas:
-    SecretVisibility:
-      type: string
-      enum: [VISIBLE, LEASE_REQUIRED, HIDDEN]
-
-    SecretMetadata:
-      type: object
-      properties:
-        secretId: { type: string }
-        name: { type: string }
-        metadata:
-          type: object
-          description: Combined size of metadata keys and values must not exceed 8 KB.
-        visibility: { $ref: '#/components/schemas/SecretVisibility' }
-        createdAt: { type: string, format: date-time }
-        updatedAt: { type: string, format: date-time }
-    
-    Secret:
-      allOf:
-        - $ref: '#/components/schemas/SecretMetadata'
-        - type: object
-          properties:
-            encryptedValue:
-              type: string
-              maxLength: 87381
-              description: Encrypted secret value (max 64 KB before Base64 encoding).
-
-    CreateSecretRequest:
-      type: object
-      required: [name, encryptedValue]
-      properties:
-        name: { type: string }
-        encryptedValue:
-          type: string
-          maxLength: 87381
-          description: Encrypted secret value (max 64 KB before Base64 encoding).
-        metadata:
-          type: object
-          description: Combined size of metadata keys and values must not exceed 8 KB.
-
-    RequestStatus:
-      type: string
-      enum: [pending, fulfilled, rejected, abandoned]
-
-    RequestType:
-      type: string
-      enum: [CREATE, LEASE]
-
-    Request:
-      type: object
-      properties:
-        requestId: { type: string }
-        status: { $ref: '#/components/schemas/RequestStatus' }
-        type: { $ref: '#/components/schemas/RequestType' }
-        name: { type: string }
-        context:
-          type: string
-          maxLength: 2048
-          description: Context for the request (max 2 KB).
-        requiredMetadata:
-          type: object
-          description: Combined size must not exceed 8 KB.
-        requiredFieldsInSecretValue: { type: array, items: { type: string } }
-        mappedSecretId: { type: string }
-        rejectionReason: { type: string }
-        fulfillmentUrl: { type: string }
-        createdAt: { type: string, format: date-time }
-        updatedAt: { type: string, format: date-time }
-
-    CreateRequestDTO:
-      type: object
-      required: [name, type]
-      properties:
-        name: { type: string }
-        context:
-          type: string
-          maxLength: 2048
-          description: Context for the request (max 2 KB).
-        requiredMetadata:
-          type: object
-          description: Combined size must not exceed 8 KB.
-        requiredFieldsInSecretValue: { type: array, items: { type: string } }
-        type: { $ref: '#/components/schemas/RequestType' }
-        secretId: { type: string }
-
-    UpdateRequestDTO:
-      type: object
-      required: [action]
-      properties:
-        action:
-          type: string
-          enum: [FULFILL, MAP, REJECT, APPROVE_LEASE]
-        name: { type: string }
-        ownerEncryptedData: { type: string, maxLength: 87381 }
-        agentEncryptedData: { type: string, maxLength: 87381 }
-        expiry: { type: string, format: date-time }
-        metadata:
-          type: object
-          description: Combined size of metadata keys and values must not exceed 8 KB.
-        secretId: { type: string }
-        newVisibility: { $ref: '#/components/schemas/SecretVisibility' }
-        reason: { type: string }
-
-    ApproveLeaseResponse:
-      type: object
-      properties:
-        status: { type: string }
-
-    UserLoginRequest:
-      type: object
-      required: [username, password]
-      properties:
-        username: { type: string }
-        password: { type: string }
-
-    AgentLoginRequest:
-      type: object
-      required: [tenantId, appToken]
-      properties:
-        tenantId: { type: string }
-        appToken: { type: string }
-
-    LoginResponse:
-      type: object
-      properties:
-        accessToken: { type: string }
-        tokenType: { type: string }
-        expiresIn: { type: integer }
-
-    ForgotPasswordRequest:
-      type: object
-      required: [username]
-      properties:
-        username: { type: string }
-
-    ResetPasswordRequest:
-      type: object
-      required: [token, newPassword]
-      properties:
-        token: { type: string }
-        newPassword: { type: string }
-
-    CreateAgentRequest:
-      type: object
-      required: [name]
-      properties:
-        name: { type: string }
-
-    RegisterAgentRequest:
-      type: object
-      required: [publicKey]
-      properties:
-        publicKey: { type: string }
-
-    AgentResponse:
-      type: object
-      properties:
-        agentId: { type: string }
-        name: { type: string }
-        displayName: { type: string }
-        publicKey: { type: string }
-        createdAt: { type: string, format: date-time }
-
-    AgentTokenResponse:
-      type: object
-      properties:
-        agentId: { type: string }
-        appToken: { type: string }

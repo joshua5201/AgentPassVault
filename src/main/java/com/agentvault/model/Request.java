@@ -36,11 +36,11 @@ import org.hibernate.annotations.Type;
 @EqualsAndHashCode(callSuper = true)
 public class Request extends BaseEntity {
 
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = "tenant_id", nullable = false)
   private Tenant tenant;
 
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = "requester_id", nullable = false)
   private User requester;
 

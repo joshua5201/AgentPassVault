@@ -24,7 +24,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.agentvault.BaseIntegrationTest;
 import com.agentvault.dto.*;
-import com.agentvault.model.SecretVisibility;
 import com.agentvault.service.AgentService;
 import com.agentvault.service.UserService;
 import java.util.List;
@@ -107,7 +106,6 @@ class RequestControllerTest extends BaseIntegrationTest {
             null,
             Map.of("env", "prod"),
             null,
-            null,
             null);
 
     mockMvc
@@ -142,7 +140,7 @@ class RequestControllerTest extends BaseIntegrationTest {
 
     UpdateRequestDTO rejectReq =
         new UpdateRequestDTO(
-            UpdateRequestDTO.Action.REJECT, null, null, null, null, null, null, null, "Denied");
+            UpdateRequestDTO.Action.REJECT, null, null, null, null, null, null, "Denied");
 
     mockMvc
         .perform(
@@ -192,14 +190,14 @@ class RequestControllerTest extends BaseIntegrationTest {
   }
 
   @Test
-  void mapRequest_WithNewVisibility_Success() throws Exception {
+  void mapRequest_Success() throws Exception {
     Long tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin", "password");
     String adminToken = getAuthToken("admin", "password");
 
-    // 1. Create a HIDDEN secret
+    // 1. Create a secret
     CreateSecretRequest createSecretReq =
-        new CreateSecretRequest("Hidden Secret", "hiddenVal", null);
+        new CreateSecretRequest("Test Secret", "val", null);
     String secretResp =
         mockMvc
             .perform(
@@ -211,11 +209,6 @@ class RequestControllerTest extends BaseIntegrationTest {
             .getResponse()
             .getContentAsString();
     String secretId = objectMapper.readTree(secretResp).get("secretId").asText();
-
-    com.agentvault.model.Secret secret =
-        secretRepository.findById(Long.valueOf(secretId)).get();
-    secret.setVisibility(SecretVisibility.HIDDEN);
-    secretRepository.save(secret);
 
     // 2. Create Request for it
     CreateRequestDTO createReq = new CreateRequestDTO("Reveal Secret", "Context", null, null);
@@ -231,7 +224,7 @@ class RequestControllerTest extends BaseIntegrationTest {
             .getContentAsString();
     String requestId = objectMapper.readTree(reqResponse).get("requestId").asText();
 
-    // 3. Map Request and change visibility to VISIBLE
+    // 3. Map Request
     UpdateRequestDTO mapReq =
         new UpdateRequestDTO(
             UpdateRequestDTO.Action.MAP,
@@ -241,7 +234,6 @@ class RequestControllerTest extends BaseIntegrationTest {
             null,
             null,
             secretId,
-            SecretVisibility.VISIBLE,
             null);
 
     mockMvc
@@ -253,11 +245,5 @@ class RequestControllerTest extends BaseIntegrationTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("fulfilled"))
         .andExpect(jsonPath("$.mappedSecretId").value(secretId));
-
-    // 4. Verify secret is now VISIBLE
-    mockMvc
-        .perform(get("/api/v1/secrets/" + secretId).header("Authorization", "Bearer " + adminToken))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.visibility").value("VISIBLE"));
   }
 }

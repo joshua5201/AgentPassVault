@@ -115,7 +115,6 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
             null,
             Map.of("service", "db", "env", "prod"),
             null,
-            null,
             null);
 
     mockMvc

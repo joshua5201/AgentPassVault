@@ -15,7 +15,6 @@
  */
 package com.agentvault.dto;
 
-import com.agentvault.model.SecretVisibility;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import java.time.Instant;
@@ -32,7 +31,6 @@ public record UpdateRequestDTO(
     // For MAP or APPROVE_LEASE (Existing Secret)
     @Pattern(regexp = "^[0-9]+$", message = "Secret ID must be numeric")
     String secretId,
-    SecretVisibility newVisibility,
     // For REJECT
     String reason) {
   public enum Action {

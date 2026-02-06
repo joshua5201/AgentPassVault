@@ -84,9 +84,7 @@ public class RequestController {
         }
         return ResponseEntity.ok(
             requestService.mapRequest(
-                authentication.getTenantId(),
-                id,
-                new MapRequestDTO(dto.secretId(), dto.newVisibility())));
+                authentication.getTenantId(), id, new MapRequestDTO(dto.secretId())));
       case REJECT:
         if (dto.reason() == null) {
           return ResponseEntity.badRequest().body("Reason is required for REJECT");

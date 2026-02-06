@@ -102,25 +102,12 @@ public class RequestService {
     Long secretId = Long.valueOf(dto.secretId());
 
     // Verify secret exists and belongs to tenant
-    Secret secret =
+    @SuppressWarnings("unused")
+    Secret unused =
         secretRepository
             .findById(secretId)
             .filter(s -> s.getTenant().getId().equals(tenantId))
             .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
-
-    if (dto.newVisibility() != null) {
-      secret.setVisibility(dto.newVisibility());
-      secretRepository.save(secret);
-    }
-
-    // MAP action for a CREATE request might just link it.
-    // But usually mapping requires giving access to the agent.
-    // However, if the admin just wants to link it without providing encrypted blob here,
-    // they might need another step.
-    // DESIGN says: "Option 2: Map (Existing Secret): ... Admin leases the secret if needed."
-    // If they use MAP, they probably should also provide agentEncryptedData.
-    // But for now, we follow the current DTO which doesn't have it for MAP.
-    // Wait, UpdateRequestDTO DOES have it now! I added it.
 
     request.setStatus(RequestStatus.fulfilled);
     request.setMappedSecretId(secretId);
