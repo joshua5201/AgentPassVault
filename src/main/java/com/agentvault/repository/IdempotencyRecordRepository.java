@@ -13,9 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.agentvault.dto;
+package com.agentvault.repository;
 
+import com.agentvault.model.IdempotencyRecord;
 import java.time.Instant;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-public record AgentResponse(
-    String agentId, String name, String displayName, String publicKey, Instant createdAt) {}
+@Repository
+public interface IdempotencyRecordRepository extends JpaRepository<IdempotencyRecord, String> {
+  void deleteByCreatedAtBefore(Instant threshold);
+}

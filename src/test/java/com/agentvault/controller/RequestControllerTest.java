@@ -102,7 +102,9 @@ class RequestControllerTest extends BaseIntegrationTest {
         new UpdateRequestDTO(
             UpdateRequestDTO.Action.FULFILL,
             "AWS Secret",
-            "secretVal",
+            "ownerEncVal",
+            "agentEncVal",
+            null,
             Map.of("env", "prod"),
             null,
             null,
@@ -140,7 +142,7 @@ class RequestControllerTest extends BaseIntegrationTest {
 
     UpdateRequestDTO rejectReq =
         new UpdateRequestDTO(
-            UpdateRequestDTO.Action.REJECT, null, null, null, null, null, "Denied");
+            UpdateRequestDTO.Action.REJECT, null, null, null, null, null, null, null, "Denied");
 
     mockMvc
         .perform(
@@ -233,6 +235,8 @@ class RequestControllerTest extends BaseIntegrationTest {
     UpdateRequestDTO mapReq =
         new UpdateRequestDTO(
             UpdateRequestDTO.Action.MAP,
+            null,
+            null,
             null,
             null,
             null,

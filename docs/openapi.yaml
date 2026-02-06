@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: AgentVault API
-  description: Secure Secret Manager for Automated Agents
+  description: Secure Secret Manager for Automated Agents (Zero-Knowledge Architecture)
   version: 0.0.1
 servers:
   - url: http://localhost:8080/api/v1
@@ -123,8 +123,8 @@ paths:
                 type: object
                 properties:
                   message: { type: string }
-                  tenantId: { type: string, format: uuid }
-                  userId: { type: string, format: uuid }
+                  tenantId: { type: string }
+                  userId: { type: string }
                   role: { type: string, enum: [ADMIN, AGENT] }
 
   /secrets:
@@ -177,19 +177,15 @@ paths:
 
   /secrets/{id}:
     get:
-      summary: Get Secret Value
+      summary: Get Secret Value (Owner's copy for Admin, Agent's copy for Agent)
       parameters:
         - name: id
           in: path
           required: true
-          schema: { type: string, format: uuid }
-        - name: leaseToken
-          in: query
-          required: false
           schema: { type: string }
       responses:
         '200':
-          description: Decrypted Secret
+          description: Encrypted Secret Blob
           content:
             application/json:
               schema:
@@ -200,7 +196,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: string, format: uuid }
+          schema: { type: string }
       responses:
         '204':
           description: Deleted
@@ -234,7 +230,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: string, format: uuid }
+          schema: { type: string }
       responses:
         '200':
           description: OK
@@ -248,7 +244,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: string, format: uuid }
+          schema: { type: string }
         - name: Idempotency-Key
           in: header
           required: false
@@ -274,7 +270,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: string, format: uuid }
+          schema: { type: string }
       responses:
         '204':
           description: Abandoned
@@ -282,11 +278,6 @@ paths:
   /agents:
     get:
       summary: List Agents (Admin)
-      parameters:
-        - name: showAppToken
-          in: query
-          required: false
-          schema: { type: boolean, default: false }
       responses:
         '200':
           description: Agent list
@@ -308,10 +299,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [name]
-              properties:
-                name: { type: string }
+              $ref: '#/components/schemas/CreateAgentRequest'
       responses:
         '200':
           description: Created
@@ -320,6 +308,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/AgentTokenResponse'
 
+  /agents/{id}:
+    get:
+      summary: Get Agent Details (Admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentResponse'
+    delete:
+      summary: Delete Agent (Admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204':
+          description: Deleted
+
   /agents/{id}/rotate:
     post:
       summary: Rotate Agent Token (Admin)
@@ -327,7 +341,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: string, format: uuid }
+          schema: { type: string }
         - name: Idempotency-Key
           in: header
           required: false
@@ -341,17 +355,27 @@ paths:
               schema:
                 $ref: '#/components/schemas/AgentTokenResponse'
 
-  /agents/{id}:
-    delete:
-      summary: Delete Agent (Admin)
+  /agents/{id}/register:
+    post:
+      summary: Register Agent Public Key (Admin or the Agent themselves)
       parameters:
         - name: id
           in: path
           required: true
-          schema: { type: string, format: uuid }
+          schema: { type: string }
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            $ref: '#/components/headers/Idempotency-Key/schema'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterAgentRequest'
       responses:
         '204':
-          description: Deleted
+          description: Registered
 
 
 components:
@@ -363,7 +387,7 @@ components:
     SecretMetadata:
       type: object
       properties:
-        secretId: { type: string, format: uuid }
+        secretId: { type: string }
         name: { type: string }
         metadata:
           type: object
@@ -377,17 +401,17 @@ components:
         - $ref: '#/components/schemas/SecretMetadata'
         - type: object
           properties:
-            value:
+            encryptedValue:
               type: string
               maxLength: 87381
               description: Encrypted secret value (max 64 KB before Base64 encoding).
 
     CreateSecretRequest:
       type: object
-      required: [name, value]
+      required: [name, encryptedValue]
       properties:
         name: { type: string }
-        value:
+        encryptedValue:
           type: string
           maxLength: 87381
           description: Encrypted secret value (max 64 KB before Base64 encoding).
@@ -406,7 +430,7 @@ components:
     Request:
       type: object
       properties:
-        requestId: { type: string, format: uuid }
+        requestId: { type: string }
         status: { $ref: '#/components/schemas/RequestStatus' }
         type: { $ref: '#/components/schemas/RequestType' }
         name: { type: string }
@@ -418,7 +442,7 @@ components:
           type: object
           description: Combined size must not exceed 8 KB.
         requiredFieldsInSecretValue: { type: array, items: { type: string } }
-        mappedSecretId: { type: string, format: uuid }
+        mappedSecretId: { type: string }
         rejectionReason: { type: string }
         fulfillmentUrl: { type: string }
         createdAt: { type: string, format: date-time }
@@ -426,7 +450,7 @@ components:
 
     CreateRequestDTO:
       type: object
-      required: [name]
+      required: [name, type]
       properties:
         name: { type: string }
         context:
@@ -438,7 +462,7 @@ components:
           description: Combined size must not exceed 8 KB.
         requiredFieldsInSecretValue: { type: array, items: { type: string } }
         type: { $ref: '#/components/schemas/RequestType' }
-        secretId: { type: string, format: uuid }
+        secretId: { type: string }
 
     UpdateRequestDTO:
       type: object
@@ -448,21 +472,20 @@ components:
           type: string
           enum: [FULFILL, MAP, REJECT, APPROVE_LEASE]
         name: { type: string }
-        value:
-          type: string
-          maxLength: 87381
-          description: Encrypted secret value (max 64 KB before Base64 encoding).
+        ownerEncryptedData: { type: string, maxLength: 87381 }
+        agentEncryptedData: { type: string, maxLength: 87381 }
+        expiry: { type: string, format: date-time }
         metadata:
           type: object
-          description: Combined size must not exceed 8 KB.
-        secretId: { type: string, format: uuid }
+          description: Combined size of metadata keys and values must not exceed 8 KB.
+        secretId: { type: string }
         newVisibility: { $ref: '#/components/schemas/SecretVisibility' }
         reason: { type: string }
 
     ApproveLeaseResponse:
       type: object
       properties:
-        leaseToken: { type: string }
+        status: { type: string }
 
     UserLoginRequest:
       type: object
@@ -475,7 +498,7 @@ components:
       type: object
       required: [tenantId, appToken]
       properties:
-        tenantId: { type: string, format: uuid }
+        tenantId: { type: string }
         appToken: { type: string }
 
     LoginResponse:
@@ -498,17 +521,29 @@ components:
         token: { type: string }
         newPassword: { type: string }
 
+    CreateAgentRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+
+    RegisterAgentRequest:
+      type: object
+      required: [publicKey]
+      properties:
+        publicKey: { type: string }
+
     AgentResponse:
       type: object
       properties:
-        agentId: { type: string, format: uuid }
+        agentId: { type: string }
         name: { type: string }
         displayName: { type: string }
+        publicKey: { type: string }
         createdAt: { type: string, format: date-time }
-        appToken: { type: string, nullable: true }
 
     AgentTokenResponse:
       type: object
       properties:
-        agentId: { type: string, format: uuid }
+        agentId: { type: string }
         appToken: { type: string }

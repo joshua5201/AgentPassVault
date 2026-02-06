@@ -52,7 +52,7 @@ public class SecretController {
     if (leaseToken != null) {
       return secretService.getSecretWithLease(authentication.getTenantId(), id, leaseToken);
     }
-    return secretService.getSecret(authentication.getTenantId(), id);
+    return secretService.getSecret(authentication, id);
   }
 
   @DeleteMapping("/{id}")

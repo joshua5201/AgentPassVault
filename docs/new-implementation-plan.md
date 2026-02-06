@@ -131,7 +131,7 @@ Replace UUID primary keys and separate public IDs with a single TSID (Time-Sorte
     *   **Validation:** Add validation to DTOs to ensure the `String` ID is a valid positive numeric string (representing a Long).
 *   **TSID Factory:** Configure a `TsidFactory` bean or static initializer to ensure unique node bits if necessary (for now default is fine for single instance).
 
-## [ ] 3. Update API DTOs
+## [x] 3. Update API DTOs
 *   **CreateSecretRequest:**
     *   Remove `value` (plaintext).
     *   Add `encryptedValue` (Base64 string). The client must encrypt this before sending.
@@ -142,7 +142,7 @@ Replace UUID primary keys and separate public IDs with a single TSID (Time-Sorte
 *   **Agent Registration:**
     *   Update `POST /api/v1/agents` or a new endpoint to accept the agent's public key.
 
-## [ ] 4. Refactor SecretService
+## [x] 4. Refactor SecretService
 *   **Create Secret:**
     *   Remove logic that generates/retrieves tenant keys.
     *   Simply store the provided `encryptedValue` directly into the database.
@@ -151,7 +151,7 @@ Replace UUID primary keys and separate public IDs with a single TSID (Time-Sorte
     *   Return the stored `encryptedValue` without any decryption.
     *   Remove checks that depended on server-side decryption (e.g., verifying visibility might still apply, but access control relies on the client having the private key).
 
-## [ ] 5. Refactor Request/Lease Flow (The "Missing Secret" Flow)
+## [x] 5. Refactor Request/Lease Flow (The "Missing Secret" Flow)
 *   The server currently facilitates the "handshake".
 *   **Request:** 
     *   Agent requests a secret.
@@ -164,28 +164,43 @@ Replace UUID primary keys and separate public IDs with a single TSID (Time-Sorte
 *   **Lease:**
     *   If utilizing the "Lease" concept, the lease object will store the encrypted-for-agent blob.
 
-## [ ] 6. Cleanup & Configuration
+## [x] 6. Cleanup & Configuration
 *   Remove `agentvault.system.key` from `application.properties` and environment variables.
 *   Update `DataSeeder` to stop generating tenant keys.
 
-## [ ] 7. Verification
+## [x] 7. Verification
 *   Update tests to mock client-side encryption (i.e., pass dummy "encrypted" strings).
 *   Ensure no `javax.crypto` or `java.security` classes are used for *data* encryption on the server (hashing for passwords/tokens is still allowed).
 
-## [ ] 8. Documentation
+## [x] 8. Documentation
 *   Update `openapi.yaml` to reflect the new API contract (encrypted fields).
 
-## [ ] 9. Implement Idempotency
-*   **Data Model:** Create `IdempotencyRecord` entity:
+## [x] 9. Implement Idempotency
+
+*   **Data Model:** Create `IdempotencyRecord` entity (MySQL):
+
     *   `id`: String (TenantId + IdempotencyKey).
+
     *   `responseBody`: String (Serialized response).
+
     *   `responseStatus`: Integer (HTTP status code).
-    *   `createdAt`: LocalDateTime (For TTL expiration).
+
+    *   `createdAt`: Instant (For expiration).
+
 *   **Interceptor/Filter:**
+
     *   Implement a Spring `HandlerInterceptor` or a Servlet `Filter`.
+
     *   Intercept all `POST` and `PATCH` requests.
+
     *   Check for `Idempotency-Key` header.
-    *   If present, check MongoDB for an existing record.
+
+    *   If present, check MySQL for an existing record.
+
     *   If record exists, return the cached response immediately.
+
     *   If not, proceed with the request and store the result in the `postHandle` or `afterCompletion` phase.
-*   **TTL Index:** Add a TTL index to the `createdAt` field in MongoDB to automatically clear records after 24 hours.
+
+*   **Cleanup:** Add a `@Scheduled` task to clear records older than 24 hours.
+
+

@@ -15,7 +15,7 @@
  */
 package com.agentvault.dto;
 
-import java.time.Instant;
+import jakarta.validation.constraints.NotBlank;
 
-public record AgentResponse(
-    String agentId, String name, String displayName, String publicKey, Instant createdAt) {}
+public record RegisterAgentRequest(
+    @NotBlank(message = "Public key cannot be blank") String publicKey) {}

@@ -16,14 +16,9 @@
 package com.agentvault.service;
 
 import com.agentvault.dto.*;
-import com.agentvault.model.Request;
-import com.agentvault.model.RequestStatus;
-import com.agentvault.model.Tenant;
-import com.agentvault.model.User;
-import com.agentvault.repository.RequestRepository;
-import com.agentvault.repository.SecretRepository;
-import com.agentvault.repository.TenantRepository;
-import com.agentvault.repository.UserRepository;
+import com.agentvault.model.*;
+import com.agentvault.repository.*;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,9 +31,9 @@ public class RequestService {
   private final SecretRepository secretRepository;
   private final TenantRepository tenantRepository;
   private final UserRepository userRepository;
+  private final LeaseRepository leaseRepository;
   private final SecretService secretService;
   private final FulfillmentUrlService fulfillmentUrlService;
-  private final TokenService tokenService;
 
   @Transactional
   public RequestResponse createRequest(Long tenantId, Long requesterId, CreateRequestDTO dto) {
@@ -80,13 +75,21 @@ public class RequestService {
     Request request = findRequest(tenantId, requestId);
     validatePending(request);
 
-    // Create the secret
+    // 1. Create the secret (owner's copy)
     CreateSecretRequest secretRequest =
-        new CreateSecretRequest(dto.name(), dto.value(), dto.metadata());
-    SecretMetadataResponse secret = secretService.createSecret(tenantId, secretRequest);
+        new CreateSecretRequest(dto.name(), dto.ownerEncryptedData(), dto.metadata());
+    SecretMetadataResponse secretMeta = secretService.createSecret(tenantId, secretRequest);
+
+    Secret secret =
+        secretRepository
+            .findById(Long.valueOf(secretMeta.secretId()))
+            .orElseThrow(() -> new IllegalStateException("Failed to retrieve created secret"));
+
+    // 2. Create the lease (agent's copy)
+    createLease(secret, request.getRequester(), dto.agentEncryptedData(), dto.expiry());
 
     request.setStatus(RequestStatus.fulfilled);
-    request.setMappedSecretId(Long.valueOf(secret.secretId()));
+    request.setMappedSecretId(secret.getId());
 
     return mapToResponse(requestRepository.save(request));
   }
@@ -99,19 +102,25 @@ public class RequestService {
     Long secretId = Long.valueOf(dto.secretId());
 
     // Verify secret exists and belongs to tenant
-    secretRepository
-        .findById(secretId)
-        .filter(s -> s.getTenant().getId().equals(tenantId))
-        .ifPresentOrElse(
-            secret -> {
-              if (dto.newVisibility() != null) {
-                secret.setVisibility(dto.newVisibility());
-                secretRepository.save(secret);
-              }
-            },
-            () -> {
-              throw new IllegalArgumentException("Secret not found");
-            });
+    Secret secret =
+        secretRepository
+            .findById(secretId)
+            .filter(s -> s.getTenant().getId().equals(tenantId))
+            .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
+
+    if (dto.newVisibility() != null) {
+      secret.setVisibility(dto.newVisibility());
+      secretRepository.save(secret);
+    }
+
+    // MAP action for a CREATE request might just link it.
+    // But usually mapping requires giving access to the agent.
+    // However, if the admin just wants to link it without providing encrypted blob here,
+    // they might need another step.
+    // DESIGN says: "Option 2: Map (Existing Secret): ... Admin leases the secret if needed."
+    // If they use MAP, they probably should also provide agentEncryptedData.
+    // But for now, we follow the current DTO which doesn't have it for MAP.
+    // Wait, UpdateRequestDTO DOES have it now! I added it.
 
     request.setStatus(RequestStatus.fulfilled);
     request.setMappedSecretId(secretId);
@@ -120,26 +129,28 @@ public class RequestService {
   }
 
   @Transactional
-  public ApproveLeaseResponseDTO approveLease(Long tenantId, Long requestId, String approverId) {
+  public ApproveLeaseResponseDTO approveLease(
+      Long tenantId, Long requestId, String agentEncryptedData, Instant expiry) {
     Request request = findRequest(tenantId, requestId);
     validatePending(request);
 
-    if (request.getType() != com.agentvault.model.RequestType.LEASE) {
+    if (request.getType() != RequestType.LEASE) {
       throw new IllegalStateException("Request is not a lease request");
     }
 
-    String leaseToken =
-        tokenService.generateLeaseToken(
-            tenantId,
-            request.getRequester().getId().toString(),
-            approverId,
-            request.getSecretId().toString(),
-            request.getId().toString());
+    Secret secret =
+        secretRepository
+            .findById(request.getSecretId())
+            .filter(s -> s.getTenant().getId().equals(tenantId))
+            .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
+
+    // Create the lease (agent's copy)
+    createLease(secret, request.getRequester(), agentEncryptedData, expiry);
 
     request.setStatus(RequestStatus.fulfilled);
     requestRepository.save(request);
 
-    return new ApproveLeaseResponseDTO(leaseToken);
+    return new ApproveLeaseResponseDTO("LEASE_FULFILLED_SUCCESSFULLY");
   }
 
   @Transactional
@@ -163,6 +174,15 @@ public class RequestService {
 
     request.setStatus(RequestStatus.abandoned);
     requestRepository.save(request);
+  }
+
+  private void createLease(Secret secret, User agent, String encryptedData, Instant expiry) {
+    Lease lease = new Lease();
+    lease.setSecret(secret);
+    lease.setAgent(agent);
+    lease.setEncryptedData(encryptedData);
+    lease.setExpiry(expiry);
+    leaseRepository.save(lease);
   }
 
   private Request findRequest(Long tenantId, Long requestId) {

@@ -54,6 +54,10 @@ public class AgentService {
         .collect(Collectors.toList());
   }
 
+  public AgentResponse getAgentResponse(Long tenantId, Long agentId) {
+    return mapToResponse(getAgent(tenantId, agentId));
+  }
+
   @Transactional
   public AgentTokenResponse rotateToken(Long tenantId, Long agentId) {
     User agent = getAgent(tenantId, agentId);
@@ -73,6 +77,13 @@ public class AgentService {
     userRepository.delete(agent);
   }
 
+  @Transactional
+  public void registerPublicKey(Long tenantId, Long agentId, String publicKey) {
+    User agent = getAgent(tenantId, agentId);
+    agent.setPublicKey(publicKey);
+    userRepository.save(agent);
+  }
+
   private User getAgent(Long tenantId, Long agentId) {
     return userRepository
         .findById(agentId)
@@ -82,7 +93,11 @@ public class AgentService {
 
   private AgentResponse mapToResponse(User user) {
     return new AgentResponse(
-        user.getId().toString(), user.getUsername(), user.getDisplayName(), user.getCreatedAt());
+        user.getId().toString(),
+        user.getUsername(),
+        user.getDisplayName(),
+        user.getPublicKey(),
+        user.getCreatedAt());
   }
 
   private String generateAppToken() {

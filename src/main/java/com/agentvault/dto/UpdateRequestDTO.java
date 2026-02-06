@@ -18,14 +18,18 @@ package com.agentvault.dto;
 import com.agentvault.model.SecretVisibility;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import java.time.Instant;
+import java.util.Map;
 
 public record UpdateRequestDTO(
     @NotNull Action action,
-    // For FULFILL
+    // For FULFILL (CREATE)
     String name,
-    String value,
-    java.util.Map<String, Object> metadata,
-    // For MAP
+    String ownerEncryptedData,
+    String agentEncryptedData,
+    Instant expiry,
+    Map<String, Object> metadata,
+    // For MAP or APPROVE_LEASE (Existing Secret)
     @Pattern(regexp = "^[0-9]+$", message = "Secret ID must be numeric")
     String secretId,
     SecretVisibility newVisibility,

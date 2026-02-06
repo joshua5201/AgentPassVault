@@ -16,9 +16,12 @@
 package com.agentvault.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import java.time.Instant;
 import java.util.Map;
 
 public record FulfillRequestDTO(
     @NotBlank(message = "Secret name cannot be blank") String name,
-    @NotBlank(message = "Secret value cannot be blank") String value,
+    @NotBlank(message = "Owner encrypted data cannot be blank") String ownerEncryptedData,
+    @NotBlank(message = "Agent encrypted data cannot be blank") String agentEncryptedData,
+    Instant expiry,
     Map<String, Object> metadata) {}

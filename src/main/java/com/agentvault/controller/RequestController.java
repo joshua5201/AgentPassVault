@@ -65,14 +65,19 @@ public class RequestController {
       @Valid @RequestBody UpdateRequestDTO dto) {
     switch (dto.action()) {
       case FULFILL:
-        if (dto.name() == null || dto.value() == null) {
-          return ResponseEntity.badRequest().body("Name and value are required for FULFILL");
+        if (dto.name() == null || dto.ownerEncryptedData() == null || dto.agentEncryptedData() == null) {
+          return ResponseEntity.badRequest().body("Name, ownerEncryptedData and agentEncryptedData are required for FULFILL");
         }
         return ResponseEntity.ok(
             requestService.fulfillRequest(
                 authentication.getTenantId(),
                 id,
-                new FulfillRequestDTO(dto.name(), dto.value(), dto.metadata())));
+                new FulfillRequestDTO(
+                    dto.name(),
+                    dto.ownerEncryptedData(),
+                    dto.agentEncryptedData(),
+                    dto.expiry(),
+                    dto.metadata())));
       case MAP:
         if (dto.secretId() == null) {
           return ResponseEntity.badRequest().body("Secret ID is required for MAP");
@@ -81,7 +86,7 @@ public class RequestController {
             requestService.mapRequest(
                 authentication.getTenantId(),
                 id,
-                new MapRequestDTO(dto.secretId().toString(), dto.newVisibility())));
+                new MapRequestDTO(dto.secretId(), dto.newVisibility())));
       case REJECT:
         if (dto.reason() == null) {
           return ResponseEntity.badRequest().body("Reason is required for REJECT");
@@ -89,9 +94,12 @@ public class RequestController {
         return ResponseEntity.ok(
             requestService.rejectRequest(authentication.getTenantId(), id, dto.reason()));
       case APPROVE_LEASE:
+        if (dto.agentEncryptedData() == null) {
+          return ResponseEntity.badRequest().body("agentEncryptedData is required for APPROVE_LEASE");
+        }
         ApproveLeaseResponseDTO leaseResponse =
             requestService.approveLease(
-                authentication.getTenantId(), id, authentication.getPrincipal().toString());
+                authentication.getTenantId(), id, dto.agentEncryptedData(), dto.expiry());
         return ResponseEntity.ok(leaseResponse);
     }
     return ResponseEntity.badRequest().build();
