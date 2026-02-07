@@ -1,3 +1,5 @@
+import { CipherStringParser } from './CipherString';
+
 /**
  * CryptoService handles symmetric (AES-CBC + HMAC) and asymmetric (RSA-OAEP) encryption.
  * It follows the Bitwarden-compatible Cipher String Type 2 format.
@@ -24,7 +26,6 @@ export class CryptoService {
     );
 
     // 2. Sign the ciphertext (Encrypt-then-MAC)
-    // Bitwarden usually HMACs the ciphertext (including IV sometimes? Let's check)
     // Standard approach: HMAC(IV + Ciphertext)
     const combinedData = new Uint8Array(iv.length + ciphertext.byteLength);
     combinedData.set(iv);
@@ -36,12 +37,12 @@ export class CryptoService {
       combinedData
     );
 
-    // 3. Format as Type 2 Cipher String
-    const ivB64 = btoa(String.fromCharCode(...iv));
-    const ciphertextB64 = btoa(String.fromCharCode(...new Uint8Array(ciphertext)));
-    const macB64 = btoa(String.fromCharCode(...new Uint8Array(mac)));
-
-    return `2.${ivB64}|${ciphertextB64}|${macB64}`;
+    // 3. Format as Type 2 Cipher String using Parser
+    return CipherStringParser.serialize(
+      iv,
+      new Uint8Array(ciphertext),
+      new Uint8Array(mac)
+    );
   }
 
   /**
@@ -52,18 +53,7 @@ export class CryptoService {
     encKey: CryptoKey,
     macKey: CryptoKey
   ): Promise<string> {
-    if (!cipherString.startsWith('2.')) {
-      throw new Error('Unsupported or invalid cipher string type');
-    }
-
-    const [ivPart, ciphertextPart, macPart] = cipherString.substring(2).split('|');
-    if (!ivPart || !ciphertextPart || !macPart) {
-      throw new Error('Invalid cipher string format');
-    }
-
-    const iv = new Uint8Array(atob(ivPart).split('').map(c => c.charCodeAt(0)));
-    const ciphertext = new Uint8Array(atob(ciphertextPart).split('').map(c => c.charCodeAt(0)));
-    const mac = new Uint8Array(atob(macPart).split('').map(c => c.charCodeAt(0)));
+    const { iv, ciphertext, mac } = CipherStringParser.parse(cipherString);
 
     // 1. Verify HMAC (MAC-then-Decrypt)
     const combinedData = new Uint8Array(iv.length + ciphertext.byteLength);

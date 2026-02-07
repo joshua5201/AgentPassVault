@@ -1,6 +1,6 @@
 # Bitwarden Compatibility Analysis
 
-> **CRITICAL:** DO NOT COPY OR REUSE ANY CODE FROM THE REFERENCED REPOSITORIES (bitwarden-clients or goldwarden). All implementations in AgentPassVault must be written from scratch using standard platform APIs (Web Crypto API, Java Crypto, etc.) to ensure no copyright violations or license contamination.
+> **CRITICAL:** While we are okay to refer to the logic of Bitwarden's GPL-licensed code to implement our encryption/decryption logic and formats, we must **NEVER** refer to or use any code from Bitwarden's commercially licensed software (`bitwarden_license/`). All implementations must be written from scratch to ensure no direct code duplication or license contamination from proprietary modules.
 
 ## 1. License Analysis & Commercial Use
 
@@ -8,7 +8,7 @@
 The "Bitwarden License v1.0" applies specifically to **Commercial Modules** (located in `/bitwarden_license`).
 - **Restrictions:** Section 2.3 (iii) explicitly prohibits using these modules to **"create a competing product or service."**
 - **Usage:** Only allowed for internal development and testing in non-production environments.
-- **Action for AgentPassVault:** **COMPLETE AVOIDANCE.** We must not read, reference, or use any code within `bitwarden_license/` directories to ensure our product remains legally independent and commercially viable.
+- **Action for AgentPassVault:** **COMPLETE AVOIDANCE.** We must not read, reference, or use any code within `bitwarden_license/` directories to ensure our product remains legally independent and avoids any conflict with Bitwarden's commercial licensing.
 
 ### Building Compatible Products with Paid Features
 Based on research into the legality of Bitwarden-compatible implementations (e.g., Vaultwarden):
@@ -21,7 +21,7 @@ Based on research into the legality of Bitwarden-compatible implementations (e.g
 ### GPL v3.0 (Open Source)
 The bulk of the Bitwarden client logic (primitives, UI components, etc.) is under GPL v3.0.
 - **Usage:** While GPL allows creating third-party clients/servers, any code *derived* from GPL code must also be GPL.
-- **Action for AgentPassVault:** To maintain maximum licensing flexibility, we avoid copying GPL code and instead **implement the protocol based on public standards** (AES, RSA, PBKDF2).
+- **Action for AgentPassVault:** Since we have adopted **GPLv3** for our frontend implementation, we are permitted to refer to the encryption/decryption logic and data formats defined in Bitwarden's GPL-licensed repositories to ensure full compatibility. We still implement our own code from scratch using standard platform APIs (Web Crypto API) to maintain a clean and independent codebase.
 
 ### Goldwarden (MIT)
 - **Action:** Patterns and protocol details can be safely referenced as it is MIT licensed, but we still implement our own code to maintain project integrity.

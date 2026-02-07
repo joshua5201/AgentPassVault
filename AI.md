@@ -24,7 +24,20 @@ Agents working on this project must adhere to the specifications and workflows d
 - **Directory:** `frontend/`
 - **Primary Branch:** `feat/frontend`. Use this as the base for all frontend work.
 - **Git Restriction:** **NEVER push to origin.** All changes must remain local.
+- **License:** **GPLv3**. We may refer to Bitwarden's GPL-licensed logic for encryption/decryption and formats.
+- **Bitwarden Restriction:** **NEVER** refer to or use code from `bitwarden_license/` (Commercial Modules). This is enforced via `.geminiignore`.
 - **Architecture:** Monorepo using Turborepo + PNPM.
+- **Detailed Plan:** [Frontend Implementation Plan](./docs/frontend-implementation-plan.md)
+- **Implementation Status:**
+    - [x] **SDK - Models:** Core interfaces for Secrets, Leases, Requests - Finished.
+    - [x] **SDK - Crypto:** `MasterKeyService` (PBKDF2 derivation) - Finished.
+    - [x] **SDK - Crypto:** `CryptoService` (Symmetric AES-CBC+HMAC, Asymmetric RSA-OAEP) - Finished.
+    - [x] **SDK - Crypto:** `CipherStringParser` (Type 2 support) - Finished.
+    - [x] **SDK - Services:** `SecretService` (Local secret management) - Finished.
+    - [x] **SDK - Services:** `LeaseService` (Agent re-encryption logic) - Finished.
+    - [ ] **SDK - API:** Client-side API definitions and request handling - Pending (Waiting for backend integration).
+    - [ ] **CLI:** Agent CLI implementation - Pending.
+    - [ ] **Web:** Admin/Fulfillment UI - Pending.
 - **Sub-projects:**
     - `packages/sdk`: Core crypto/API logic (TypeScript).
     - `apps/cli`: Agent CLI (Node.js).
