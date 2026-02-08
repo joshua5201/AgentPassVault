@@ -6,11 +6,30 @@ plugins {
 	id("io.spring.dependency-management") version "1.1.7"
 	id("net.ltgt.errorprone") version "4.0.0"
 	id("com.diffplug.spotless") version "6.25.0"
+	id("com.google.cloud.tools.jib") version "3.4.1"
 }
 
 group = "com.agentpassvault"
 version = "0.0.1-SNAPSHOT"
 description = "AgentPassVault - Secure Secret Manager for Agents"
+
+jib {
+	from {
+		image = "amazoncorretto:21-alpine"
+	}
+	to {
+		image = "agentpassvault-backend"
+		tags = setOf("latest", version.toString())
+	}
+	container {
+		mainClass = "com.agentpassvault.AgentPassVaultApplication"
+		ports = listOf("8080")
+		environment = mapOf(
+			"SPRING_PROFILES_ACTIVE" to "prod",
+			"SPRING_FLYWAY_ENABLED" to "false"
+		)
+	}
+}
 
 java {
 	toolchain {
