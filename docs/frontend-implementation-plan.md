@@ -18,11 +18,11 @@ The SDK provides the cryptographic primitives and API client logic used by both 
 - [x] **1.4 Verification:**
     - [x] Unit tests for all crypto operations.
     - [x] Head-to-head compatibility tests with Bitwarden test vectors.
-- [ ] **1.5 API Client:**
-    - [ ] Implement `VaultClient` using `fetch` (or similar).
-    - [ ] Handle Authentication (Login for Humans and Agents).
-    - [ ] Implement Idempotency-Key handling.
-    - [ ] CRUD operations for Secrets, Agents, and Requests.
+- [x] **1.5 API Client:**
+    - [x] Implement `VaultClient` using `fetch` (or similar).
+    - [x] Handle Authentication (Login for Humans and Agents).
+    - [x] Implement Idempotency-Key handling.
+    - [x] CRUD operations for Secrets, Agents, and Requests.
 
 ## [ ] 2. Agent CLI (`apps/cli`)
 The CLI tool used by autonomous agents to retrieve and manage secrets.
@@ -54,7 +54,17 @@ The interface for human administrators to manage the vault and fulfill agent req
     - [ ] Dashboard for pending requests.
     - [ ] Fulfillment flow: Decrypt with Master Key -> Re-encrypt with Agent Public Key -> Post Lease.
 
-## [ ] 4. Integration & Polishing
+## [ ] 4. Configuration & Environment Variables
+The applications will be configured via environment variables to ensure flexibility across different environments.
+
+- **Web UI (`apps/web`):**
+    - `VITE_API_URL`: The base URL of the AgentPassVault API (e.g., `http://localhost:8080`).
+- **Agent CLI (`apps/cli`):**
+    - `AGENTPASSVAULT_API_URL`: The base URL of the AgentPassVault API.
+    - `AGENTPASSVAULT_TENANT_ID`: The tenant ID for the agent.
+    - `AGENTPASSVAULT_APP_TOKEN`: The application token for the agent.
+
+## [ ] 5. Integration & Polishing
 - [ ] End-to-end integration tests between CLI, Web UI, and Backend.
 - [ ] Error handling and user-friendly error messages.
 - [ ] Documentation for installation and usage.

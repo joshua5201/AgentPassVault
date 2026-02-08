@@ -35,7 +35,7 @@ Agents working on this project must adhere to the specifications and workflows d
     - [x] **SDK - Crypto:** `CipherStringParser` (Type 2 support) - Finished.
     - [x] **SDK - Services:** `SecretService` (Local secret management) - Finished.
     - [x] **SDK - Services:** `LeaseService` (Agent re-encryption logic) - Finished.
-    - [ ] **SDK - API:** Client-side API definitions and request handling - Pending (Waiting for backend integration).
+    - [x] **SDK - API:** Client-side API definitions and request handling - Finished.
     - [ ] **CLI:** Agent CLI implementation - Pending.
     - [ ] **Web:** Admin/Fulfillment UI - Pending.
 

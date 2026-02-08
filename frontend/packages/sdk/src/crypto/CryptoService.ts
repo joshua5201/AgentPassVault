@@ -63,7 +63,7 @@ export class CryptoService {
     const isValid = await crypto.subtle.verify(
       { name: 'HMAC' },
       macKey,
-      mac,
+      mac as any,
       combinedData
     );
 
@@ -73,9 +73,9 @@ export class CryptoService {
 
     // 2. Decrypt
     const plaintext = await crypto.subtle.decrypt(
-      { name: 'AES-CBC', iv },
+      { name: 'AES-CBC', iv: iv as any },
       encKey,
-      ciphertext
+      ciphertext as any
     );
 
     return new TextDecoder().decode(plaintext);
