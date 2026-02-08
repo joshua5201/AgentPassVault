@@ -1,0 +1,13 @@
+/*
+ * Copyright (C) 2026 Tsung-en Hsiao
+ *
+ * Licensed under the GNU Affero General Public License v3.0 or later.
+ * See LICENSE file in the project root for full license information.
+ */
+package com.agentpassvault.exception;
+
+public class TwoFactorRequiredException extends RuntimeException {
+  public TwoFactorRequiredException(String message) {
+    super(message);
+  }
+}

@@ -49,6 +49,18 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
   }
 
+  @ExceptionHandler(TwoFactorRequiredException.class)
+  public ResponseEntity<ErrorResponse> handleTwoFactorRequiredException(
+      TwoFactorRequiredException ex, WebRequest request) {
+    ErrorResponse error =
+        new ErrorResponse(
+            HttpStatus.UNAUTHORIZED.value(),
+            "TWO_FACTOR_REQUIRED",
+            request.getDescription(false).replace("uri=", ""),
+            LocalDateTime.now(ZoneId.of("UTC")));
+    return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+  }
+
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
     ErrorResponse error =
