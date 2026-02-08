@@ -6,6 +6,7 @@
  */
 package com.agentpassvault.service;
 
+import com.agentpassvault.dto.TotpSetupResponse;
 import com.agentpassvault.model.Role;
 import com.agentpassvault.model.Tenant;
 import com.agentpassvault.model.User;
@@ -26,6 +27,7 @@ public class UserService {
   private final UserRepository userRepository;
   private final TenantRepository tenantRepository;
   private final PasswordEncoder passwordEncoder;
+  private final TwoFactorAuthService twoFactorAuthService;
 
   @Transactional
   public User createAdminUser(
@@ -126,6 +128,51 @@ public class UserService {
     user.setResetPasswordToken(null);
     user.setResetPasswordExpiresAt(null);
     user.setResetPasswordTokenCreatedAt(null);
+    userRepository.save(user);
+  }
+
+  @Transactional(readOnly = true)
+  public TotpSetupResponse getTotpSetup(Long userId) {
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+    String secret = twoFactorAuthService.generateSecret();
+    String qrCodeUrl = twoFactorAuthService.generateQrCodeUrl(secret, user.getUsername());
+
+    return new TotpSetupResponse(secret, qrCodeUrl);
+  }
+
+  @Transactional
+  public void enableTotp(Long userId, String secret, String code) {
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+    if (user.isTotpEnabled()) {
+      throw new IllegalStateException("TOTP is already enabled");
+    }
+
+    if (!twoFactorAuthService.verifyCode(secret, code)) {
+      throw new BadCredentialsException("Invalid 2FA code");
+    }
+
+    user.setTotpSecret(secret);
+    user.setTotpEnabled(true);
+    userRepository.save(user);
+  }
+
+  @Transactional
+  public void disableTotp(Long userId) {
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+    user.setTotpEnabled(false);
+    user.setTotpSecret(null);
     userRepository.save(user);
   }
 

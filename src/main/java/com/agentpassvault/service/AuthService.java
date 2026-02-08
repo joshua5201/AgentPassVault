@@ -8,7 +8,9 @@ package com.agentpassvault.service;
 
 import com.agentpassvault.dto.AgentLoginRequest;
 import com.agentpassvault.dto.LoginResponse;
+import com.agentpassvault.dto.TwoFactorLoginRequest;
 import com.agentpassvault.dto.UserLoginRequest;
+import com.agentpassvault.exception.TwoFactorRequiredException;
 import com.agentpassvault.model.User;
 import com.agentpassvault.repository.TenantRepository;
 import com.agentpassvault.repository.UserRepository;
@@ -29,6 +31,7 @@ public class AuthService {
   private final TenantRepository tenantRepository;
   private final PasswordEncoder passwordEncoder;
   private final TokenService tokenService;
+  private final TwoFactorAuthService twoFactorAuthService;
 
   public LoginResponse userLogin(UserLoginRequest request) {
     User user =
@@ -38,6 +41,31 @@ public class AuthService {
 
     if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
       throw new BadCredentialsException("Invalid credentials");
+    }
+
+    if (user.isTotpEnabled()) {
+      throw new TwoFactorRequiredException("Two-factor authentication required");
+    }
+
+    return createLoginResponse(user);
+  }
+
+  public LoginResponse userLoginWith2fa(TwoFactorLoginRequest request) {
+    User user =
+        userRepository
+            .findByUsername(request.username())
+            .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
+
+    if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+      throw new BadCredentialsException("Invalid credentials");
+    }
+
+    if (!user.isTotpEnabled()) {
+      return createLoginResponse(user);
+    }
+
+    if (!twoFactorAuthService.verifyCode(user.getTotpSecret(), request.code())) {
+      throw new BadCredentialsException("Invalid 2FA code");
     }
 
     return createLoginResponse(user);

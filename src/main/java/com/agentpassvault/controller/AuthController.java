@@ -30,6 +30,27 @@ public class AuthController {
     return authService.userLogin(request);
   }
 
+  @PostMapping("/login/user/2fa")
+  public LoginResponse userLoginWith2fa(@Valid @RequestBody TwoFactorLoginRequest request) {
+    return authService.userLoginWith2fa(request);
+  }
+
+  @GetMapping("/2fa/totp/setup")
+  public TotpSetupResponse getTotpSetup(AgentPassVaultAuthentication authentication) {
+    return userService.getTotpSetup((Long) authentication.getPrincipal());
+  }
+
+  @PostMapping("/2fa/totp/enable")
+  public void enableTotp(
+      AgentPassVaultAuthentication authentication, @Valid @RequestBody TotpVerifyRequest request) {
+    userService.enableTotp((Long) authentication.getPrincipal(), request.secret(), request.code());
+  }
+
+  @PostMapping("/2fa/totp/disable")
+  public void disableTotp(AgentPassVaultAuthentication authentication) {
+    userService.disableTotp((Long) authentication.getPrincipal());
+  }
+
   @PostMapping("/login/agent")
   public LoginResponse agentLogin(@Valid @RequestBody AgentLoginRequest request) {
     return authService.agentLogin(request);
