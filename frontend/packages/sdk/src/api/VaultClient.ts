@@ -12,6 +12,8 @@ import {
   LoginResponse,
   RefreshTokenRequest,
   RegisterAgentRequest,
+  RegistrationRequest,
+  RegistrationResponse,
   RequestResponse,
   ResetPasswordRequest,
   SearchSecretRequest,
@@ -81,6 +83,10 @@ export class VaultClient {
   }
 
   // Auth
+  async register(request: RegistrationRequest): Promise<RegistrationResponse> {
+    return this.request<RegistrationResponse>('/api/v1/auth/register', 'POST', request);
+  }
+
   async userLogin(request: UserLoginRequest): Promise<LoginResponse> {
     return this.request<LoginResponse>('/api/v1/auth/login/user', 'POST', request);
   }

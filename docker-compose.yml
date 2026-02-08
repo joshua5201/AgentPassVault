@@ -19,9 +19,9 @@ services:
     depends_on:
       - mysql
 
-  integration_test_app:
+  test_app:
     image: amazoncorretto:21-alpine
-    container_name: agentpassvault-integration_test-app
+    container_name: agentpassvault-test-app
     working_dir: /app
     volumes:
       - .:/app

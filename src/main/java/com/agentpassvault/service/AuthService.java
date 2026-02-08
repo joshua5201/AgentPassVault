@@ -8,9 +8,12 @@ package com.agentpassvault.service;
 
 import com.agentpassvault.dto.AgentLoginRequest;
 import com.agentpassvault.dto.LoginResponse;
+import com.agentpassvault.dto.RegistrationRequest;
+import com.agentpassvault.dto.RegistrationResponse;
 import com.agentpassvault.dto.TwoFactorLoginRequest;
 import com.agentpassvault.dto.UserLoginRequest;
 import com.agentpassvault.exception.TwoFactorRequiredException;
+import com.agentpassvault.model.Tenant;
 import com.agentpassvault.model.User;
 import com.agentpassvault.repository.TenantRepository;
 import com.agentpassvault.repository.UserRepository;
@@ -22,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +36,21 @@ public class AuthService {
   private final PasswordEncoder passwordEncoder;
   private final TokenService tokenService;
   private final TwoFactorAuthService twoFactorAuthService;
+  private final TenantService tenantService;
+  private final UserService userService;
+
+  @Transactional
+  public RegistrationResponse register(RegistrationRequest request) {
+    // 1. Create Tenant
+    Tenant tenant = tenantService.createTenant("Default");
+
+    // 2. Create Admin User
+    User user =
+        userService.createAdminUser(
+            tenant.getId(), request.username(), request.password(), request.displayName());
+
+    return new RegistrationResponse(tenant.getId().toString(), user.getId().toString());
+  }
 
   public LoginResponse userLogin(UserLoginRequest request) {
     User user =

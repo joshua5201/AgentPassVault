@@ -5,6 +5,17 @@ export interface UserLoginRequest {
   password: string; // Login Hash
 }
 
+export interface RegistrationRequest {
+  username: string;
+  password: string; // Login Hash
+  displayName?: string;
+}
+
+export interface RegistrationResponse {
+  tenantId: string;
+  userId: string;
+}
+
 export interface TwoFactorLoginRequest {
   username: string;
   password: string; // Login Hash
