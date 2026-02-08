@@ -19,9 +19,9 @@ services:
     depends_on:
       - mysql
 
-  test_app:
+  integration_test_app:
     image: amazoncorretto:21-alpine
-    container_name: agentpassvault-test-app
+    container_name: agentpassvault-integration_test-app
     working_dir: /app
     volumes:
       - .:/app
@@ -29,7 +29,7 @@ services:
     ports:
       - "127.0.0.1:58080:8080"
     environment:
-      - SPRING_PROFILES_ACTIVE=test
+      - SPRING_PROFILES_ACTIVE=integration_test
     command: ["./gradlew", "bootRun"]
     depends_on:
       - mysql
