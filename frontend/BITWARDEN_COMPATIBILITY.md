@@ -97,6 +97,7 @@ If you intend to patent a unique business flow (like the "Agent Fulfillment" pro
 - **Why RSA-OAEP?** Ideal for asynchronous fulfillment by humans for agents. We use SHA-256 to align with modern security standards while following the general Bitwarden pattern for asymmetric delivery.
 
 ### Key Derivation (Master Key)
-- **Method:** PBKDF2-HMAC-SHA256.
+- **Method:** PBKDF2-HMAC-SHA256 (Default for MVP).
 - **Salt:** User's email (following Bitwarden's approach).
 - **Iterations:** 600,000 to match Bitwarden's current security baseline.
+- **Argon2id:** Bitwarden also supports Argon2id. We plan to support this in future versions once the core protocol is stable.

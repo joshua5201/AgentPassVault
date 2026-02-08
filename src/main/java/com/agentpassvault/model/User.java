@@ -58,7 +58,4 @@ public class User extends BaseEntity {
 
   @Column(name = "public_key", columnDefinition = "TEXT")
   private String publicKey;
-
-  @Column(name = "encrypted_master_key_salt")
-  private String encryptedMasterKeySalt;
 }

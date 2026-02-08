@@ -38,12 +38,6 @@ Agents working on this project must adhere to the specifications and workflows d
     - [ ] **SDK - API:** Client-side API definitions and request handling - Pending (Waiting for backend integration).
     - [ ] **CLI:** Agent CLI implementation - Pending.
     - [ ] **Web:** Admin/Fulfillment UI - Pending.
-- **Sub-projects:**
-    - `packages/sdk`: Core crypto/API logic (TypeScript).
-    - `apps/cli`: Agent CLI (Node.js).
-    - `apps/web`: Admin/Fulfillment UI (React).
-- **Security:** Use Web Crypto API. secrets must never be stored in plaintext.
-- **Style:** TypeScript strict mode. Functional components for React.
 
 ## License Header
 - For all `.java` files, the license header from `licence-header.txt` must be present at the top of the file.
