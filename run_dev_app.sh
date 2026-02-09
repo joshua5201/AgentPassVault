@@ -7,4 +7,4 @@ if [ $? -ne 0 ]; then
   echo "Flyway migration is outdated. Run ./scripts/database/flyway.sh migrate"
   exit 1
 fi
-./gradlew bootRun
+SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun

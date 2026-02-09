@@ -90,6 +90,3 @@ spotless {
 	useJUnitPlatform()
 	systemProperty("spring.profiles.active", "test")
 }
-tasks.getByName<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
-	systemProperty("spring.profiles.active", "dev")
-}

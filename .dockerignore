@@ -1,0 +1,51 @@
+# VCS
+.git
+.gitignore
+.gitattributes
+
+# IDEs
+.idea
+.vscode
+*.iml
+*.swp
+*.swo
+
+# Java/Gradle
+build/
+.gradle/
+*.class
+*.jar
+
+# Node.js / Frontend
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+.turbo/
+.npm
+.pnpm-debug.log
+**/out/
+
+# Secrets and Environment
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.jks
+
+# Documentation and Temporary files
+.gemini/
+*.log
+tmp/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker files (optional, but often excluded to keep image clean)
+docker/
+docker-compose.yml
+Dockerfile.local
+.dockerignore

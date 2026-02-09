@@ -1,0 +1,34 @@
+# Stage 1: Build
+FROM amazoncorretto:21-alpine AS builder
+
+RUN apk add --no-cache bash
+
+WORKDIR /build
+
+# Copy gradle files for caching
+COPY gradlew .
+RUN chmod +x gradlew
+COPY gradle gradle
+COPY build.gradle.kts .
+COPY settings.gradle.kts .
+
+# Download dependencies
+RUN ./gradlew --no-daemon dependencies || true
+
+# Copy source and build
+COPY . .
+RUN ./gradlew --no-daemon bootJar
+
+# Stage 2: Runtime
+FROM amazoncorretto:21-alpine
+
+RUN apk add --no-cache bash curl
+
+WORKDIR /app
+
+# Copy the built jar from the builder stage
+COPY --from=builder /build/build/libs/*.jar app.jar
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-Dspring.profiles.active=integration_test", "-jar", "app.jar"]
