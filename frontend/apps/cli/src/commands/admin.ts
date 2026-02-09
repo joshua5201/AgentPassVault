@@ -8,13 +8,24 @@ import {
 } from '@agentpassvault/sdk';
 import { loadConfig, saveConfig, Config, ensureConfigDir } from '../config.js';
 
+import { Writable } from 'node:stream';
+
 async function prompt(question: string, silent: boolean = false): Promise<string> {
+  const mutableStdout = new Writable({
+    write: (chunk, encoding, callback) => {
+      if (!silent) {
+        process.stdout.write(chunk, encoding);
+      }
+      callback();
+    }
+  });
+
   const rl = readline.createInterface({
     input: process.stdin,
-    output: silent ? undefined : process.stdout,
+    output: mutableStdout,
+    terminal: true
   });
   
-  // If silent, we need to handle the output manually to not show password
   if (silent) {
     process.stdout.write(question);
   }
