@@ -1,11 +1,14 @@
 import { Command } from 'commander';
-import { setup, generateKey, registerAgent } from './commands/identity';
-import { getSecret, searchSecrets, requestSecret, getRequestStatus } from './commands/secrets';
+import { setup, generateKey, registerAgent } from './commands/identity.js';
+import { getSecret, searchSecrets, requestSecret, getRequestStatus } from './commands/secrets.js';
 import { 
   adminLogin, 
+  adminRegister,
+  adminDeleteTenant,
   adminListSecrets, 
   adminViewSecret, 
   adminCreateSecret,
+  adminUpdateSecret,
   adminDeleteSecret,
   adminListAgents,
   adminCreateAgent,
@@ -14,7 +17,7 @@ import {
   adminListRequests,
   adminFulfillRequest,
   adminRejectRequest
-} from './commands/admin';
+} from './commands/admin.js';
 
 const program = new Command();
 
@@ -72,12 +75,39 @@ const admin = program.command('admin').description('Admin operations (Human only
 
 
 admin.command('login')
-
   .description('Login as administrator')
-
   .option('--api-url <url>', 'API URL')
-
+  .option('--username <name>', 'Username')
+  .option('--password <pass>', 'Master Password')
   .action(adminLogin);
+
+admin.command('register')
+  .description('Register a new tenant and administrator')
+  .option('--api-url <url>', 'API URL')
+  .option('--username <name>', 'Username')
+  .option('--password <pass>', 'Master Password')
+  .option('--display-name <name>', 'Display Name')
+  .action(adminRegister);
+
+
+
+
+
+
+
+admin.command('delete-tenant <id>')
+
+
+
+  .description('Delete a tenant and all its data (Integration Test only)')
+
+
+
+  .action(adminDeleteTenant);
+
+
+
+
 
 
 
@@ -94,30 +124,24 @@ adminSecret.command('list')
 
 
 adminSecret.command('view <id>')
-
   .description('View and decrypt a secret')
-
+  .option('--password <pass>', 'Master Password')
   .action(adminViewSecret);
 
-
-
 adminSecret.command('create <name>')
-
-
-
   .description('Create a new secret')
-
-
-
   .option('--value <plain>', 'Secret value (plaintext)')
-
-
-
   .option('--metadata <json>', 'Metadata as JSON')
-
-
-
+  .option('--password <pass>', 'Master Password')
   .action(adminCreateSecret);
+
+adminSecret.command('update <id>')
+  .description('Update a secret')
+  .option('--name <new-name>', 'New name')
+  .option('--value <plain>', 'New secret value (plaintext)')
+  .option('--metadata <json>', 'New metadata as JSON')
+  .option('--password <pass>', 'Master Password')
+  .action(adminUpdateSecret);
 
 
 
@@ -126,6 +150,10 @@ adminSecret.command('create <name>')
 
 
 adminSecret.command('delete <id>')
+
+
+
+
 
 
 
@@ -238,21 +266,10 @@ adminRequest.command('list')
 
 
 adminRequest.command('fulfill <requestId>')
-
-
-
   .description('Fulfill a secret request')
-
-
-
   .option('--secret-id <id>', 'Fulfill using an existing secret')
-
-
-
   .option('--value <plain>', 'Fulfill by creating a new secret with this value')
-
-
-
+  .option('--password <pass>', 'Master Password')
   .action(adminFulfillRequest);
 
 

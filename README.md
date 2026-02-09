@@ -53,34 +53,57 @@ docker compose up -d
 ```
 The API will be available at `http://localhost:8080`.
 
-## Agent CLI
+## Frontend Development
 
-The Agent CLI allows autonomous agents to manage their identity and retrieve secrets.
+The frontend is a TypeScript monorepo managed by **Turborepo** and **pnpm**. It consists of three main parts:
+*   `packages/sdk`: The core cryptographic and API logic.
+*   `apps/cli`: The `agentpassvault` command-line tool.
+*   `apps/web`: The React-based administrator dashboard.
 
-### Installation
+### Prerequisites
+*   **Node.js**: Version 20 or higher.
+*   **pnpm**: The package manager used for this project. Install via `npm install -g pnpm`.
+
+### Core Commands (Run from the `frontend/` directory)
+
+| Command | Description |
+| :--- | :--- |
+| `pnpm install` | Install all dependencies for the entire monorepo. |
+| `pnpm build` | Build all packages (SDK, CLI, Web). Includes linting and type-checking. |
+| `pnpm clean` | Remove all build artifacts (`dist`, `.turbo`, `node_modules`). |
+| `pnpm lint` | Run code quality and formatting checks. |
+| `pnpm typecheck` | Run TypeScript compiler checks across all projects. |
+| `pnpm test` | Run all unit tests. |
+| `pnpm sync-dtos` | Re-generate the API contract from the Java backend. |
+
+### Working with the Agent CLI
+
+#### Local Execution
+After building the project (`pnpm build`), you can run the CLI directly using Node.js without installing it globally:
 ```bash
-cd frontend
-pnpm install
-pnpm build
-cd apps/cli
-npm link # Optional: make 'agentpassvault' command available globally
+cd frontend/apps/cli
+node dist/index.js --help
 ```
 
-### Usage
-1. **Setup:** `agentpassvault identity setup --api-url <url> --tenant-id <id> --agent-id <id> --app-token <token>`
-2. **Register:** `agentpassvault identity register` (generates keys and registers public key)
-3. **Request Secret:** `agentpassvault request-secret "Service Name"`
-4. **Get Secret:** `agentpassvault get-secret <id>`
+#### Running Tests
+The CLI has two types of tests:
+*   **Unit Tests**: Logic tests that don't require a server.
+    `pnpm test:unit`
+*   **Integration (E2E) Tests**: Full lifecycle tests against the running Docker backend.
+    `pnpm test:integration`
 
-## Development
-
-### Synchronizing DTOs
-When you modify Java DTOs in the backend, you can synchronize the frontend TypeScript interfaces by running:
+#### Global Link (Optional)
+To make the `agentpassvault` command available everywhere on your system:
 ```bash
-cd frontend
-npm run sync-dtos
+cd frontend/apps/cli
+npm link
 ```
-This script will automatically regenerate `docs/openapi.yaml` from the Java code and then update the TypeScript models in the SDK.
+
+### Troubleshooting
+If you encounter weird build errors or type mismatches after a git pull:
+1. `pnpm clean`
+2. `pnpm install`
+3. `pnpm build`
 
 ## License & Commercial Usage
 

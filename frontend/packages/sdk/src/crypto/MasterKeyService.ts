@@ -66,6 +66,39 @@ export class MasterKeyService {
   }
 
   /**
+   * Derives the Login Hash from the Master Key and Master Password.
+   * Following Bitwarden approach: PBKDF2-HMAC-SHA256(MasterKeyEnc, MasterPassword, 1 iteration)
+   */
+  static async deriveLoginHash(masterKeys: MasterKeys, password: string): Promise<string> {
+    const encKeyBytes = await this.exportKey(masterKeys.encKey);
+    const passwordBytes = new TextEncoder().encode(password);
+
+    // Convert to a regular ArrayBuffer to ensure compatibility with BufferSource
+    const encKeyBuffer = encKeyBytes.buffer.slice(encKeyBytes.byteOffset, encKeyBytes.byteOffset + encKeyBytes.byteLength);
+
+    const baseKey = await crypto.subtle.importKey(
+      'raw',
+      encKeyBuffer as any,
+      'PBKDF2',
+      false,
+      ['deriveBits']
+    );
+
+    const derivedBits = await crypto.subtle.deriveBits(
+      {
+        name: this.ALGORITHM,
+        salt: passwordBytes,
+        iterations: 1,
+        hash: this.HASH,
+      },
+      baseKey,
+      256
+    );
+
+    return btoa(String.fromCharCode(...new Uint8Array(derivedBits)));
+  }
+
+  /**
    * Exports a CryptoKey to a raw Uint8Array.
    */
   static async exportKey(key: CryptoKey): Promise<Uint8Array> {

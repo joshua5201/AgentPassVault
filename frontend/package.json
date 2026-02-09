@@ -7,16 +7,19 @@
     "sync-dtos": "../scripts/management/sync-dtos.sh",
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "turbo run lint",
+    "lint": "turbo run lint && prettier --check \"**/*.{ts,tsx,md}\"",
+    "typecheck": "turbo run typecheck",
     "clean": "turbo run clean",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
     "@openapitools/openapi-generator-cli": "^2.28.2",
+    "@types/node": "^20.11.19",
     "prettier": "latest",
     "tsx": "^4.21.0",
     "turbo": "latest",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.2"
   },
   "packageManager": "pnpm@8.15.1"
 }

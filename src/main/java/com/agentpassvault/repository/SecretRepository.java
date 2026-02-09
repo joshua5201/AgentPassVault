@@ -8,7 +8,11 @@ package com.agentpassvault.repository;
 
 import com.agentpassvault.model.Secret;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface SecretRepository extends JpaRepository<Secret, Long> {}
+public interface SecretRepository extends JpaRepository<Secret, Long> {
+  @Modifying
+  void deleteAllByTenantId(Long tenantId);
+}

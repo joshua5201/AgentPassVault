@@ -6,7 +6,7 @@ import {
   LeaseService, 
   CryptoService 
 } from '@agentpassvault/sdk';
-import { loadConfig, saveConfig, Config } from '../config';
+import { loadConfig, saveConfig, Config, ensureConfigDir } from '../config.js';
 
 async function prompt(question: string, silent: boolean = false): Promise<string> {
   const rl = readline.createInterface({
@@ -40,15 +40,20 @@ async function getAdminClient() {
   return { client, config };
 }
 
-export async function adminLogin(options: { apiUrl?: string }) {
+export async function adminLogin(options: { apiUrl?: string, username?: string, password?: string }) {
+  await ensureConfigDir();
   const config = await loadConfig() || { apiUrl: options.apiUrl || 'http://localhost:8080' };
   
   if (options.apiUrl) {
     config.apiUrl = options.apiUrl;
   }
 
-  const username = await prompt('Username: ');
-  const password = await prompt('Master Password: ', true);
+  const username = options.username || await prompt('Username: ');
+  const password = options.password || await prompt('Master Password: ', true);
+
+  console.log('Deriving login credentials...');
+  const masterKeys = await MasterKeyService.deriveMasterKeys(password, username);
+  const loginHash = await MasterKeyService.deriveLoginHash(masterKeys, password);
 
   console.log('Logging in...');
   const client = new VaultClient(config.apiUrl);
@@ -56,7 +61,7 @@ export async function adminLogin(options: { apiUrl?: string }) {
   try {
     const loginResp = await client.userLogin({
       username,
-      password, // In a real zero-knowledge system, this would be a login hash derived from MK
+      password: loginHash,
     });
 
     const newConfig: Config = {
@@ -64,13 +69,67 @@ export async function adminLogin(options: { apiUrl?: string }) {
       apiUrl: config.apiUrl,
       adminUsername: username,
       adminToken: loginResp.accessToken,
-      adminTenantId: (loginResp as any).tenantId || config.tenantId, // Assuming tenantId is in response
     };
 
     await saveConfig(newConfig);
     console.log('Login successful.');
   } catch (error: any) {
     console.error('Login failed:', error.message);
+    process.exit(1);
+  }
+}
+
+export async function adminRegister(options: { apiUrl?: string, username?: string, password?: string, displayName?: string }) {
+  await ensureConfigDir();
+  const apiUrl = options.apiUrl || (await loadConfig())?.apiUrl || 'http://localhost:8080';
+  
+  const username = options.username || await prompt('Username (will be used as salt): ');
+  
+  let password = options.password;
+  if (!password) {
+    const p1 = await prompt('Master Password: ', true);
+    const p2 = await prompt('Confirm Master Password: ', true);
+    if (p1 !== p2) {
+      console.error('Passwords do not match.');
+      process.exit(1);
+    }
+    password = p1;
+  }
+
+  const displayName = options.displayName || await prompt('Display Name: ');
+
+  console.log('Deriving credentials...');
+  const masterKeys = await MasterKeyService.deriveMasterKeys(password, username);
+  const loginHash = await MasterKeyService.deriveLoginHash(masterKeys, password);
+
+  console.log('Registering...');
+  const client = new VaultClient(apiUrl);
+  
+  try {
+    const resp = await client.register({
+      username,
+      password: loginHash,
+      displayName
+    });
+
+    console.log('Registration successful.');
+    console.log(`Tenant ID: ${resp.tenantId}`);
+    console.log(`User ID: ${resp.userId}`);
+    console.log('\nPlease login using "admin login"');
+  } catch (error: any) {
+    console.error('Registration failed:', error.message);
+    process.exit(1);
+  }
+}
+
+export async function adminDeleteTenant(id: string) {
+  try {
+    const { client } = await getAdminClient();
+    console.log(`Deleting tenant ${id} and all associated data...`);
+    await client.deleteTenant(id);
+    console.log('Tenant deleted.');
+  } catch (error: any) {
+    console.error('Error:', error.message);
     process.exit(1);
   }
 }
@@ -96,11 +155,11 @@ export async function adminListSecrets() {
   }
 }
 
-export async function adminViewSecret(id: string) {
+export async function adminViewSecret(id: string, options: { password?: string }) {
   try {
     const { client, config } = await getAdminClient();
     
-    const password = await prompt('Confirm Master Password: ', true);
+    const password = options.password || await prompt('Confirm Master Password: ', true);
     
     console.log('Fetching secret...');
     const secret = await client.getSecret(id);
@@ -124,19 +183,19 @@ export async function adminViewSecret(id: string) {
   }
 }
 
-export async function adminCreateSecret(name: string, options: { value?: string, metadata?: string }) {
+export async function adminCreateSecret(name: string, options: { value?: string, metadata?: string, password?: string }) {
   try {
     const { client, config } = await getAdminClient();
     
     const value = options.value || await prompt('Secret Value: ', true);
-    const password = await prompt('Confirm Master Password: ', true);
+    const password = options.password || await prompt('Confirm Master Password: ', true);
     const metadata = options.metadata ? JSON.parse(options.metadata) : {};
 
     console.log('Deriving Master Key...');
     const masterKeys = await MasterKeyService.deriveMasterKeys(password, config.adminUsername!);
     
     console.log('Encrypting...');
-    const secretData = await SecretService.createSecret(name, value, metadata, masterKeys, config.adminTenantId!);
+    const secretData = await SecretService.createSecret(name, value, metadata, masterKeys);
     
     console.log('Uploading...');
     await client.createSecret(secretData as any);
@@ -154,6 +213,32 @@ export async function adminDeleteSecret(id: string) {
     console.log(`Deleting secret ${id}...`);
     await client.deleteSecret(id);
     console.log('Secret deleted.');
+  } catch (error: any) {
+    console.error('Error:', error.message);
+    process.exit(1);
+  }
+}
+
+export async function adminUpdateSecret(id: string, options: { name?: string, value?: string, metadata?: string, password?: string }) {
+  try {
+    const { client, config } = await getAdminClient();
+    
+    let encryptedValue: string | undefined;
+    if (options.value) {
+      const password = options.password || await prompt('Confirm Master Password to re-encrypt: ', true);
+      const masterKeys = await MasterKeyService.deriveMasterKeys(password, config.adminUsername!);
+      encryptedValue = await CryptoService.encryptSymmetric(options.value, masterKeys.encKey, masterKeys.macKey);
+    }
+
+    const metadata = options.metadata ? JSON.parse(options.metadata) : undefined;
+
+    console.log(`Updating secret ${id}...`);
+    await client.updateSecret(id, {
+      name: options.name,
+      encryptedValue,
+      metadata
+    });
+    console.log('Secret updated.');
   } catch (error: any) {
     console.error('Error:', error.message);
     process.exit(1);
@@ -227,15 +312,15 @@ export async function adminListRequests() {
   try {
     const { client } = await getAdminClient();
     console.log('Fetching requests...');
-    const requests = await client.listRequests();
+    const secretRequestResponses = await client.listRequests();
     
-    if (requests.length === 0) {
+    if (secretRequestResponses.length === 0) {
       console.log('No requests found.');
       return;
     }
 
-    console.log(`Found ${requests.length} request(s):`);
-    requests.forEach((r: any) => {
+    console.log(`Found ${secretRequestResponses.length} request(s):`);
+    secretRequestResponses.forEach((r: any) => {
       console.log(`- ${r.name} (ID: ${r.requestId})`);
       console.log(`  Status: ${r.status}, Type: ${r.type}`);
       if (r.context) console.log(`  Context: ${r.context}`);
@@ -260,7 +345,7 @@ export async function adminRejectRequest(id: string, reason: string) {
   }
 }
 
-export async function adminFulfillRequest(requestId: string, options: { secretId?: string, value?: string }) {
+export async function adminFulfillRequest(requestId: string, options: { secretId?: string, value?: string, password?: string }) {
   try {
     const { client, config } = await getAdminClient();
     
@@ -269,15 +354,15 @@ export async function adminFulfillRequest(requestId: string, options: { secretId
     }
 
     console.log('Fetching request details...');
-    const request = await client.getRequest(requestId);
+    const secretRequestResponse = await client.getRequest(requestId);
     
     console.log('Fetching agent details...');
-    const agent = await client.getAgent(request.agentId);
+    const agent = await client.getAgent(secretRequestResponse.agentId!);
     if (!agent.publicKey) {
       throw new Error('Agent has not registered a public key yet.');
     }
 
-    const password = await prompt('Confirm Master Password to decrypt/encrypt: ', true);
+    const password = options.password || await prompt('Confirm Master Password to decrypt/encrypt: ', true);
     console.log('Deriving Master Key...');
     const masterKeys = await MasterKeyService.deriveMasterKeys(password, config.adminUsername!);
 
@@ -288,11 +373,10 @@ export async function adminFulfillRequest(requestId: string, options: { secretId
       // Create a new secret first
       console.log('Creating new secret...');
       const secretData = await SecretService.createSecret(
-        request.name || 'Fulfilling Request',
+        secretRequestResponse.name || 'Fulfilling Request',
         plaintext,
-        request.requiredMetadata as any || {},
-        masterKeys,
-        config.adminTenantId!
+        secretRequestResponse.requiredMetadata as any || {},
+        masterKeys
       );
       const newSecret = await client.createSecret(secretData as any);
       secretId = newSecret.secretId;
@@ -313,7 +397,7 @@ export async function adminFulfillRequest(requestId: string, options: { secretId
     const encryptedForAgent = await CryptoService.encryptAsymmetric(plaintext, agentPublicKey);
 
     await client.createLease(secretId, {
-      agentId: agent.agentId,
+      agentId: agent.agentId!,
       publicKey: agent.publicKey,
       encryptedData: encryptedForAgent
     });

@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import { CryptoService, VaultClient, RequestType } from '@agentpassvault/sdk';
-import { loadConfig, getPrivateKeyPath } from '../config';
+import { loadConfig, getPrivateKeyPath } from '../config.js';
 
 async function getClient() {
   const config = await loadConfig();
@@ -13,7 +13,7 @@ async function getClient() {
     tenantId: config.tenantId,
     appToken: config.appToken,
   });
-  client.setAccessToken(loginResp.accessToken);
+  client.setAccessToken(loginResp.accessToken || null);
   return { client, config };
 }
 
@@ -36,7 +36,7 @@ export async function getSecret(id: string) {
     
     // 3. Decrypt
     console.log('Decrypting secret...');
-    const decrypted = await CryptoService.decryptAsymmetric(secret.encryptedValue, privateKey);
+    const decrypted = await CryptoService.decryptAsymmetric(secret.encryptedValue!, privateKey);
     
     console.log('\nSecret Details:');
     console.log(`Name: ${secret.name}`);
@@ -80,7 +80,7 @@ export async function requestSecret(name: string, options: { context?: string, m
     const requiredMetadata = options.metadata ? JSON.parse(options.metadata) : {};
     
     console.log(`Creating secret request for "${name}"...`);
-    const request = await client.createRequest({
+    const secretRequestResponse = await client.createRequest({
       name,
       type: RequestType.CREATE,
       context: options.context,
@@ -88,9 +88,9 @@ export async function requestSecret(name: string, options: { context?: string, m
     });
     
     console.log('Request created successfully.');
-    console.log(`ID: ${request.requestId}`);
-    console.log(`Status: ${request.status}`);
-    console.log(`Fulfillment URL: ${request.fulfillmentUrl}`);
+    console.log(`ID: ${secretRequestResponse.requestId}`);
+    console.log(`Status: ${secretRequestResponse.status}`);
+    console.log(`Fulfillment URL: ${secretRequestResponse.fulfillmentUrl}`);
     console.log('\nPlease share this URL with a human administrator.');
   } catch (error: any) {
     console.error('Error:', error.message);
@@ -101,17 +101,17 @@ export async function requestSecret(name: string, options: { context?: string, m
 export async function getRequestStatus(id: string) {
   try {
     const { client } = await getClient();
-    const request = await client.getRequest(id);
+    const secretRequestResponse = await client.getRequest(id);
     
     console.log('Request Status:');
-    console.log(`ID: ${request.requestId}`);
-    console.log(`Name: ${request.name}`);
-    console.log(`Status: ${request.status}`);
-    if (request.mappedSecretId) {
-      console.log(`Mapped Secret ID: ${request.mappedSecretId}`);
+    console.log(`ID: ${secretRequestResponse.requestId}`);
+    console.log(`Name: ${secretRequestResponse.name}`);
+    console.log(`Status: ${secretRequestResponse.status}`);
+    if (secretRequestResponse.mappedSecretId) {
+      console.log(`Mapped Secret ID: ${secretRequestResponse.mappedSecretId}`);
     }
-    if (request.rejectionReason) {
-      console.log(`Rejection Reason: ${request.rejectionReason}`);
+    if (secretRequestResponse.rejectionReason) {
+      console.log(`Rejection Reason: ${secretRequestResponse.rejectionReason}`);
     }
   } catch (error: any) {
     console.error('Error:', error.message);

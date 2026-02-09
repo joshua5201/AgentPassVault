@@ -79,7 +79,12 @@ export class VaultClient {
       return {} as T;
     }
 
-    return response.json();
+    const text = await response.text();
+    if (!text) {
+      return {} as T;
+    }
+
+    return JSON.parse(text);
   }
 
   // Auth
@@ -176,6 +181,11 @@ export class VaultClient {
 
   async registerAgentPublicKey(id: string, request: RegisterAgentRequest): Promise<void> {
     await this.request<void>(`/api/v1/agents/${id}/register`, 'POST', request);
+  }
+
+  // Tenants
+  async deleteTenant(id: string): Promise<void> {
+    await this.request<void>(`/api/v1/tenants/${id}`, 'DELETE');
   }
 
   // Leases

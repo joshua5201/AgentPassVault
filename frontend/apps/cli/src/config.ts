@@ -17,7 +17,8 @@ const ConfigSchema = z.object({
 
 export type Config = z.infer<typeof ConfigSchema>;
 
-const DEFAULT_CONFIG_DIR = path.join(os.homedir(), '.config', 'agentpassvault');
+const homeDir = (os.platform() !== 'win32' && process.env.HOME) || os.homedir();
+const DEFAULT_CONFIG_DIR = path.join(homeDir, '.config', 'agentpassvault');
 const CONFIG_FILE = path.join(DEFAULT_CONFIG_DIR, 'config.json');
 export const KEYS_DIR = path.join(DEFAULT_CONFIG_DIR, 'keys');
 
@@ -33,23 +34,29 @@ export async function ensureConfigDir() {
 }
 
 export async function loadConfig(): Promise<Config | null> {
-  // 1. Try environment variables first
-  const envConfig = {
-    apiUrl: process.env.AGENTPASSVAULT_API_URL,
-    tenantId: process.env.AGENTPASSVAULT_TENANT_ID,
-    appToken: process.env.AGENTPASSVAULT_APP_TOKEN,
-  };
+  let config: Partial<Config> = {};
 
-  if (envConfig.apiUrl && envConfig.tenantId) {
-    return ConfigSchema.partial().parse(envConfig) as Config;
-  }
-
-  // 2. Try config file
+  // 1. Load from config file first
   try {
     const content = await fs.readFile(CONFIG_FILE, 'utf-8');
-    const json = JSON.parse(content);
-    return ConfigSchema.parse(json);
+    config = JSON.parse(content);
   } catch (error) {
+    // Ignore error if file doesn't exist
+  }
+
+  // 2. Override with environment variables
+  if (process.env.AGENTPASSVAULT_API_URL) config.apiUrl = process.env.AGENTPASSVAULT_API_URL;
+  if (process.env.AGENTPASSVAULT_TENANT_ID) config.tenantId = process.env.AGENTPASSVAULT_TENANT_ID;
+  if (process.env.AGENTPASSVAULT_APP_TOKEN) config.appToken = process.env.AGENTPASSVAULT_APP_TOKEN;
+  if (process.env.AGENTPASSVAULT_ADMIN_TOKEN) config.adminToken = process.env.AGENTPASSVAULT_ADMIN_TOKEN;
+  if (process.env.AGENTPASSVAULT_ADMIN_USERNAME) config.adminUsername = process.env.AGENTPASSVAULT_ADMIN_USERNAME;
+  if (process.env.AGENTPASSVAULT_ADMIN_TENANT_ID) config.adminTenantId = process.env.AGENTPASSVAULT_ADMIN_TENANT_ID;
+
+  // 3. Validate final config
+  try {
+    return ConfigSchema.parse(config);
+  } catch (error) {
+    // If it's still invalid (e.g. no apiUrl), return null
     return null;
   }
 }

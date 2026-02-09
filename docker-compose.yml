@@ -1,6 +1,6 @@
 services:
   mysql:
-    image: mysql:8.0
+    image: mysql:8.4
     container_name: agentpassvault-mysql
     ports:
       - "127.0.0.1:${MYSQL_PORT_3306:-53306}:3306"

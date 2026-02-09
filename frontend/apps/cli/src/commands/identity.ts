@@ -9,7 +9,7 @@ import {
   loadConfig, 
   Config,
   KEYS_DIR
-} from '../config';
+} from '../config.js';
 
 export async function setup(options: { 
   apiUrl: string; 
@@ -17,7 +17,9 @@ export async function setup(options: {
   agentId: string; 
   appToken: string; 
 }) {
+  const existingConfig = await loadConfig() || {};
   const config: Config = {
+    ...existingConfig,
     apiUrl: options.apiUrl,
     tenantId: options.tenantId,
     agentId: options.agentId,
@@ -91,7 +93,7 @@ export async function registerAgent() {
       appToken: config.appToken,
     });
     
-    client.setAccessToken(loginResp.accessToken);
+    client.setAccessToken(loginResp.accessToken || null);
     
     await client.registerAgentPublicKey(config.agentId, {
       publicKey: pubB64,
