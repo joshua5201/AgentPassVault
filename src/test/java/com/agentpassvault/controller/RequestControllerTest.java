@@ -66,8 +66,8 @@ class RequestControllerTest extends BaseIntegrationTest {
   @Test
   void createAndFulfillRequest_Success() throws Exception {
     Long tenantId = createTenant();
-    userService.createAdminUser(tenantId, "admin", "password");
-    String token = getAuthToken("admin", "password");
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
+    String token = getAuthToken("admin@example.com", "password");
 
     // 1. Create Request
     CreateRequestRequest createReq =
@@ -122,8 +122,8 @@ class RequestControllerTest extends BaseIntegrationTest {
   @Test
   void rejectRequest_Success() throws Exception {
     Long tenantId = createTenant();
-    userService.createAdminUser(tenantId, "admin", "password");
-    String token = getAuthToken("admin", "password");
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
+    String token = getAuthToken("admin@example.com", "password");
 
     CreateRequestRequest createReq = new CreateRequestRequest("Bad Req", "Context", null, null);
     String reqResponse =
@@ -179,8 +179,8 @@ class RequestControllerTest extends BaseIntegrationTest {
         .andExpect(status().isNoContent());
 
     // 3. Verify status is abandoned
-    userService.createAdminUser(tenantId, "admin", "password");
-    String adminToken = getAuthToken("admin", "password");
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
+    String adminToken = getAuthToken("admin@example.com", "password");
     mockMvc
         .perform(
             get("/api/v1/requests/" + requestId).header("Authorization", "Bearer " + adminToken))
@@ -191,8 +191,8 @@ class RequestControllerTest extends BaseIntegrationTest {
   @Test
   void mapRequest_Success() throws Exception {
     Long tenantId = createTenant();
-    userService.createAdminUser(tenantId, "admin", "password");
-    String adminToken = getAuthToken("admin", "password");
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
+    String adminToken = getAuthToken("admin@example.com", "password");
 
     // 1. Create a secret
     CreateSecretRequest createSecretReq = new CreateSecretRequest("Test Secret", "val", null);

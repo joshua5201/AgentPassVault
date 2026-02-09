@@ -6,7 +6,8 @@
  */
 package com.agentpassvault.dto;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 public record TwoFactorLoginRequest(
-    @NotBlank String username, @NotBlank String password, @NotBlank String code) {}
+    @NotBlank @Email(message = "Invalid email format") String username, @NotBlank String password, @NotBlank String code) {}

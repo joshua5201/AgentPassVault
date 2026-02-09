@@ -83,7 +83,7 @@ export async function adminRegister(options: { apiUrl?: string, username?: strin
   await ensureConfigDir();
   const apiUrl = options.apiUrl || (await loadConfig())?.apiUrl || 'http://localhost:8080';
   
-  const username = options.username || await prompt('Username (will be used as salt): ');
+  const username = options.username || await prompt('Email: ');
   
   let password = options.password;
   if (!password) {
@@ -165,7 +165,6 @@ export async function adminViewSecret(id: string, options: { password?: string }
     const secret = await client.getSecret(id);
     
     console.log('Deriving Master Key...');
-    // We use username as salt for now, as defined in our simplified Bitwarden model
     const masterKeys = await MasterKeyService.deriveMasterKeys(password, config.adminUsername!);
     
     console.log('Decrypting...');

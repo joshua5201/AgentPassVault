@@ -26,7 +26,7 @@ class IdempotencyTest extends BaseIntegrationTest {
   @Test
   void testIdempotency_Success() throws Exception {
     Long tenantId = createTenant();
-    userService.createAdminUser(tenantId, "admin", "password");
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
 
     // Login to get token
     String loginResponse =
@@ -35,7 +35,7 @@ class IdempotencyTest extends BaseIntegrationTest {
                 post("/api/v1/auth/login/user")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
-                        objectMapper.writeValueAsString(new UserLoginRequest("admin", "password"))))
+                        objectMapper.writeValueAsString(new UserLoginRequest("admin@example.com", "password"))))
             .andReturn()
             .getResponse()
             .getContentAsString();

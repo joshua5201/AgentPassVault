@@ -30,7 +30,7 @@ class TwoFactorAuthControllerTest extends BaseIntegrationTest {
   @Test
   void totp_FullFlow_Success() throws Exception {
     Long tenantId = createTenant();
-    userService.createAdminUser(tenantId, "2fa_user", "password");
+    userService.createAdminUser(tenantId, "2fa_user@example.com", "password");
 
     // 1. Login to get token
     String loginResponse =
@@ -40,7 +40,7 @@ class TwoFactorAuthControllerTest extends BaseIntegrationTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         objectMapper.writeValueAsString(
-                            new UserLoginRequest("2fa_user", "password"))))
+                            new UserLoginRequest("2fa_user@example.com", "password"))))
             .andExpect(status().isOk())
             .andReturn()
             .getResponse()
@@ -79,7 +79,7 @@ class TwoFactorAuthControllerTest extends BaseIntegrationTest {
             post("/api/v1/auth/login/user")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
-                    objectMapper.writeValueAsString(new UserLoginRequest("2fa_user", "password"))))
+                    objectMapper.writeValueAsString(new UserLoginRequest("2fa_user@example.com", "password"))))
         .andExpect(status().isUnauthorized())
         .andExpect(jsonPath("$.message").value("TWO_FACTOR_REQUIRED"));
 
@@ -91,7 +91,7 @@ class TwoFactorAuthControllerTest extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     objectMapper.writeValueAsString(
-                        new TwoFactorLoginRequest("2fa_user", "password", code2))))
+                        new TwoFactorLoginRequest("2fa_user@example.com", "password", code2))))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.accessToken").exists());
 
@@ -109,7 +109,7 @@ class TwoFactorAuthControllerTest extends BaseIntegrationTest {
             post("/api/v1/auth/login/user")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
-                    objectMapper.writeValueAsString(new UserLoginRequest("2fa_user", "password"))))
+                    objectMapper.writeValueAsString(new UserLoginRequest("2fa_user@example.com", "password"))))
         .andExpect(status().isOk());
   }
 }

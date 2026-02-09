@@ -32,8 +32,8 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
     Long tenantId = createTenant();
 
     // Setup Admin
-    userService.createAdminUser(tenantId, "admin", "password");
-    String adminToken = getAuthToken("admin", "password");
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
+    String adminToken = getAuthToken("admin@example.com", "password");
 
     // Setup Agent
     AgentTokenResponse agentResp = agentService.createAgent(tenantId, "deploy-agent");
