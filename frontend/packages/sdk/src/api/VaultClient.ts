@@ -5,7 +5,7 @@ import {
   ChangePasswordRequest,
   CreateAgentRequest,
   CreateLeaseRequest,
-  CreateRequestDTO,
+  CreateRequestRequest,
   CreateSecretRequest,
   ForgotPasswordRequest,
   LeaseResponse,
@@ -22,7 +22,7 @@ import {
   TotpSetupResponse,
   TotpVerifyRequest,
   TwoFactorLoginRequest,
-  UpdateRequestDTO,
+  UpdateRequestRequest,
   UpdateSecretRequest,
   UserLoginRequest,
 } from './dtos';
@@ -196,7 +196,7 @@ export class VaultClient {
   }
 
   // Requests
-  async createRequest(request: CreateRequestDTO, idempotencyKey?: string): Promise<RequestResponse> {
+  async createRequest(request: CreateRequestRequest, idempotencyKey?: string): Promise<RequestResponse> {
     return this.request<RequestResponse>('/api/v1/requests', 'POST', request, idempotencyKey);
   }
 
@@ -208,7 +208,11 @@ export class VaultClient {
     await this.request<void>(`/api/v1/requests/${id}`, 'DELETE');
   }
 
-  async updateRequest(id: string, request: UpdateRequestDTO, idempotencyKey?: string): Promise<RequestResponse> {
+  async listRequests(): Promise<RequestResponse[]> {
+    return this.request<RequestResponse[]>('/api/v1/requests');
+  }
+
+  async updateRequest(id: string, request: UpdateRequestRequest, idempotencyKey?: string): Promise<RequestResponse> {
     return this.request<RequestResponse>(`/api/v1/requests/${id}`, 'PATCH', request, idempotencyKey);
   }
 }

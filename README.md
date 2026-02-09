@@ -53,6 +53,35 @@ docker compose up -d
 ```
 The API will be available at `http://localhost:8080`.
 
+## Agent CLI
+
+The Agent CLI allows autonomous agents to manage their identity and retrieve secrets.
+
+### Installation
+```bash
+cd frontend
+pnpm install
+pnpm build
+cd apps/cli
+npm link # Optional: make 'agentpassvault' command available globally
+```
+
+### Usage
+1. **Setup:** `agentpassvault identity setup --api-url <url> --tenant-id <id> --agent-id <id> --app-token <token>`
+2. **Register:** `agentpassvault identity register` (generates keys and registers public key)
+3. **Request Secret:** `agentpassvault request-secret "Service Name"`
+4. **Get Secret:** `agentpassvault get-secret <id>`
+
+## Development
+
+### Synchronizing DTOs
+When you modify Java DTOs in the backend, you can synchronize the frontend TypeScript interfaces by running:
+```bash
+cd frontend
+npm run sync-dtos
+```
+This script will automatically regenerate `docs/openapi.yaml` from the Java code and then update the TypeScript models in the SDK.
+
 ## License & Commercial Usage
 
 ### Backend

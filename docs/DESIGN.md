@@ -94,7 +94,7 @@ To prevent duplicate records and ensure reliable operations over unstable networ
     2.  Encrypt the master key using WebAuthN and store the encrypted MK to the IndexedDB (Version 1.2).
 
 ### Agent Registration
-When the first time (or reset) the Agent want to use the API via the CLI, it has to do the registration.
+When the first time (or reset) the Agent want to use the API via the `agentpassvault` CLI, it has to do the registration.
 
 1.  Create a set of public key and private key. They should be stored in persistent storage (possibly .agentpassvault/) and set the permission to 600.
 2.  Register the public key to the system. The system saves or overwrites the public key to the DB field.
@@ -216,7 +216,7 @@ When the user approves (sometimes upon creation), the system goes through a leas
 *   **Security:** **Spring Security** with **Spring Boot Starter OAuth2 Resource Server** for JWT and Bearer token management.
 *   **Database:** **MySQL 8.0+**.
 *   **Data Access:** **Spring Data JPA** (Repository pattern and object mapping).
-*   **CLI:** Python utility for the agent to use.
+*   **CLI:** Node.js utility for the agent to use.
 *   **Web UI:** JS application utilizing Web Crypto API (PBKDF2-HMAC-SHA256 for KDF by default, Argon2id planned), WebAuthN and Indexed DB.
 
 ## Flexible Metadata Implementation

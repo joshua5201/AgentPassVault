@@ -10,6 +10,7 @@ import com.agentpassvault.dto.*;
 import com.agentpassvault.security.AgentPassVaultAuthentication;
 import com.agentpassvault.service.RequestService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,10 +25,16 @@ public class RequestController {
 
   private final RequestService requestService;
 
+  @GetMapping
+  @PreAuthorize("hasRole('ADMIN')")
+  public List<RequestResponse> listRequests(AgentPassVaultAuthentication authentication) {
+    return requestService.listRequests(authentication.getTenantId());
+  }
+
   @PostMapping
   @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
   public RequestResponse createRequest(
-      AgentPassVaultAuthentication authentication, @Valid @RequestBody CreateRequestDTO dto) {
+      AgentPassVaultAuthentication authentication, @Valid @RequestBody CreateRequestRequest dto) {
     return requestService.createRequest(
         authentication.getTenantId(), (Long) authentication.getPrincipal(), dto);
   }
@@ -53,7 +60,7 @@ public class RequestController {
   public RequestResponse updateRequest(
       AgentPassVaultAuthentication authentication,
       @PathVariable Long id,
-      @Valid @RequestBody UpdateRequestDTO dto) {
+      @Valid @RequestBody UpdateRequestRequest dto) {
     return requestService.updateRequestStatus(authentication.getTenantId(), id, dto);
   }
 }

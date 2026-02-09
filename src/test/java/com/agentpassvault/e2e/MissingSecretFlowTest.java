@@ -78,8 +78,8 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
         .andExpect(jsonPath("$", hasSize(0)));
 
     // 3. Agent Creates Request
-    CreateRequestDTO createReq =
-        new CreateRequestDTO(
+    CreateRequestRequest createReq =
+        new CreateRequestRequest(
             "Prod DB Credentials",
             "Need to run migration",
             Map.of("service", "db", "env", "prod"),
@@ -138,7 +138,7 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
         .andExpect(status().isOk());
 
     // 5c. Update Request Status
-    UpdateRequestDTO fulfillReq = new UpdateRequestDTO(RequestStatus.fulfilled, secretId, null);
+    UpdateRequestRequest fulfillReq = new UpdateRequestRequest(RequestStatus.fulfilled, secretId, null);
 
     mockMvc
         .perform(

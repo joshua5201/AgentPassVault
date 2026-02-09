@@ -9,6 +9,8 @@ package com.agentpassvault.service;
 import com.agentpassvault.dto.*;
 import com.agentpassvault.model.*;
 import com.agentpassvault.repository.*;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,8 +25,14 @@ public class RequestService {
   private final UserRepository userRepository;
   private final FulfillmentUrlService fulfillmentUrlService;
 
+  public List<RequestResponse> listRequests(Long tenantId) {
+    return requestRepository.findAllByTenantId(tenantId).stream()
+        .map(this::mapToResponse)
+        .collect(Collectors.toList());
+  }
+
   @Transactional
-  public RequestResponse createRequest(Long tenantId, Long requesterId, CreateRequestDTO dto) {
+  public RequestResponse createRequest(Long tenantId, Long requesterId, CreateRequestRequest dto) {
     Tenant tenant =
         tenantRepository
             .findById(tenantId)
@@ -59,7 +67,7 @@ public class RequestService {
   }
 
   @Transactional
-  public RequestResponse updateRequestStatus(Long tenantId, Long requestId, UpdateRequestDTO dto) {
+  public RequestResponse updateRequestStatus(Long tenantId, Long requestId, UpdateRequestRequest dto) {
     Request request = findRequest(tenantId, requestId);
     validatePending(request);
 
@@ -120,6 +128,7 @@ public class RequestService {
   private RequestResponse mapToResponse(Request request) {
     return new RequestResponse(
         request.getId().toString(),
+        request.getRequester().getId().toString(),
         request.getStatus(),
         request.getType(),
         request.getName(),

@@ -7,11 +7,19 @@ plugins {
 	id("net.ltgt.errorprone") version "4.0.0"
 	id("com.diffplug.spotless") version "6.25.0"
 	id("com.google.cloud.tools.jib") version "3.4.1"
+	id("org.springdoc.openapi-gradle-plugin") version "1.9.0"
 }
 
 group = "com.agentpassvault"
 version = "0.0.1-SNAPSHOT"
 description = "AgentPassVault - Secure Secret Manager for Agents"
+
+openApi {
+	apiDocsUrl.set("http://localhost:8080/v3/api-docs.yaml")
+	outputDir.set(file("docs"))
+	outputFileName.set("openapi.yaml")
+	waitTimeInSeconds.set(30)
+}
 
 jib {
 	from {

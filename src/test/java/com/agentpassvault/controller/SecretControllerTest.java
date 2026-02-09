@@ -223,8 +223,8 @@ class SecretControllerTest extends BaseIntegrationTest {
         .andExpect(status().isOk());
 
     // 4. Agent creates a LEASE request
-    CreateRequestDTO createReq =
-        new CreateRequestDTO(
+    CreateRequestRequest createReq =
+        new CreateRequestRequest(
             "Request for " + secretId,
             "Need lease access",
             null,
@@ -257,8 +257,8 @@ class SecretControllerTest extends BaseIntegrationTest {
         .andExpect(status().isOk());
 
     // 6. Admin fulfills the request (updates status)
-    UpdateRequestDTO fulfillReq =
-        new UpdateRequestDTO(com.agentpassvault.model.RequestStatus.fulfilled, secretId, null);
+    UpdateRequestRequest fulfillReq =
+        new UpdateRequestRequest(com.agentpassvault.model.RequestStatus.fulfilled, secretId, null);
 
     mockMvc
         .perform(

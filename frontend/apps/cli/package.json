@@ -5,7 +5,7 @@
   "license": "GPL-3.0",
   "type": "module",
   "bin": {
-    "agentpass": "./dist/index.js"
+    "agentpassvault": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc",
