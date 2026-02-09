@@ -41,7 +41,7 @@ public class DataSeeder implements CommandLineRunner {
     log.info("Created Default Tenant: ID={}", tenant.getId());
 
     // Create Admin User
-    String username = "devadmin";
+    String username = "devadmin@example.com";
     String rawPassword = System.getenv("AGENTPASSVAULT_DEV_PASSWORD");
 
     if (rawPassword == null || rawPassword.isBlank()) {

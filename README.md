@@ -53,13 +53,70 @@ docker compose up -d
 ```
 The API will be available at `http://localhost:8080`.
 
+## Frontend Development
+
+The frontend is a TypeScript monorepo managed by **Turborepo** and **pnpm**. It consists of three main parts:
+*   `packages/sdk`: The core cryptographic and API logic.
+*   `apps/cli`: The `agentpassvault` command-line tool.
+*   `apps/web`: The React-based administrator dashboard.
+
+### Prerequisites
+*   **Node.js**: Version 20 or higher.
+*   **pnpm**: The package manager used for this project. Install via `npm install -g pnpm`.
+
+### Core Commands (Run from the `frontend/` directory)
+
+| Command | Description |
+| :--- | :--- |
+| `pnpm install` | Install all dependencies for the entire monorepo. |
+| `pnpm build` | Build all packages (SDK, CLI, Web). Includes linting and type-checking. |
+| `pnpm clean` | Remove all build artifacts (`dist`, `.turbo`, `node_modules`). |
+| `pnpm lint` | Run code quality and formatting checks. |
+| `pnpm typecheck` | Run TypeScript compiler checks across all projects. |
+| `pnpm test` | Run all unit tests. |
+| `pnpm sync-dtos` | Re-generate the API contract from the Java backend. |
+
+### Working with the Agent CLI
+
+#### Local Execution
+After building the project (`pnpm build`), you can run the CLI directly using Node.js without installing it globally:
+```bash
+cd frontend/apps/cli
+node dist/index.js --help
+```
+
+#### Running Tests
+The CLI has two types of tests:
+*   **Unit Tests**: Logic tests that don't require a server.
+    `pnpm test:unit`
+*   **Integration (E2E) Tests**: Full lifecycle tests against the running Docker backend.
+    `pnpm test:integration`
+
+#### Global Link (Optional)
+To make the `agentpassvault` command available everywhere on your system:
+```bash
+cd frontend/apps/cli
+npm link
+```
+
+### Troubleshooting
+If you encounter weird build errors or type mismatches after a git pull:
+1. `pnpm clean`
+2. `pnpm install`
+3. `pnpm build`
+
 ## License & Commercial Usage
 
-This project is licensed under the **GNU Affero General Public License v3.0**. See the `LICENSE` file for details. All source files must contain the standard AGPL v3.0 license header.
+### Backend
+The server side application is licensed under the **GNU Affero General Public License v3.0**. See the `LICENSE` file for details. All source files must contain the standard AGPL v3.0 license header.
 
 For commercial inquiries, custom licensing terms, or enterprise support, please contact: `joshua841025@gmail.com`
 
----
+### Fronted (SDK, CLI, Web UI)
+
+Licensed under the **GNU General Public License v3.0 (GPLv3)**. See the `frontend/LICENSE` file for details.
 
 ## Contributing
 We welcome all contributions! To ensure legal clarity for all users, all contributors must agree to our [Contributor License Agreement (CLA)](CONTRIBUTING.md) when submitting a Pull Request.
+
+All source files must contain the appropriate license header.

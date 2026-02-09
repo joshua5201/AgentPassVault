@@ -14,7 +14,7 @@ import jakarta.validation.constraints.Size;
 import java.util.List;
 import java.util.Map;
 
-public record CreateRequestDTO(
+public record CreateRequestRequest(
     @NotBlank(message = "Request name cannot be blank") String name,
     @Size(max = 2048, message = "Context must not exceed 2 KB") String context,
     Map<String, Object> requiredMetadata,
@@ -23,7 +23,7 @@ public record CreateRequestDTO(
     @Pattern(regexp = "^[0-9]+$", message = "Secret ID must be numeric") String secretId) {
 
   // Constructor for CREATE requests
-  public CreateRequestDTO(
+  public CreateRequestRequest(
       String name,
       String context,
       Map<String, Object> requiredMetadata,

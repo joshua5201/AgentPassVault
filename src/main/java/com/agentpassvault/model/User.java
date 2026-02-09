@@ -59,6 +59,9 @@ public class User extends BaseEntity {
   @Column(name = "public_key", columnDefinition = "TEXT")
   private String publicKey;
 
-  @Column(name = "encrypted_master_key_salt")
-  private String encryptedMasterKeySalt;
+  @Column(name = "totp_enabled", nullable = false)
+  private boolean totpEnabled = false;
+
+  @Column(name = "totp_secret")
+  private String totpSecret;
 }

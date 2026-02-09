@@ -42,8 +42,8 @@ class SecretControllerTest extends BaseIntegrationTest {
   @Test
   void createAndGetSecret_Success() throws Exception {
     Long tenantId = createTenant();
-    userService.createAdminUser(tenantId, "admin", "password");
-    String token = getAuthToken("admin", "password");
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
+    String token = getAuthToken("admin@example.com", "password");
 
     // Create
     CreateSecretRequest createReq =
@@ -78,8 +78,8 @@ class SecretControllerTest extends BaseIntegrationTest {
   @Test
   void deleteSecret_Success() throws Exception {
     Long tenantId = createTenant();
-    userService.createAdminUser(tenantId, "admin", "password");
-    String token = getAuthToken("admin", "password");
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
+    String token = getAuthToken("admin@example.com", "password");
 
     CreateSecretRequest createReq = new CreateSecretRequest("Delete Me", "val", null);
     String createResponse =
@@ -108,8 +108,8 @@ class SecretControllerTest extends BaseIntegrationTest {
   @Test
   void searchSecrets_Success() throws Exception {
     Long tenantId = createTenant();
-    userService.createAdminUser(tenantId, "admin", "password");
-    String token = getAuthToken("admin", "password");
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
+    String token = getAuthToken("admin@example.com", "password");
 
     // Create two secrets
     mockMvc.perform(
@@ -157,13 +157,13 @@ class SecretControllerTest extends BaseIntegrationTest {
   void crossTenantAccess_Denied() throws Exception {
     // Tenant A
     Long tenantA = createTenant();
-    userService.createAdminUser(tenantA, "adminA", "pass");
-    String tokenA = getAuthToken("adminA", "pass");
+    userService.createAdminUser(tenantA, "adminA@example.com", "pass");
+    String tokenA = getAuthToken("adminA@example.com", "pass");
 
     // Tenant B
     Long tenantB = createTenant();
-    userService.createAdminUser(tenantB, "adminB", "pass");
-    String tokenB = getAuthToken("adminB", "pass");
+    userService.createAdminUser(tenantB, "adminB@example.com", "pass");
+    String tokenB = getAuthToken("adminB@example.com", "pass");
 
     // A creates secret
     CreateSecretRequest createReq = new CreateSecretRequest("Secret A", "valA", null);
@@ -188,8 +188,8 @@ class SecretControllerTest extends BaseIntegrationTest {
   @Test
   void testGetSecret_WithLease_Success() throws Exception {
     Long tenantId = createTenant();
-    userService.createAdminUser(tenantId, "admin", "password");
-    String adminToken = getAuthToken("admin", "password");
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
+    String adminToken = getAuthToken("admin@example.com", "password");
 
     // 1. Create a secret
     String secretId = createSecret(adminToken, "Lease Me");
@@ -223,8 +223,8 @@ class SecretControllerTest extends BaseIntegrationTest {
         .andExpect(status().isOk());
 
     // 4. Agent creates a LEASE request
-    CreateRequestDTO createReq =
-        new CreateRequestDTO(
+    CreateRequestRequest createReq =
+        new CreateRequestRequest(
             "Request for " + secretId,
             "Need lease access",
             null,
@@ -257,8 +257,8 @@ class SecretControllerTest extends BaseIntegrationTest {
         .andExpect(status().isOk());
 
     // 6. Admin fulfills the request (updates status)
-    UpdateRequestDTO fulfillReq =
-        new UpdateRequestDTO(com.agentpassvault.model.RequestStatus.fulfilled, secretId, null);
+    UpdateRequestRequest fulfillReq =
+        new UpdateRequestRequest(com.agentpassvault.model.RequestStatus.fulfilled, secretId, null);
 
     mockMvc
         .perform(
@@ -278,8 +278,8 @@ class SecretControllerTest extends BaseIntegrationTest {
   @Test
   void updateSecret_Success() throws Exception {
     Long tenantId = createTenant();
-    userService.createAdminUser(tenantId, "admin", "password");
-    String token = getAuthToken("admin", "password");
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
+    String token = getAuthToken("admin@example.com", "password");
 
     String secretId = createSecret(token, "Original Name");
 
@@ -301,8 +301,8 @@ class SecretControllerTest extends BaseIntegrationTest {
   @Test
   void listAndRevokeLeases_Success() throws Exception {
     Long tenantId = createTenant();
-    userService.createAdminUser(tenantId, "admin", "password");
-    String token = getAuthToken("admin", "password");
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
+    String token = getAuthToken("admin@example.com", "password");
 
     String secretId = createSecret(token, "Secret");
 
@@ -347,8 +347,8 @@ class SecretControllerTest extends BaseIntegrationTest {
   @Test
   void updateSecret_WithEncryptedValue_DeletesLeases() throws Exception {
     Long tenantId = createTenant();
-    userService.createAdminUser(tenantId, "admin", "password");
-    String token = getAuthToken("admin", "password");
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
+    String token = getAuthToken("admin@example.com", "password");
 
     String secretId = createSecret(token, "Secret");
 

@@ -10,6 +10,8 @@ import com.agentpassvault.model.Lease;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -20,4 +22,8 @@ public interface LeaseRepository extends JpaRepository<Lease, Long> {
 
   Optional<Lease> findBySecret_IdAndAgent_IdAndPublicKey(
       Long secretId, Long agentId, String publicKey);
+
+  @Modifying
+  @Query("DELETE FROM Lease l WHERE l.secret.tenant.id = :tenantId")
+  void deleteAllBySecretTenantId(Long tenantId);
 }

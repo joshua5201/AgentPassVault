@@ -25,9 +25,35 @@ public class AuthController {
   private final AuthService authService;
   private final UserService userService;
 
+  @PostMapping("/register")
+  public RegistrationResponse register(@Valid @RequestBody RegistrationRequest request) {
+    return authService.register(request);
+  }
+
   @PostMapping("/login/user")
   public LoginResponse userLogin(@Valid @RequestBody UserLoginRequest request) {
     return authService.userLogin(request);
+  }
+
+  @PostMapping("/login/user/2fa")
+  public LoginResponse userLoginWith2fa(@Valid @RequestBody TwoFactorLoginRequest request) {
+    return authService.userLoginWith2fa(request);
+  }
+
+  @GetMapping("/2fa/totp/setup")
+  public TotpSetupResponse getTotpSetup(AgentPassVaultAuthentication authentication) {
+    return userService.getTotpSetup((Long) authentication.getPrincipal());
+  }
+
+  @PostMapping("/2fa/totp/enable")
+  public void enableTotp(
+      AgentPassVaultAuthentication authentication, @Valid @RequestBody TotpVerifyRequest request) {
+    userService.enableTotp((Long) authentication.getPrincipal(), request.secret(), request.code());
+  }
+
+  @PostMapping("/2fa/totp/disable")
+  public void disableTotp(AgentPassVaultAuthentication authentication) {
+    userService.disableTotp((Long) authentication.getPrincipal());
   }
 
   @PostMapping("/login/agent")

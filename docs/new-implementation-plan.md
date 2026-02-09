@@ -18,7 +18,6 @@ This plan outlines the transition of AgentPassVault from a server-side encryptio
     *   Remove `encryptedTenantKey`.
 *   **User (Agent) Model:**
     *   Add a string field for the user's **Public Key** (`publicKey`), stored as a PEM string. This is used by others to encrypt secrets for this user (agent).
-    *   Add `encryptedMasterKeySalt` (String): Stores the user's master key salt, encrypted using the SYSTEM key.
 *   **Lease Model:**
     *   Create a new entity `Lease` to store the secret data encrypted specifically for an agent.
     *   Fields:
@@ -63,7 +62,7 @@ The project transitioned from MongoDB to MySQL 8 to leverage robust relational i
 *   **User (`users` table):**
     *   `@Entity @Table(name = "users")`.
     *   `@ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "tenant_id") private Tenant tenant;`
-    *   Fields: `username`, `passwordHash`, `role` (EnumString), `publicKey` (TEXT/CLOB), `encryptedMasterKeySalt`.
+    *   Fields: `username`, `passwordHash`, `role` (EnumString), `publicKey` (TEXT/CLOB).
 *   **Secret (`secrets` table):**
     *   `@Entity @Table(name = "secrets")`.
     *   `@ManyToOne(fetch = FetchType.LAZY) private Tenant tenant;`

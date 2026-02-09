@@ -14,6 +14,7 @@ import java.util.Map;
 
 public record RequestResponse(
     String requestId,
+    String agentId,
     RequestStatus status,
     RequestType type,
     String name,

@@ -29,7 +29,7 @@ class AuthControllerTest extends BaseIntegrationTest {
     Long tenantId = createTenant();
 
     // Create user with known password
-    userService.createAdminUser(tenantId, "change_pass_user", "oldPass123");
+    userService.createAdminUser(tenantId, "change_pass_user@example.com", "oldPass123");
 
     // Login to get token
     String loginResponse =
@@ -39,7 +39,7 @@ class AuthControllerTest extends BaseIntegrationTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         objectMapper.writeValueAsString(
-                            new UserLoginRequest("change_pass_user", "oldPass123"))))
+                            new UserLoginRequest("change_pass_user@example.com", "oldPass123"))))
             .andExpect(status().isOk())
             .andReturn()
             .getResponse()
@@ -65,17 +65,17 @@ class AuthControllerTest extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     objectMapper.writeValueAsString(
-                        new UserLoginRequest("change_pass_user", "newPass456"))))
+                        new UserLoginRequest("change_pass_user@example.com", "newPass456"))))
         .andExpect(status().isOk());
   }
 
   @Test
   void forgotAndResetPassword_Flow_Success() throws Exception {
     Long tenantId = createTenant();
-    userService.createAdminUser(tenantId, "reset_user", "oldPass");
+    userService.createAdminUser(tenantId, "reset_user@example.com", "oldPass");
 
     // 1. Forgot Password
-    ForgotPasswordRequest forgotReq = new ForgotPasswordRequest("reset_user");
+    ForgotPasswordRequest forgotReq = new ForgotPasswordRequest("reset_user@example.com");
 
     String response =
         mockMvc
@@ -108,14 +108,14 @@ class AuthControllerTest extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     objectMapper.writeValueAsString(
-                        new UserLoginRequest("reset_user", "newPass789"))))
+                        new UserLoginRequest("reset_user@example.com", "newPass789"))))
         .andExpect(status().isOk());
   }
 
   @Test
   void resetPassword_TokenIssuedBeforeLastUpdate_ReturnsError() throws Exception {
     Long tenantId = createTenant();
-    userService.createAdminUser(tenantId, "security_user", "pass");
+    userService.createAdminUser(tenantId, "security_user@example.com", "pass");
 
     // 1. Forgot Password -> get token
     String token =
@@ -127,7 +127,7 @@ class AuthControllerTest extends BaseIntegrationTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(
                                 objectMapper.writeValueAsString(
-                                    new ForgotPasswordRequest("security_user"))))
+                                    new ForgotPasswordRequest("security_user@example.com"))))
                     .andExpect(status().isOk())
                     .andReturn()
                     .getResponse()
@@ -136,7 +136,7 @@ class AuthControllerTest extends BaseIntegrationTest {
             .asText();
 
     // 2. Manually simulate password update AFTER token was issued
-    com.agentpassvault.model.User user = userRepository.findByUsername("security_user").get();
+    com.agentpassvault.model.User user = userRepository.findByUsername("security_user@example.com").get();
     user.setPasswordLastUpdatedAt(java.time.Instant.now().plusSeconds(1));
     userRepository.save(user);
 
@@ -160,7 +160,7 @@ class AuthControllerTest extends BaseIntegrationTest {
   void ping_WithValidToken_ReturnsPong() throws Exception {
     Long tenantId = createTenant();
 
-    userService.createAdminUser(tenantId, "testuser", "password");
+    userService.createAdminUser(tenantId, "testuser@example.com", "password");
 
     // Login to get token
     String loginResponse =
@@ -170,7 +170,7 @@ class AuthControllerTest extends BaseIntegrationTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         objectMapper.writeValueAsString(
-                            new UserLoginRequest("testuser", "password"))))
+                            new UserLoginRequest("testuser@example.com", "password"))))
             .andReturn()
             .getResponse()
             .getContentAsString();
@@ -190,9 +190,9 @@ class AuthControllerTest extends BaseIntegrationTest {
   void login_WithValidAdminCredentials_ReturnsToken() throws Exception {
     Long tenantId = createTenant();
 
-    userService.createAdminUser(tenantId, "admin", "password");
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
 
-    UserLoginRequest request = new UserLoginRequest("admin", "password");
+    UserLoginRequest request = new UserLoginRequest("admin@example.com", "password");
 
     mockMvc
         .perform(
@@ -231,7 +231,7 @@ class AuthControllerTest extends BaseIntegrationTest {
 
   @Test
   void login_WithInvalidCredentials_Returns401() throws Exception {
-    UserLoginRequest request = new UserLoginRequest("wrong", "wrong");
+    UserLoginRequest request = new UserLoginRequest("wrong@example.com", "wrong@example.com");
 
     mockMvc
         .perform(
@@ -244,7 +244,7 @@ class AuthControllerTest extends BaseIntegrationTest {
   @Test
   void refreshToken_WithValidToken_Success() throws Exception {
     Long tenantId = createTenant();
-    userService.createAdminUser(tenantId, "refresh_user", "password");
+    userService.createAdminUser(tenantId, "refresh_user@example.com", "password");
 
     // 1. Login to get refresh token
     String loginResponse =
@@ -254,7 +254,7 @@ class AuthControllerTest extends BaseIntegrationTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         objectMapper.writeValueAsString(
-                            new UserLoginRequest("refresh_user", "password"))))
+                            new UserLoginRequest("refresh_user@example.com", "password"))))
             .andExpect(status().isOk())
             .andReturn()
             .getResponse()

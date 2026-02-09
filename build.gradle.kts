@@ -6,11 +6,38 @@ plugins {
 	id("io.spring.dependency-management") version "1.1.7"
 	id("net.ltgt.errorprone") version "4.0.0"
 	id("com.diffplug.spotless") version "6.25.0"
+	id("com.google.cloud.tools.jib") version "3.4.1"
+	id("org.springdoc.openapi-gradle-plugin") version "1.9.0"
 }
 
 group = "com.agentpassvault"
 version = "0.0.1-SNAPSHOT"
 description = "AgentPassVault - Secure Secret Manager for Agents"
+
+openApi {
+	apiDocsUrl.set("http://localhost:8080/v3/api-docs.yaml")
+	outputDir.set(file("docs"))
+	outputFileName.set("openapi.yaml")
+	waitTimeInSeconds.set(30)
+}
+
+jib {
+	from {
+		image = "amazoncorretto:21-alpine"
+	}
+	to {
+		image = "agentpassvault-backend"
+		tags = setOf("latest", version.toString())
+	}
+	container {
+		mainClass = "com.agentpassvault.AgentPassVaultApplication"
+		ports = listOf("8080")
+		environment = mapOf(
+			"SPRING_PROFILES_ACTIVE" to "prod",
+			"SPRING_FLYWAY_ENABLED" to "false"
+		)
+	}
+}
 
 java {
 	toolchain {
@@ -52,6 +79,9 @@ dependencies {
  	implementation("io.jsonwebtoken:jjwt-api:0.12.3")
  	runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.3")
  	runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.3")
+
+    // TOTP for 2FA
+    implementation("dev.samstevens.totp:totp:1.7.1")
 }
 
 spotless {
@@ -67,7 +97,4 @@ spotless {
 	tasks.withType<Test> {
 	useJUnitPlatform()
 	systemProperty("spring.profiles.active", "test")
-}
-tasks.getByName<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
-	systemProperty("spring.profiles.active", "dev")
 }

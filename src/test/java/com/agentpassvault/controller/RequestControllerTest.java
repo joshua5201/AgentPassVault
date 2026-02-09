@@ -66,12 +66,12 @@ class RequestControllerTest extends BaseIntegrationTest {
   @Test
   void createAndFulfillRequest_Success() throws Exception {
     Long tenantId = createTenant();
-    userService.createAdminUser(tenantId, "admin", "password");
-    String token = getAuthToken("admin", "password");
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
+    String token = getAuthToken("admin@example.com", "password");
 
     // 1. Create Request
-    CreateRequestDTO createReq =
-        new CreateRequestDTO(
+    CreateRequestRequest createReq =
+        new CreateRequestRequest(
             "AWS Creds", "Need for deploy", Map.of("service", "aws"), List.of("key", "secret"));
 
     String reqResponse =
@@ -106,7 +106,7 @@ class RequestControllerTest extends BaseIntegrationTest {
     String secretId = objectMapper.readTree(secretResp).get("secretId").asText();
 
     // 3. Fulfill Request (Update status and link secret)
-    UpdateRequestDTO fulfillReq = new UpdateRequestDTO(RequestStatus.fulfilled, secretId, null);
+    UpdateRequestRequest fulfillReq = new UpdateRequestRequest(RequestStatus.fulfilled, secretId, null);
 
     mockMvc
         .perform(
@@ -122,10 +122,10 @@ class RequestControllerTest extends BaseIntegrationTest {
   @Test
   void rejectRequest_Success() throws Exception {
     Long tenantId = createTenant();
-    userService.createAdminUser(tenantId, "admin", "password");
-    String token = getAuthToken("admin", "password");
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
+    String token = getAuthToken("admin@example.com", "password");
 
-    CreateRequestDTO createReq = new CreateRequestDTO("Bad Req", "Context", null, null);
+    CreateRequestRequest createReq = new CreateRequestRequest("Bad Req", "Context", null, null);
     String reqResponse =
         mockMvc
             .perform(
@@ -138,7 +138,7 @@ class RequestControllerTest extends BaseIntegrationTest {
             .getContentAsString();
     String requestId = objectMapper.readTree(reqResponse).get("requestId").asText();
 
-    UpdateRequestDTO rejectReq = new UpdateRequestDTO(RequestStatus.rejected, null, "Denied");
+    UpdateRequestRequest rejectReq = new UpdateRequestRequest(RequestStatus.rejected, null, "Denied");
 
     mockMvc
         .perform(
@@ -158,7 +158,7 @@ class RequestControllerTest extends BaseIntegrationTest {
     String agentJwt = getAgentJwt(tenantId, agentTokenResp.appToken());
 
     // 1. Create Request as Agent
-    CreateRequestDTO createReq = new CreateRequestDTO("Agent Req", "Context", null, null);
+    CreateRequestRequest createReq = new CreateRequestRequest("Agent Req", "Context", null, null);
     String reqResponse =
         mockMvc
             .perform(
@@ -179,8 +179,8 @@ class RequestControllerTest extends BaseIntegrationTest {
         .andExpect(status().isNoContent());
 
     // 3. Verify status is abandoned
-    userService.createAdminUser(tenantId, "admin", "password");
-    String adminToken = getAuthToken("admin", "password");
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
+    String adminToken = getAuthToken("admin@example.com", "password");
     mockMvc
         .perform(
             get("/api/v1/requests/" + requestId).header("Authorization", "Bearer " + adminToken))
@@ -191,8 +191,8 @@ class RequestControllerTest extends BaseIntegrationTest {
   @Test
   void mapRequest_Success() throws Exception {
     Long tenantId = createTenant();
-    userService.createAdminUser(tenantId, "admin", "password");
-    String adminToken = getAuthToken("admin", "password");
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
+    String adminToken = getAuthToken("admin@example.com", "password");
 
     // 1. Create a secret
     CreateSecretRequest createSecretReq = new CreateSecretRequest("Test Secret", "val", null);
@@ -209,7 +209,7 @@ class RequestControllerTest extends BaseIntegrationTest {
     String secretId = objectMapper.readTree(secretResp).get("secretId").asText();
 
     // 2. Create Request for it
-    CreateRequestDTO createReq = new CreateRequestDTO("Reveal Secret", "Context", null, null);
+    CreateRequestRequest createReq = new CreateRequestRequest("Reveal Secret", "Context", null, null);
     String reqResponse =
         mockMvc
             .perform(
@@ -223,7 +223,7 @@ class RequestControllerTest extends BaseIntegrationTest {
     String requestId = objectMapper.readTree(reqResponse).get("requestId").asText();
 
     // 3. Map Request (Same as Fulfill in new API, just linking existing secret)
-    UpdateRequestDTO mapReq = new UpdateRequestDTO(RequestStatus.fulfilled, secretId, null);
+    UpdateRequestRequest mapReq = new UpdateRequestRequest(RequestStatus.fulfilled, secretId, null);
 
     mockMvc
         .perform(

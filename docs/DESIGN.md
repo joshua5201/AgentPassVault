@@ -20,7 +20,7 @@ AgentPassVault is a lightweight, standalone password and secret manager designed
 *   **Agent CLI tool:** A CLI tool for the agent to decrypt secrets and interact with the server.
 
 ### Roles
-*   **System Operator:** Manages the deployment and the System Key to encrypt the user master salt.
+*   **System Operator:** Manages the deployment.
 *   **Tenant Admin (Secret Owner, the Human):**
     *   Managed within a specific "Tenant".
     *   Full CRUD access to their tenant's secrets.
@@ -42,7 +42,8 @@ To prevent duplicate records and ensure reliable operations over unstable networ
 
 ## Roadmap
 ### MVP 0.1
-All features except the features listed in other sections.
+*   All features except the features listed in other sections.
+*   **Two-Factor Authentication (2FA):** Support for Authenticator apps (TOTP) for Human admins. Highly recommended but optional.
 
 ### Version 1.0 (Free SaaS ready)
 *   Registration.
@@ -67,7 +68,12 @@ All features except the features listed in other sections.
 ### Authentication
 
 #### The Human
-*   The admin user uses username (basically email) and password to obtain a JWT bearer token.
+*   **Single Password Approach:** The admin user uses a single "Master Password" for both authentication and encryption.
+*   **Login Flow:**
+    1.  The client derives the **Master Key** (512 bits) from the Master Password and Email (salt) using PBKDF2-HMAC-SHA256 (600,000 iterations).
+    2.  The client derives the **Login Hash** by performing one additional iteration of PBKDF2-HMAC-SHA256 using the Master Key's encryption part as the password and the original Master Password as the salt.
+    3.  The client sends the **Login Hash** to the server as the authentication credential.
+    4.  **2FA Check:** If 2FA is enabled, the server returns a `2FA-Required` challenge. The client then prompts for the TOTP code and sends it to `/api/v1/auth/login/user/2fa`.
 *   The admin user uses Google to login or create the user (Version 1.1).
 
 #### The Agent
@@ -78,18 +84,17 @@ All features except the features listed in other sections.
 (version 1.0)
 *   A tenant and the user is created during the registration flow.
 *   The username is unique across the whole system.
-*   A salt for master key generation is encrypted by the system key and saved to the DB.
 
 ### Secret Creation and Encryption
-*   The Human needs to set up a "Master Password".
-*   Use the standard ways (follow BitWarden's approach) to generate a "Master Key (MK)" using the master password and the master salt.
-*   The MK is never stored to the DB.
+*   The Human sets up a "Master Password".
+*   The client generates a 512-bit **Master Key (MK)** using the Master Password and the user's email as salt (Bitwarden-compatible PBKDF2 + HKDF-Expand/Stretching).
+*   The MK is never stored on the server.
 *   In the Web Client, the user can:
     1.  Use the master password every time when accessing the secrets.
     2.  Encrypt the master key using WebAuthN and store the encrypted MK to the IndexedDB (Version 1.2).
 
 ### Agent Registration
-When the first time (or reset) the Agent want to use the API via the CLI, it has to do the registration.
+When the first time (or reset) the Agent want to use the API via the `agentpassvault` CLI, it has to do the registration.
 
 1.  Create a set of public key and private key. They should be stored in persistent storage (possibly .agentpassvault/) and set the permission to 600.
 2.  Register the public key to the system. The system saves or overwrites the public key to the DB field.
@@ -157,11 +162,17 @@ When the user approves (sometimes upon creation), the system goes through a leas
 `POST /api/v1/register` - Create a new tenant and the admin user.
 
 ### Authentication
-*   `POST /api/v1/auth/login/user` - User's login endpoint to obtain JWT key.
+*   `POST /api/v1/auth/login/user` - User's login endpoint to obtain JWT key. Returns token or a 2FA challenge.
+*   `POST /api/v1/auth/login/user/2fa` - Verify 2FA TOTP code and obtain JWT key.
 *   `POST /api/v1/auth/login/agent` - Agent's login endpoint to obtain JWT key.
 *   `POST /api/v1/auth/change-password` - Change password.
 *   `POST /api/v1/auth/forgot-password` - Initiate password reset flow.
 *   `POST /api/v1/auth/reset-password` - Complete password reset.
+
+### Two-Factor Authentication (Admin Only)
+*   `GET /api/v1/auth/2fa/totp/setup` - Generate a new TOTP secret and QR code URL for setup.
+*   `POST /api/v1/auth/2fa/totp/enable` - Verify code and enable TOTP 2FA.
+*   `POST /api/v1/auth/2fa/totp/disable` - Disable TOTP 2FA.
 
 ### Secrets
 *   `POST /api/v1/secrets/search` - Search secrets by arbitrary metadata.
@@ -205,8 +216,8 @@ When the user approves (sometimes upon creation), the system goes through a leas
 *   **Security:** **Spring Security** with **Spring Boot Starter OAuth2 Resource Server** for JWT and Bearer token management.
 *   **Database:** **MySQL 8.0+**.
 *   **Data Access:** **Spring Data JPA** (Repository pattern and object mapping).
-*   **CLI:** Python utility for the agent to use.
-*   **Web UI:** JS application utilizing Web Crypto API, WebAuthN and Indexed DB.
+*   **CLI:** Node.js utility for the agent to use.
+*   **Web UI:** JS application utilizing Web Crypto API (PBKDF2-HMAC-SHA256 for KDF by default, Argon2id planned), WebAuthN and Indexed DB.
 
 ## Flexible Metadata Implementation
 To support agent-provided metadata while maintaining performance and control, the system uses:

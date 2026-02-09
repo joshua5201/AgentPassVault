@@ -40,8 +40,8 @@ class AgentControllerTest extends BaseIntegrationTest {
   @Test
   void createAndListAgent_Success() throws Exception {
     Long tenantId = createTenant();
-    userService.createAdminUser(tenantId, "admin", "password");
-    String token = getAuthToken("admin", "password");
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
+    String token = getAuthToken("admin@example.com", "password");
 
     // Create Agent
     CreateAgentRequest createReq = new CreateAgentRequest("CI Runner");
@@ -66,8 +66,8 @@ class AgentControllerTest extends BaseIntegrationTest {
   @Test
   void rotateToken_Success() throws Exception {
     Long tenantId = createTenant();
-    userService.createAdminUser(tenantId, "admin", "password");
-    String token = getAuthToken("admin", "password");
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
+    String token = getAuthToken("admin@example.com", "password");
 
     // Create Agent
     CreateAgentRequest createReq = new CreateAgentRequest("Agent 1");
@@ -96,8 +96,8 @@ class AgentControllerTest extends BaseIntegrationTest {
   @Test
   void deleteAgent_Success() throws Exception {
     Long tenantId = createTenant();
-    userService.createAdminUser(tenantId, "admin", "password");
-    String token = getAuthToken("admin", "password");
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
+    String token = getAuthToken("admin@example.com", "password");
 
     // Create Agent
     CreateAgentRequest createReq = new CreateAgentRequest("Agent 1");

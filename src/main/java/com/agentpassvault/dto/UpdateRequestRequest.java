@@ -10,7 +10,7 @@ import com.agentpassvault.model.RequestStatus;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
-public record UpdateRequestDTO(
+public record UpdateRequestRequest(
     @NotNull(message = "Status is required") RequestStatus status,
     // For FULFILL (Existing Secret)
     @Pattern(regexp = "^[0-9]+$", message = "Secret ID must be numeric") String secretId,
