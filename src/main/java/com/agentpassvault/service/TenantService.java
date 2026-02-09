@@ -38,10 +38,10 @@ public class TenantService {
     requestRepository.deleteAllByTenantId(tenantId);
     secretRepository.deleteAllByTenantId(tenantId);
     userRepository.deleteAllByTenantId(tenantId);
-    
+
     // Delete idempotency records (id starts with tenantId + ":")
     idempotencyRecordRepository.deleteByIdStartingWith(tenantId + ":");
-    
+
     tenantRepository.deleteById(tenantId);
   }
 }

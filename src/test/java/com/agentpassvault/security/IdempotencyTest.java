@@ -35,7 +35,8 @@ class IdempotencyTest extends BaseIntegrationTest {
                 post("/api/v1/auth/login/user")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
-                        objectMapper.writeValueAsString(new UserLoginRequest("admin@example.com", "password"))))
+                        objectMapper.writeValueAsString(
+                            new UserLoginRequest("admin@example.com", "password"))))
             .andReturn()
             .getResponse()
             .getContentAsString();

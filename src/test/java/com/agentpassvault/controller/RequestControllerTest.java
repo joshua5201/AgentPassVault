@@ -106,7 +106,8 @@ class RequestControllerTest extends BaseIntegrationTest {
     String secretId = objectMapper.readTree(secretResp).get("secretId").asText();
 
     // 3. Fulfill Request (Update status and link secret)
-    UpdateRequestRequest fulfillReq = new UpdateRequestRequest(RequestStatus.fulfilled, secretId, null);
+    UpdateRequestRequest fulfillReq =
+        new UpdateRequestRequest(RequestStatus.fulfilled, secretId, null);
 
     mockMvc
         .perform(
@@ -138,7 +139,8 @@ class RequestControllerTest extends BaseIntegrationTest {
             .getContentAsString();
     String requestId = objectMapper.readTree(reqResponse).get("requestId").asText();
 
-    UpdateRequestRequest rejectReq = new UpdateRequestRequest(RequestStatus.rejected, null, "Denied");
+    UpdateRequestRequest rejectReq =
+        new UpdateRequestRequest(RequestStatus.rejected, null, "Denied");
 
     mockMvc
         .perform(
@@ -209,7 +211,8 @@ class RequestControllerTest extends BaseIntegrationTest {
     String secretId = objectMapper.readTree(secretResp).get("secretId").asText();
 
     // 2. Create Request for it
-    CreateRequestRequest createReq = new CreateRequestRequest("Reveal Secret", "Context", null, null);
+    CreateRequestRequest createReq =
+        new CreateRequestRequest("Reveal Secret", "Context", null, null);
     String reqResponse =
         mockMvc
             .perform(

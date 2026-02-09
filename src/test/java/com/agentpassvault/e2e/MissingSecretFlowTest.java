@@ -138,7 +138,8 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
         .andExpect(status().isOk());
 
     // 5c. Update Request Status
-    UpdateRequestRequest fulfillReq = new UpdateRequestRequest(RequestStatus.fulfilled, secretId, null);
+    UpdateRequestRequest fulfillReq =
+        new UpdateRequestRequest(RequestStatus.fulfilled, secretId, null);
 
     mockMvc
         .perform(

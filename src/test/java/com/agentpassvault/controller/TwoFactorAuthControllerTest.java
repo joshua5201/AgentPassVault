@@ -79,7 +79,8 @@ class TwoFactorAuthControllerTest extends BaseIntegrationTest {
             post("/api/v1/auth/login/user")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
-                    objectMapper.writeValueAsString(new UserLoginRequest("2fa_user@example.com", "password"))))
+                    objectMapper.writeValueAsString(
+                        new UserLoginRequest("2fa_user@example.com", "password"))))
         .andExpect(status().isUnauthorized())
         .andExpect(jsonPath("$.message").value("TWO_FACTOR_REQUIRED"));
 
@@ -109,7 +110,8 @@ class TwoFactorAuthControllerTest extends BaseIntegrationTest {
             post("/api/v1/auth/login/user")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
-                    objectMapper.writeValueAsString(new UserLoginRequest("2fa_user@example.com", "password"))))
+                    objectMapper.writeValueAsString(
+                        new UserLoginRequest("2fa_user@example.com", "password"))))
         .andExpect(status().isOk());
   }
 }

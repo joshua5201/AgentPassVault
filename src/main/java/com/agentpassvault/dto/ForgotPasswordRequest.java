@@ -10,4 +10,5 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 public record ForgotPasswordRequest(
-    @NotBlank(message = "Username cannot be blank") @Email(message = "Invalid email format") String username) {}
+    @NotBlank(message = "Username cannot be blank") @Email(message = "Invalid email format")
+        String username) {}

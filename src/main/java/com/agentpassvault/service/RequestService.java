@@ -67,7 +67,8 @@ public class RequestService {
   }
 
   @Transactional
-  public RequestResponse updateRequestStatus(Long tenantId, Long requestId, UpdateRequestRequest dto) {
+  public RequestResponse updateRequestStatus(
+      Long tenantId, Long requestId, UpdateRequestRequest dto) {
     Request request = findRequest(tenantId, requestId);
     validatePending(request);
 

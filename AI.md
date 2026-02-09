@@ -22,7 +22,6 @@ Agents working on this project must adhere to the specifications and workflows d
 
 ## Frontend Implementation Context
 - **Directory:** `frontend/`
-- **Primary Branch:** `feat/frontend`. Use this as the base for all frontend work.
 - **Git Restriction:** **NEVER push to origin.** All changes must remain local.
 - **License:** **GPLv3**. We may refer to Bitwarden's GPL-licensed logic for encryption/decryption and formats.
 - **Bitwarden Restriction:** **NEVER** refer to or use code from `bitwarden_license/` (Commercial Modules). This is enforced via `.geminiignore`.
@@ -36,7 +35,7 @@ Agents working on this project must adhere to the specifications and workflows d
     - [x] **SDK - Services:** `SecretService` (Local secret management) - Finished.
     - [x] **SDK - Services:** `LeaseService` (Agent re-encryption logic) - Finished.
     - [x] **SDK - API:** Client-side API definitions and request handling - Finished.
-    - [ ] **CLI:** Agent CLI implementation - Pending.
+    - [x] **CLI:** Agent CLI implementation - Finished.
     - [ ] **Web:** Admin/Fulfillment UI - Pending.
 
 ## License Header

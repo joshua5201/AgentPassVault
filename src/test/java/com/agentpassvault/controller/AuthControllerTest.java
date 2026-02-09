@@ -136,7 +136,8 @@ class AuthControllerTest extends BaseIntegrationTest {
             .asText();
 
     // 2. Manually simulate password update AFTER token was issued
-    com.agentpassvault.model.User user = userRepository.findByUsername("security_user@example.com").get();
+    com.agentpassvault.model.User user =
+        userRepository.findByUsername("security_user@example.com").get();
     user.setPasswordLastUpdatedAt(java.time.Instant.now().plusSeconds(1));
     userRepository.save(user);
 
