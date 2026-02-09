@@ -110,7 +110,7 @@ If you encounter weird build errors or type mismatches after a git pull:
 ### Backend
 The server side application is licensed under the **GNU Affero General Public License v3.0**. See the `LICENSE` file for details. All source files must contain the standard AGPL v3.0 license header.
 
-For commercial inquiries, custom licensing terms, or enterprise support, please contact: `joshua841025@gmail.com`
+For commercial inquiries, custom licensing terms, or enterprise support, please contact: `joshua841025 at gmail.com`
 
 ### Fronted (SDK, CLI, Web UI)
 
