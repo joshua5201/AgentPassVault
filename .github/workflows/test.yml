@@ -22,6 +22,21 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Setup Docker
+      uses: docker/setup-docker-action@v4.7.0
+    
+    - name: Set up docker compose
+      uses: docker/setup-compose-action@v1.2.0
+      with:
+        version: v5.0.2
+        
+    - name: Start mysql & flyway  
+      run: docker compose up mysql flyway -d
+
+    - name: Run flyway migration
+      run: ./scripts/database/flyway.sh migrate
+
     - name: Set up JDK 21
       uses: actions/setup-java@v4
       with:
@@ -30,23 +45,6 @@ jobs:
 
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
-
-    - name: Docker Setup Docker
-      uses: docker/setup-docker-action@v4.7.0
-
-    - name: Build and publish the docker image locally with Gradle Wrapper
-      run: ./gradlew jibDockerBuild
-    
-    - name: Set up docker compose
-      uses: docker/setup-compose-action@v1.2.0
-      with:
-        version: v5.0.2
-        
-    - name: Start services needed for test  
-      run: docker compose up -d
-
-    - name: Run flyway migration
-      run: ./scripts/database/flyway.sh migrate
       
     - name: Build and test with Gradle Wrapper
       run: ./gradlew build
@@ -57,15 +55,21 @@ jobs:
         version: 8.15.1
         package_json_file: ./frontend/package.json
 
-    - name: build frontend
+    - name: Build frontend
       working-directory: ./frontend
       run: pnpm build
 
-    - name: run frontend unit tests
+    - name: Run frontend unit tests
       working-directory: ./frontend
       run: pnpm test:unit
 
-    - name: run E2E test
+    - name: Build and publish the docker image locally with Gradle Wrapper
+      run: ./gradlew jibDockerBuild
+      
+    - name: Start integration test container 
+      run: docker compose up integration_test -d
+      
+    - name: Run E2E test
       working-directory: ./frontend
       run: pnpm test:integration
           
