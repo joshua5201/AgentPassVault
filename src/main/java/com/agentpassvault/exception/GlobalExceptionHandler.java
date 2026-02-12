@@ -15,11 +15,24 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
   public record ErrorResponse(int status, String message, String path, LocalDateTime timestamp) {}
+
+  @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+  public ResponseEntity<ErrorResponse> handleTypeMismatchException(
+      MethodArgumentTypeMismatchException ex, WebRequest request) {
+    ErrorResponse error =
+        new ErrorResponse(
+            HttpStatus.BAD_REQUEST.value(),
+            "Invalid parameter format",
+            request.getDescription(false).replace("uri=", ""),
+            LocalDateTime.now(ZoneId.of("UTC")));
+    return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+  }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<ErrorResponse> handleValidationExceptions(
@@ -43,7 +56,7 @@ public class GlobalExceptionHandler {
     ErrorResponse error =
         new ErrorResponse(
             HttpStatus.UNAUTHORIZED.value(),
-            ex.getMessage(),
+            "Invalid credentials",
             request.getDescription(false).replace("uri=", ""),
             LocalDateTime.now(ZoneId.of("UTC")));
     return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
@@ -61,12 +74,25 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
   }
 
+  @ExceptionHandler(IllegalArgumentException.class)
+  public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
+      IllegalArgumentException ex, WebRequest request) {
+    ErrorResponse error =
+        new ErrorResponse(
+            HttpStatus.BAD_REQUEST.value(),
+            ex.getMessage(),
+            request.getDescription(false).replace("uri=", ""),
+            LocalDateTime.now(ZoneId.of("UTC")));
+    return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+  }
+
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
+    // Log the actual exception here if we had a logger
     ErrorResponse error =
         new ErrorResponse(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
-            ex.getMessage(),
+            "An unexpected error occurred",
             request.getDescription(false).replace("uri=", ""),
             LocalDateTime.now(ZoneId.of("UTC")));
     return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);

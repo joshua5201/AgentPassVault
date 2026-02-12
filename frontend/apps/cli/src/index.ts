@@ -128,10 +128,8 @@ adminSecret.command('view <id>')
   .option('--password <pass>', 'Master Password')
   .action(adminViewSecret);
 
-adminSecret.command('create <name>')
-  .description('Create a new secret')
-  .option('--value <plain>', 'Secret value (plaintext)')
-  .option('--metadata <json>', 'Metadata as JSON')
+adminSecret.command('create')
+  .description('Create a new secret (Interactive)')
   .option('--password <pass>', 'Master Password')
   .action(adminCreateSecret);
 

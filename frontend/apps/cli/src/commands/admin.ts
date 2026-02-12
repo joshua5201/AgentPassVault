@@ -8,13 +8,24 @@ import {
 } from '@agentpassvault/sdk';
 import { loadConfig, saveConfig, Config, ensureConfigDir } from '../config.js';
 
+import { Writable } from 'node:stream';
+
 async function prompt(question: string, silent: boolean = false): Promise<string> {
+  const mutableStdout = new Writable({
+    write: (chunk, encoding, callback) => {
+      if (!silent) {
+        process.stdout.write(chunk, encoding);
+      }
+      callback();
+    }
+  });
+
   const rl = readline.createInterface({
     input: process.stdin,
-    output: silent ? undefined : process.stdout,
+    output: mutableStdout,
+    terminal: true
   });
   
-  // If silent, we need to handle the output manually to not show password
   if (silent) {
     process.stdout.write(question);
   }
@@ -115,7 +126,21 @@ export async function adminRegister(options: { apiUrl?: string, username?: strin
     console.log('Registration successful.');
     console.log(`Tenant ID: ${resp.tenantId}`);
     console.log(`User ID: ${resp.userId}`);
-    console.log('\nPlease login using "admin login"');
+
+    console.log('\nLogging in automatically...');
+    const loginResp = await client.userLogin({
+      username,
+      password: loginHash,
+    });
+
+    const newConfig: Config = {
+      apiUrl,
+      adminUsername: username,
+      adminToken: loginResp.accessToken,
+    };
+
+    await saveConfig(newConfig);
+    console.log('Login successful and configuration updated.');
   } catch (error: any) {
     console.error('Registration failed:', error.message);
     process.exit(1);
@@ -182,13 +207,22 @@ export async function adminViewSecret(id: string, options: { password?: string }
   }
 }
 
-export async function adminCreateSecret(name: string, options: { value?: string, metadata?: string, password?: string }) {
+export async function adminCreateSecret(options: { password?: string }) {
   try {
     const { client, config } = await getAdminClient();
     
-    const value = options.value || await prompt('Secret Value: ', true);
+    const name = await prompt('Secret Name (e.g. AWS Prod): ');
+    const username = await prompt('Username/Email: ');
+    const valuePassword = await prompt('Password: ', true);
+    
     const password = options.password || await prompt('Confirm Master Password: ', true);
-    const metadata = options.metadata ? JSON.parse(options.metadata) : {};
+    
+    const secretValueObj = {
+      username,
+      password: valuePassword
+    };
+    const value = JSON.stringify(secretValueObj);
+    const metadata = { name };
 
     console.log('Deriving Master Key...');
     const masterKeys = await MasterKeyService.deriveMasterKeys(password, config.adminUsername!);
