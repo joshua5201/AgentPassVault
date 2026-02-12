@@ -129,7 +129,10 @@ adminSecret.command('view <id>')
   .action(adminViewSecret);
 
 adminSecret.command('create')
-  .description('Create a new secret (Interactive)')
+  .description('Create a new secret')
+  .option('--name <name>', 'Secret Name')
+  .option('--username <username>', 'Username/Email for the secret')
+  .option('--secret-password <password>', 'Password for the secret')
   .option('--password <pass>', 'Master Password')
   .action(adminCreateSecret);
 

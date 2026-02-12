@@ -16,15 +16,8 @@ build/
 *.class
 *.jar
 
-# Node.js / Frontend
-node_modules/
-**/node_modules/
-dist/
-**/dist/
-.turbo/
-.npm
-.pnpm-debug.log
-**/out/
+# Frontend
+frontend/
 
 # Secrets and Environment
 .env

@@ -25,7 +25,7 @@ import {
   UpdateRequestRequest,
   UpdateSecretRequest,
   UserLoginRequest,
-} from './dtos';
+} from './generated/models';
 
 export class VaultError extends Error {
   constructor(public status: number, public message: string, public code?: string) {

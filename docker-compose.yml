@@ -20,10 +20,10 @@ services:
       - mysql
 
   integration_test:
-    build:
-      context: .
-      dockerfile: Dockerfile.local
+    image: agentpassvault-backend
     container_name: agentpassvault-integration-test
+    environment:
+      SPRING_PROFILES_ACTIVE: integration_test
     ports:
       - "127.0.0.1:58080:8080"
     depends_on:

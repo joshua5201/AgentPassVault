@@ -149,7 +149,7 @@ class AuthControllerTest extends BaseIntegrationTest {
                 .content(
                     objectMapper.writeValueAsString(
                         new com.agentpassvault.dto.ResetPasswordRequest(token, "newpass"))))
-        .andExpect(status().isInternalServerError());
+        .andExpect(status().isBadRequest());
   }
 
   @Test

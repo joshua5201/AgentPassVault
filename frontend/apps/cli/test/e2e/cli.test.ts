@@ -33,9 +33,6 @@ describe('AgentPassVault CLI E2E Scenarios', () => {
     }
     fs.mkdirSync(TEST_CONFIG_DIR, { recursive: true });
     
-    // Ensure CLI is built
-    execSync('pnpm build', { cwd: path.resolve(__dirname, '../../') });
-
     // 1. Admin Register
     console.log('Registering new tenant...');
     const registerOut = runCli(['admin', 'register', '--api-url', API_URL, '--username', adminUsername, '--password', adminPassword, '--display-name', 'Test Admin']);
@@ -43,9 +40,7 @@ describe('AgentPassVault CLI E2E Scenarios', () => {
     const tenantIdMatch = registerOut.match(/Tenant ID: (\S+)/);
     tenantId = tenantIdMatch![1];
 
-    // 2. Admin Login
-    console.log('Logging in as admin...');
-    runCli(['admin', 'login', `--api-url`, API_URL, '--username', adminUsername, '--password', adminPassword]);
+    // Note: Registration now automatically logs in and saves config
 
     // 3. Create Agent
     console.log('Creating agent...');
@@ -92,9 +87,11 @@ describe('AgentPassVault CLI E2E Scenarios', () => {
 
   it('Scenario 2: Update secret value should invalidate existing leases', async () => {
     console.log('[Scenario 2] Admin creates a secret and leases it...');
-    runCli(['admin', 'secret', 'create', 'S2-Secret', '--value', 's2-initial-value', '--password', adminPassword]);
+    // Non-interactive creation
+    runCli(['admin', 'secret', 'create', '--name', 'S2-Secret', '--username', 'user2', '--secret-password', 'pass2', '--password', adminPassword]);
     
     const listOut = runCli(['admin', 'secret', 'list']);
+    console.log('List Secrets Output:', listOut);
     const secretId = listOut.match(/- S2-Secret \(ID: (\S+)\)/)![1];
 
     // Manually lease it to agent
@@ -103,40 +100,124 @@ describe('AgentPassVault CLI E2E Scenarios', () => {
     const requestId = requestOut.match(/ID: (\S+)/)![1];
     runCli(['admin', 'request', 'fulfill', requestId, '--secret-id', secretId, '--password', adminPassword]);
 
-    // Verify retrieval works
-    console.log('[Scenario 2] Verifying initial retrieval...');
-    expect(runCli(['get-secret', secretId])).toContain('Value: s2-initial-value');
+        // Verify retrieval works
 
-    // Admin updates secret value
-    console.log('[Scenario 2] Admin updates secret value (should invalidate lease)...');
-    runCli(['admin', 'secret', 'update', secretId, '--value', 's2-updated-value', '--password', adminPassword]);
+        console.log('[Scenario 2] Verifying initial retrieval...');
 
-    // Verify retrieval FAILS now because lease was deleted on server when value changed
-    console.log('[Scenario 2] Verifying retrieval fails after update...');
-    try {
-      runCli(['get-secret', secretId]);
-      expect.fail('Should have failed to retrieve secret after update because lease was invalidated');
-    } catch (error: any) {
-      expect(error.message).toContain('No valid lease found');
-    }
-  });
+        const retrievalOut = runCli(['get-secret', secretId]);
 
-  it('Scenario 3: Map request to another existing secret', async () => {
-    console.log('[Scenario 3] Admin creates an independent secret...');
-    runCli(['admin', 'secret', 'create', 'S3-Existing-Secret', '--value', 's3-pre-existing-value', '--password', adminPassword]);
+        expect(retrievalOut).toContain('"username":"user2"');
+
+        expect(retrievalOut).toContain('"password":"pass2"');
+
     
-    const listOut = runCli(['admin', 'secret', 'list']);
-    const secretId = listOut.match(/- S3-Existing-Secret \(ID: (\S+)\)/)![1];
 
-    console.log('[Scenario 3] Agent requests a DIFFERENT secret...');
-    const requestOut = runCli(['request-secret', 'S3-New-Request']);
-    const requestId = requestOut.match(/ID: (\S+)/)![1];
+            // Admin updates secret value
 
-    console.log('[Scenario 3] Admin fulfills request by mapping to pre-existing secret...');
-    runCli(['admin', 'request', 'fulfill', requestId, '--secret-id', secretId, '--password', adminPassword]);
+    
 
-    console.log('[Scenario 3] Verifying agent can retrieve the mapped secret...');
-    const finalSecretOut = runCli(['get-secret', secretId]);
-    expect(finalSecretOut).toContain('Value: s3-pre-existing-value');
-  });
-});
+            console.log('[Scenario 2] Admin updates secret value (should invalidate lease)...');
+
+    
+
+            runCli(['admin', 'secret', 'update', secretId, '--value', 's2-updated-value'], `${adminPassword}\n`);
+
+    
+
+        
+
+    
+
+        // Verify retrieval FAILS now because lease was deleted on server when value changed
+
+        console.log('[Scenario 2] Verifying retrieval fails after update...');
+
+        try {
+
+          runCli(['get-secret', secretId]);
+
+          expect.fail('Should have failed to retrieve secret after update because lease was invalidated');
+
+        } catch (error: any) {
+
+          expect(error.message).toContain('No valid lease found');
+
+        }
+
+      });
+
+    
+
+            it('Scenario 3: Map request to another existing secret', async () => {
+
+    
+
+              console.log('[Scenario 3] Admin creates an independent secret...');
+
+    
+
+              runCli(['admin', 'secret', 'create', '--name', 'S3-Existing-Secret', '--username', 'user3', '--secret-password', 'pass3', '--password', adminPassword]);
+
+    
+
+              
+
+    
+
+              const listOut = runCli(['admin', 'secret', 'list']);
+
+    
+
+          
+
+    
+
+            const secretId = listOut.match(/- S3-Existing-Secret \(ID: (\S+)\)/)![1];
+
+    
+
+        
+
+    
+
+            console.log('[Scenario 3] Agent requests a DIFFERENT secret...');
+
+    
+
+            const requestOut = runCli(['request-secret', 'S3-New-Request']);
+
+    
+
+            const requestId = requestOut.match(/ID: (\S+)/)![1];
+
+    
+
+        
+
+    
+
+            console.log('[Scenario 3] Admin fulfills request by mapping to pre-existing secret...');
+
+    
+
+            runCli(['admin', 'request', 'fulfill', requestId, '--secret-id', secretId], `${adminPassword}\n`);
+
+    
+
+        
+
+    
+
+        console.log('[Scenario 3] Verifying agent can retrieve the mapped secret...');
+
+        const finalSecretOut = runCli(['get-secret', secretId]);
+
+        expect(finalSecretOut).toContain('"username":"user3"');
+
+        expect(finalSecretOut).toContain('"password":"pass3"');
+
+      });
+
+    });
+
+    

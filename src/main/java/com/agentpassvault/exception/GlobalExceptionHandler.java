@@ -86,6 +86,30 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
   }
 
+  @ExceptionHandler(ResourceNotFoundException.class)
+  public ResponseEntity<ErrorResponse> handleResourceNotFoundException(
+      ResourceNotFoundException ex, WebRequest request) {
+    ErrorResponse error =
+        new ErrorResponse(
+            HttpStatus.NOT_FOUND.value(),
+            ex.getMessage(),
+            request.getDescription(false).replace("uri=", ""),
+            LocalDateTime.now(ZoneId.of("UTC")));
+    return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+  }
+
+  @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+  public ResponseEntity<ErrorResponse> handleAccessDeniedException(
+      org.springframework.security.access.AccessDeniedException ex, WebRequest request) {
+    ErrorResponse error =
+        new ErrorResponse(
+            HttpStatus.FORBIDDEN.value(),
+            ex.getMessage(),
+            request.getDescription(false).replace("uri=", ""),
+            LocalDateTime.now(ZoneId.of("UTC")));
+    return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+  }
+
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
     // Log the actual exception here if we had a logger

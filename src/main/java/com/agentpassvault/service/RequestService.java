@@ -6,7 +6,10 @@
  */
 package com.agentpassvault.service;
 
-import com.agentpassvault.dto.*;
+import com.agentpassvault.dto.CreateRequestRequest;
+import com.agentpassvault.dto.RequestResponse;
+import com.agentpassvault.dto.UpdateRequestRequest;
+import com.agentpassvault.exception.ResourceNotFoundException;
 import com.agentpassvault.model.*;
 import com.agentpassvault.repository.*;
 import java.util.List;
@@ -83,7 +86,7 @@ public class RequestService {
           secretRepository
               .findById(secretId)
               .filter(s -> s.getTenant().getId().equals(tenantId))
-              .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
+              .orElseThrow(() -> new ResourceNotFoundException("Secret not found"));
 
       request.setStatus(RequestStatus.fulfilled);
       request.setMappedSecretId(secretId);
@@ -117,7 +120,7 @@ public class RequestService {
     return requestRepository
         .findById(requestId)
         .filter(r -> r.getTenant().getId().equals(tenantId))
-        .orElseThrow(() -> new IllegalArgumentException("Request not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Request not found"));
   }
 
   private void validatePending(Request request) {

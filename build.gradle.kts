@@ -33,7 +33,6 @@ jib {
 		mainClass = "com.agentpassvault.AgentPassVaultApplication"
 		ports = listOf("8080")
 		environment = mapOf(
-			"SPRING_PROFILES_ACTIVE" to "prod",
 			"SPRING_FLYWAY_ENABLED" to "false"
 		)
 	}

@@ -12,6 +12,7 @@ import com.agentpassvault.dto.LeaseResponse;
 import com.agentpassvault.dto.SecretMetadataResponse;
 import com.agentpassvault.dto.SecretResponse;
 import com.agentpassvault.dto.UpdateSecretRequest;
+import com.agentpassvault.exception.ResourceNotFoundException;
 import com.agentpassvault.model.*;
 import com.agentpassvault.repository.LeaseRepository;
 import com.agentpassvault.repository.SecretRepository;
@@ -72,7 +73,7 @@ public class SecretService {
         secretRepository
             .findById(secretId)
             .filter(s -> s.getTenant().getId().equals(tenantId))
-            .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
+            .orElseThrow(() -> new ResourceNotFoundException("Secret not found"));
 
     if (request.name() != null) {
       secret.setName(request.name());
@@ -117,7 +118,7 @@ public class SecretService {
         secretRepository
             .findById(secretId)
             .filter(s -> s.getTenant().getId().equals(tenantId))
-            .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
+            .orElseThrow(() -> new ResourceNotFoundException("Secret not found"));
 
     User agent =
         userRepository
@@ -149,7 +150,7 @@ public class SecretService {
         secretRepository
             .findById(secretId)
             .filter(s -> s.getTenant().getId().equals(tenantId))
-            .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
+            .orElseThrow(() -> new ResourceNotFoundException("Secret not found"));
 
     List<Lease> leases;
     if (agentId != null) {
@@ -169,7 +170,7 @@ public class SecretService {
         secretRepository
             .findById(secretId)
             .filter(s -> s.getTenant().getId().equals(tenantId))
-            .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
+            .orElseThrow(() -> new ResourceNotFoundException("Secret not found"));
 
     // Verify agent exists and belongs to tenant
     @SuppressWarnings("unused")
@@ -196,7 +197,7 @@ public class SecretService {
         secretRepository
             .findById(secretId)
             .filter(s -> s.getTenant().getId().equals(tenantId))
-            .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
+            .orElseThrow(() -> new ResourceNotFoundException("Secret not found"));
 
     if (Role.ADMIN.equals(auth.getRole())) {
       return mapToResponse(secret, secret.getEncryptedData());
@@ -231,7 +232,7 @@ public class SecretService {
         secretRepository
             .findById(secretId)
             .filter(s -> s.getTenant().getId().equals(tenantId))
-            .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
+            .orElseThrow(() -> new ResourceNotFoundException("Secret not found"));
 
     return mapToResponse(
         secret, secret.getEncryptedData()); // This is wrong in ZK but keeping for compilation
@@ -243,7 +244,7 @@ public class SecretService {
         secretRepository
             .findById(secretId)
             .filter(s -> s.getTenant().getId().equals(tenantId))
-            .orElseThrow(() -> new IllegalArgumentException("Secret not found"));
+            .orElseThrow(() -> new ResourceNotFoundException("Secret not found"));
 
     secretRepository.delete(secret);
   }

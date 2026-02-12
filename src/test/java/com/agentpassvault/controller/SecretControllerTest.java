@@ -102,7 +102,7 @@ class SecretControllerTest extends BaseIntegrationTest {
     // Get should fail
     mockMvc
         .perform(get("/api/v1/secrets/" + secretId).header("Authorization", "Bearer " + token))
-        .andExpect(status().isInternalServerError());
+        .andExpect(status().isNotFound());
   }
 
   @Test
@@ -182,7 +182,7 @@ class SecretControllerTest extends BaseIntegrationTest {
     // B tries to get it
     mockMvc
         .perform(get("/api/v1/secrets/" + secretId).header("Authorization", "Bearer " + tokenB))
-        .andExpect(status().isInternalServerError()); // NotFound exception
+        .andExpect(status().isNotFound()); // NotFound exception
   }
 
   @Test

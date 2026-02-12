@@ -1,2 +1,2 @@
-export * from './dtos';
+export * from './generated/models';
 export * from './VaultClient';

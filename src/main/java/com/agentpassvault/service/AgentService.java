@@ -8,6 +8,7 @@ package com.agentpassvault.service;
 
 import com.agentpassvault.dto.AgentResponse;
 import com.agentpassvault.dto.AgentTokenResponse;
+import com.agentpassvault.exception.ResourceNotFoundException;
 import com.agentpassvault.model.Role;
 import com.agentpassvault.model.User;
 import com.agentpassvault.repository.UserRepository;
@@ -79,7 +80,7 @@ public class AgentService {
     return userRepository
         .findById(agentId)
         .filter(u -> u.getTenant().getId().equals(tenantId) && Role.AGENT.equals(u.getRole()))
-        .orElseThrow(() -> new IllegalArgumentException("Agent not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Agent not found"));
   }
 
   private AgentResponse mapToResponse(User user) {

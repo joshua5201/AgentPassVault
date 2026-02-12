@@ -21,5 +21,8 @@
     "typescript": "^5.3.3",
     "vitest": "^1.2.2"
   },
-  "packageManager": "pnpm@8.15.1"
+  "packageManager": "pnpm@8.15.1",
+  "dependencies": {
+    "pnpm": "^10.29.3"
+  }
 }

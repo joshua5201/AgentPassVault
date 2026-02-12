@@ -59,7 +59,7 @@ export async function adminLogin(options: { apiUrl?: string, username?: string, 
     config.apiUrl = options.apiUrl;
   }
 
-  const username = options.username || await prompt('Username: ');
+  const username = options.username || await prompt('Username (Email): ');
   const password = options.password || await prompt('Master Password: ', true);
 
   console.log('Deriving login credentials...');
@@ -78,6 +78,7 @@ export async function adminLogin(options: { apiUrl?: string, username?: string, 
     const newConfig: Config = {
       ...config,
       apiUrl: config.apiUrl,
+      tenantId: loginResp.accessToken ? JSON.parse(Buffer.from(loginResp.accessToken.split('.')[1], 'base64').toString()).tenant_id : undefined,
       adminUsername: username,
       adminToken: loginResp.accessToken,
     };
@@ -94,7 +95,7 @@ export async function adminRegister(options: { apiUrl?: string, username?: strin
   await ensureConfigDir();
   const apiUrl = options.apiUrl || (await loadConfig())?.apiUrl || 'http://localhost:8080';
   
-  const username = options.username || await prompt('Email: ');
+  const username = options.username || await prompt('Username (Email): ');
   
   let password = options.password;
   if (!password) {
@@ -135,6 +136,7 @@ export async function adminRegister(options: { apiUrl?: string, username?: strin
 
     const newConfig: Config = {
       apiUrl,
+      tenantId: loginResp.accessToken ? JSON.parse(Buffer.from(loginResp.accessToken.split('.')[1], 'base64').toString()).tenant_id : resp.tenantId,
       adminUsername: username,
       adminToken: loginResp.accessToken,
     };
@@ -207,13 +209,13 @@ export async function adminViewSecret(id: string, options: { password?: string }
   }
 }
 
-export async function adminCreateSecret(options: { password?: string }) {
+export async function adminCreateSecret(options: { name?: string, username?: string, secretPassword?: string, password?: string }) {
   try {
     const { client, config } = await getAdminClient();
     
-    const name = await prompt('Secret Name (e.g. AWS Prod): ');
-    const username = await prompt('Username/Email: ');
-    const valuePassword = await prompt('Password: ', true);
+    const name = options.name || await prompt('Secret Name (e.g. AWS Prod): ');
+    const username = options.username || await prompt('Username (Email): ');
+    const valuePassword = options.secretPassword || await prompt('Password: ', true);
     
     const password = options.password || await prompt('Confirm Master Password: ', true);
     

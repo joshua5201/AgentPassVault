@@ -38,6 +38,11 @@ Agents working on this project must adhere to the specifications and workflows d
     - [x] **CLI:** Agent CLI implementation - Finished.
     - [ ] **Web:** Admin/Fulfillment UI - Pending.
 
+## DTO Generation
+- **NEVER** manually create or modify TypeScript DTOs in `frontend/packages/sdk/src/api/generated`.
+- **ALWAYS** use the synchronization script: `./scripts/management/sync-dtos.sh`.
+- This script generates `openapi.yaml` from the Java backend and then runs `openapi-generator` to update the frontend SDK.
+
 ## License Header
 - For all `.java` files, the license header from `licence-header.txt` must be present at the top of the file.
 
