@@ -1,0 +1,69 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+# This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-gradle
+
+name: Test
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'corretto'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
+
+    - name: Docker Setup Docker
+      uses: docker/setup-docker-action@v4.7.0
+
+    - name: Build and publish the docker image locally with Gradle Wrapper
+      run: ./gradlew jibDockerBuild
+    
+    - name: Set up docker compose
+      uses: docker/setup-compose-action@v1.2.0
+      with:
+        version: v5.0.2
+        
+    - name: Start services needed for test  
+      run: docker compose up -d
+
+    - name: Build and test with Gradle Wrapper
+      run: ./gradlew build
+    
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4.2.0
+      with:
+        version: 8.15.1
+        package_json_file: ./frontend/package.json
+
+    - name: build frontend
+      working-directory: ./frontend
+      run: pnpm build
+
+    - name: run frontend unit tests
+      working-directory: ./frontend
+      run: pnpm test:unit
+
+    - name: run E2E test
+      working-directory: ./frontend
+      run: pnpm test:integration
+          
+
