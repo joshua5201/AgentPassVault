@@ -34,6 +34,7 @@ jobs:
     - name: Start mysql & flyway  
       run: docker compose up mysql flyway -d
 
+    #TODO: wait for port 3306
     - name: Run flyway migration
       run: ./scripts/database/flyway.sh migrate
 
