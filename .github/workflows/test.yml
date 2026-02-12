@@ -45,6 +45,9 @@ jobs:
     - name: Start services needed for test  
       run: docker compose up -d
 
+    - name: Run flyway migration
+      run: ./scripts/database/flyway.sh migrate
+      
     - name: Build and test with Gradle Wrapper
       run: ./gradlew build
     
