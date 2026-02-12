@@ -5,7 +5,7 @@
 # This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-gradle
 
-name: Java CI with Gradle
+name: Build application
 
 on:
   push:
@@ -34,3 +34,21 @@ jobs:
 
     - name: Build with Gradle Wrapper
       run: ./gradlew build -x test
+      
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4.2.0
+      with:
+        version: 8.15.1
+        package_json_file: ./frontend/package.json
+
+    - name: build frontend
+      working-directory: ./frontend
+      run: pnpm build
+
+    - name: run frontend unit tests
+      working-directory: ./frontend
+      run: pnpm test:unit
+
+    - name: run E2E test
+      working-directory: ./frontend
+      run: pnpm test:integration
