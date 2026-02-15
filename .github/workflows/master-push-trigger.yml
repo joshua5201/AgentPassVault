@@ -1,4 +1,4 @@
-name: CI Trigger
+name: Master Push Trigger
 on:
   push:
     branches: [ master ]
