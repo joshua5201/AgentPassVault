@@ -6,6 +6,8 @@
     "gen-dtos": "openapi-generator-cli generate -i ../docs/openapi.yaml -g typescript-fetch -o ./packages/sdk/src/api/generated --additional-properties=typescriptThreePlus=true,modelPropertyNaming=original",
     "sync-dtos": "../scripts/management/sync-dtos.sh",
     "build": "turbo run build",
+    "build:sdk": "pnpm --filter @agentpassvault/sdk build",
+    "build:cli": "pnpm --filter @agentpassvault/cli build",
     "dev": "turbo run dev",
     "lint": "turbo run lint && prettier --check \"**/*.{ts,tsx,md}\"",
     "typecheck": "turbo run typecheck",

@@ -65,6 +65,17 @@ jobs:
           docker logs agentpassvault-flyway
           docker logs agentpassvault-integration-test || true
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4.2.0
+        with:
+          version: 8.15.1
+          package_json_file: ./frontend/package.json
+          run_install: true
+
+      - name: Build frontend packages (including CLI)
+        working-directory: ./frontend
+        run: pnpm build
+
       - name: Build and publish the docker image locally with Gradle Wrapper
         run: ./gradlew jibDockerBuild
 
@@ -75,13 +86,6 @@ jobs:
         shell: bash
         run: |
           timeout 120s bash -c "until [ \"\$(docker inspect -f '{{.State.Health.Status}}' agentpassvault-integration-test)\" == 'healthy' ]; do echo 'Waiting for integration test...'; sleep 5; done"
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4.2.0
-        with:
-          version: 8.15.1
-          package_json_file: ./frontend/package.json
-          run_install: true
 
       - name: Run E2E test
         working-directory: ./frontend
