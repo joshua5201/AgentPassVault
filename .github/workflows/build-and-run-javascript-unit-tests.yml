@@ -1,4 +1,4 @@
-name: Test Javascript
+name: Build and Run Javascript Unit Tests
 
 on:
   push:
