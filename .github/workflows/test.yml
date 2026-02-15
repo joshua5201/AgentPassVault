@@ -29,7 +29,7 @@ jobs:
       - name: Wait for MySQL
         shell: bash
         run: |
-          timeout 60s bash -c 'until [ "$(docker inspect -f "{{.State.Health.Status}}" agentpassvault-mysql)" == "healthy" ]; do echo "Waiting for MySQL..."; sleep 2; done'
+          timeout 60s bash -c "until [ \"\$(docker inspect -f '{{.State.Health.Status}}' agentpassvault-mysql)\" == 'healthy' ]; do echo 'Waiting for MySQL...'; sleep 2; done"
 
       - name: Create databases
         run: |
@@ -89,7 +89,7 @@ jobs:
       - name: Wait for integration test container
         shell: bash
         run: |
-          timeout 120s bash -c 'until [ "$(docker inspect -f "{{.State.Health.Status}}" agentpassvault-integration-test)" == "healthy" ]; do echo "Waiting for integration test..."; sleep 5; done'
+          timeout 120s bash -c "until [ \"\$(docker inspect -f '{{.State.Health.Status}}' agentpassvault-integration-test)\" == 'healthy' ]; do echo 'Waiting for integration test...'; sleep 5; done"
 
       - name: Run E2E test
         working-directory: ./frontend
