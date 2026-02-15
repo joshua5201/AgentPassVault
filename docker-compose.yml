@@ -3,12 +3,14 @@ services:
     image: mysql:8.4
     container_name: agentpassvault-mysql
     ports:
-      - "127.0.0.1:${MYSQL_PORT_3306:-53306}:3306"
+      - "${MYSQL_PORT_3306:-53306}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: agentpassvault_dev
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
     healthcheck:
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
       interval: 10s
