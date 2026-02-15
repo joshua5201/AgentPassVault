@@ -28,8 +28,12 @@ jobs:
       run: docker compose up mysql flyway -d
 
     - name: Wait for MySQL
+      shell: bash
       run: |
-        timeout 60s sh -c "until [ \"$(docker inspect -f {{.State.Health.Status}} agentpassvault-mysql)\" == \"healthy\" ]; do sleep 2; done"
+        until [ "$(docker inspect -f '{{.State.Health.Status}}' agentpassvault-mysql)" == "healthy" ]; do
+          echo "Waiting for MySQL..."
+          sleep 2
+        done
 
     - name: Create databases
       run: |
@@ -72,8 +76,12 @@ jobs:
       run: docker compose up integration_test -d
 
     - name: Wait for integration test container
+      shell: bash
       run: |
-        timeout 60s sh -c "until [ \"$(docker inspect -f {{.State.Health.Status}} agentpassvault-integration_test)\" == \"healthy\" ]; do sleep 5; done"
+        until [ "$(docker inspect -f '{{.State.Health.Status}}' agentpassvault-integration-test)" == "healthy" ]; do
+          echo "Waiting for integration test..."
+          sleep 5
+        done
       
     - name: Run E2E test
       working-directory: ./frontend
