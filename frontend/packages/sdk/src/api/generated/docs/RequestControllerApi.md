@@ -1,35 +1,28 @@
 # RequestControllerApi
 
-All URIs are relative to *http://localhost:8080*
+All URIs are relative to _http://localhost:8080_
 
-| Method | HTTP request | Description |
-|------------- | ------------- | -------------|
-| [**abandonRequest**](RequestControllerApi.md#abandonrequest) | **DELETE** /api/v1/requests/{id} |  |
-| [**createRequest**](RequestControllerApi.md#createrequestoperation) | **POST** /api/v1/requests |  |
-| [**getRequest**](RequestControllerApi.md#getrequest) | **GET** /api/v1/requests/{id} |  |
-| [**listRequests**](RequestControllerApi.md#listrequests) | **GET** /api/v1/requests |  |
-| [**updateRequest**](RequestControllerApi.md#updaterequestoperation) | **PATCH** /api/v1/requests/{id} |  |
-
-
+| Method                                                              | HTTP request                     | Description |
+| ------------------------------------------------------------------- | -------------------------------- | ----------- |
+| [**abandonRequest**](RequestControllerApi.md#abandonrequest)        | **DELETE** /api/v1/requests/{id} |             |
+| [**createRequest**](RequestControllerApi.md#createrequestoperation) | **POST** /api/v1/requests        |             |
+| [**getRequest**](RequestControllerApi.md#getrequest)                | **GET** /api/v1/requests/{id}    |             |
+| [**listRequests**](RequestControllerApi.md#listrequests)            | **GET** /api/v1/requests         |             |
+| [**updateRequest**](RequestControllerApi.md#updaterequestoperation) | **PATCH** /api/v1/requests/{id}  |             |
 
 ## abandonRequest
 
 > abandonRequest(id)
 
-
-
 ### Example
 
 ```ts
-import {
-  Configuration,
-  RequestControllerApi,
-} from '';
-import type { AbandonRequestRequest } from '';
+import { Configuration, RequestControllerApi } from "";
+import type { AbandonRequestRequest } from "";
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -54,10 +47,9 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **id** | `number` |  | [Defaults to `undefined`] |
+| Name   | Type     | Description | Notes                     |
+| ------ | -------- | ----------- | ------------------------- |
+| **id** | `number` |             | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -72,20 +64,17 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: Not defined
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## createRequest
 
 > RequestResponse createRequest(createRequestRequest)
-
-
 
 ### Example
 
@@ -98,7 +87,7 @@ import type { CreateRequestOperationRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -123,10 +112,9 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **createRequestRequest** | [CreateRequestRequest](CreateRequestRequest.md) |  | |
+| Name                     | Type                                            | Description | Notes |
+| ------------------------ | ----------------------------------------------- | ----------- | ----- |
+| **createRequestRequest** | [CreateRequestRequest](CreateRequestRequest.md) |             |       |
 
 ### Return type
 
@@ -141,33 +129,27 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `*/*`
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## getRequest
 
 > RequestResponse getRequest(id)
 
-
-
 ### Example
 
 ```ts
-import {
-  Configuration,
-  RequestControllerApi,
-} from '';
-import type { GetRequestRequest } from '';
+import { Configuration, RequestControllerApi } from "";
+import type { GetRequestRequest } from "";
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -192,10 +174,9 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **id** | `number` |  | [Defaults to `undefined`] |
+| Name   | Type     | Description | Notes                     |
+| ------ | -------- | ----------- | ------------------------- |
+| **id** | `number` |             | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -210,33 +191,27 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: `*/*`
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## listRequests
 
 > Array&lt;RequestResponse&gt; listRequests()
 
-
-
 ### Example
 
 ```ts
-import {
-  Configuration,
-  RequestControllerApi,
-} from '';
-import type { ListRequestsRequest } from '';
+import { Configuration, RequestControllerApi } from "";
+import type { ListRequestsRequest } from "";
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -271,20 +246,17 @@ This endpoint does not need any parameter.
 - **Content-Type**: Not defined
 - **Accept**: `*/*`
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## updateRequest
 
 > RequestResponse updateRequest(id, updateRequestRequest)
-
-
 
 ### Example
 
@@ -297,7 +269,7 @@ import type { UpdateRequestOperationRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -324,11 +296,10 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **id** | `number` |  | [Defaults to `undefined`] |
-| **updateRequestRequest** | [UpdateRequestRequest](UpdateRequestRequest.md) |  | |
+| Name                     | Type                                            | Description | Notes                     |
+| ------------------------ | ----------------------------------------------- | ----------- | ------------------------- |
+| **id**                   | `number`                                        |             | [Defaults to `undefined`] |
+| **updateRequestRequest** | [UpdateRequestRequest](UpdateRequestRequest.md) |             |                           |
 
 ### Return type
 
@@ -343,11 +314,10 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `*/*`
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-

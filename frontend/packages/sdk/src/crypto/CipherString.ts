@@ -11,13 +11,17 @@ export class CipherStringParser {
    * Format: 2.<iv>|<ciphertext>|<mac>
    */
   static parse(cipherString: string): CipherString {
-    if (!cipherString.startsWith('2.')) {
-      throw new Error('Unsupported or invalid cipher string type. Currently only Type 2 (AES-CBC + HMAC) is supported.');
+    if (!cipherString.startsWith("2.")) {
+      throw new Error(
+        "Unsupported or invalid cipher string type. Currently only Type 2 (AES-CBC + HMAC) is supported.",
+      );
     }
 
-    const parts = cipherString.substring(2).split('|');
+    const parts = cipherString.substring(2).split("|");
     if (parts.length !== 3) {
-      throw new Error('Invalid cipher string format. Expected 2.<iv>|<ciphertext>|<mac>');
+      throw new Error(
+        "Invalid cipher string format. Expected 2.<iv>|<ciphertext>|<mac>",
+      );
     }
 
     const [ivB64, ciphertextB64, macB64] = parts;
@@ -30,14 +34,18 @@ export class CipherStringParser {
         mac: this.base64ToBytes(macB64),
       };
     } catch (e) {
-      throw new Error('Failed to decode base64 components of cipher string');
+      throw new Error("Failed to decode base64 components of cipher string");
     }
   }
 
   /**
    * Serializes components into a Type 2 Cipher String.
    */
-  static serialize(iv: Uint8Array, ciphertext: Uint8Array, mac: Uint8Array): string {
+  static serialize(
+    iv: Uint8Array,
+    ciphertext: Uint8Array,
+    mac: Uint8Array,
+  ): string {
     const ivB64 = this.bytesToBase64(iv);
     const ciphertextB64 = this.bytesToBase64(ciphertext);
     const macB64 = this.bytesToBase64(mac);
@@ -46,7 +54,11 @@ export class CipherStringParser {
   }
 
   private static base64ToBytes(b64: string): Uint8Array {
-    return new Uint8Array(atob(b64).split('').map(c => c.charCodeAt(0)));
+    return new Uint8Array(
+      atob(b64)
+        .split("")
+        .map((c) => c.charCodeAt(0)),
+    );
   }
 
   private static bytesToBase64(bytes: Uint8Array): string {

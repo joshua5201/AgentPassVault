@@ -1,40 +1,36 @@
-
 # CreateLeaseRequest
-
 
 ## Properties
 
-Name | Type
------------- | -------------
-`agentId` | string
-`publicKey` | string
-`encryptedData` | string
-`expiry` | Date
+| Name            | Type   |
+| --------------- | ------ |
+| `agentId`       | string |
+| `publicKey`     | string |
+| `encryptedData` | string |
+| `expiry`        | Date   |
 
 ## Example
 
 ```typescript
-import type { CreateLeaseRequest } from ''
+import type { CreateLeaseRequest } from "";
 
 // TODO: Update the object below with actual values
 const example = {
-  "agentId": null,
-  "publicKey": null,
-  "encryptedData": null,
-  "expiry": null,
-} satisfies CreateLeaseRequest
+  agentId: null,
+  publicKey: null,
+  encryptedData: null,
+  expiry: null,
+} satisfies CreateLeaseRequest;
 
-console.log(example)
+console.log(example);
 
 // Convert the instance to a JSON string
-const exampleJSON: string = JSON.stringify(example)
-console.log(exampleJSON)
+const exampleJSON: string = JSON.stringify(example);
+console.log(exampleJSON);
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as CreateLeaseRequest
-console.log(exampleParsed)
+const exampleParsed = JSON.parse(exampleJSON) as CreateLeaseRequest;
+console.log(exampleParsed);
 ```
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
-

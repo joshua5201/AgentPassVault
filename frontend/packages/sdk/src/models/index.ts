@@ -20,15 +20,15 @@ export interface LeasedSecret {
 }
 
 export enum RequestStatus {
-  PENDING = 'pending',
-  FULFILLED = 'fulfilled',
-  REJECTED = 'rejected',
-  ABANDONED = 'abandoned',
+  PENDING = "pending",
+  FULFILLED = "fulfilled",
+  REJECTED = "rejected",
+  ABANDONED = "abandoned",
 }
 
 export enum RequestType {
-  CREATE = 'CREATE',
-  LEASE = 'LEASE',
+  CREATE = "CREATE",
+  LEASE = "LEASE",
 }
 
 export interface SecretRequest {

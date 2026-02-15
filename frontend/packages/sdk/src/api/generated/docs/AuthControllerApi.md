@@ -1,29 +1,25 @@
 # AuthControllerApi
 
-All URIs are relative to *http://localhost:8080*
+All URIs are relative to _http://localhost:8080_
 
-| Method | HTTP request | Description |
-|------------- | ------------- | -------------|
-| [**agentLogin**](AuthControllerApi.md#agentloginoperation) | **POST** /api/v1/auth/login/agent |  |
-| [**changePassword**](AuthControllerApi.md#changepasswordoperation) | **POST** /api/v1/auth/change-password |  |
-| [**disableTotp**](AuthControllerApi.md#disabletotp) | **POST** /api/v1/auth/2fa/totp/disable |  |
-| [**enableTotp**](AuthControllerApi.md#enabletotp) | **POST** /api/v1/auth/2fa/totp/enable |  |
-| [**forgotPassword**](AuthControllerApi.md#forgotpasswordoperation) | **POST** /api/v1/auth/forgot-password |  |
-| [**getTotpSetup**](AuthControllerApi.md#gettotpsetup) | **GET** /api/v1/auth/2fa/totp/setup |  |
-| [**ping**](AuthControllerApi.md#ping) | **GET** /api/v1/auth/ping |  |
-| [**refresh**](AuthControllerApi.md#refresh) | **POST** /api/v1/auth/refresh |  |
-| [**register**](AuthControllerApi.md#register) | **POST** /api/v1/auth/register |  |
-| [**resetPassword**](AuthControllerApi.md#resetpasswordoperation) | **POST** /api/v1/auth/reset-password |  |
-| [**userLogin**](AuthControllerApi.md#userloginoperation) | **POST** /api/v1/auth/login/user |  |
-| [**userLoginWith2fa**](AuthControllerApi.md#userloginwith2fa) | **POST** /api/v1/auth/login/user/2fa |  |
-
-
+| Method                                                             | HTTP request                           | Description |
+| ------------------------------------------------------------------ | -------------------------------------- | ----------- |
+| [**agentLogin**](AuthControllerApi.md#agentloginoperation)         | **POST** /api/v1/auth/login/agent      |             |
+| [**changePassword**](AuthControllerApi.md#changepasswordoperation) | **POST** /api/v1/auth/change-password  |             |
+| [**disableTotp**](AuthControllerApi.md#disabletotp)                | **POST** /api/v1/auth/2fa/totp/disable |             |
+| [**enableTotp**](AuthControllerApi.md#enabletotp)                  | **POST** /api/v1/auth/2fa/totp/enable  |             |
+| [**forgotPassword**](AuthControllerApi.md#forgotpasswordoperation) | **POST** /api/v1/auth/forgot-password  |             |
+| [**getTotpSetup**](AuthControllerApi.md#gettotpsetup)              | **GET** /api/v1/auth/2fa/totp/setup    |             |
+| [**ping**](AuthControllerApi.md#ping)                              | **GET** /api/v1/auth/ping              |             |
+| [**refresh**](AuthControllerApi.md#refresh)                        | **POST** /api/v1/auth/refresh          |             |
+| [**register**](AuthControllerApi.md#register)                      | **POST** /api/v1/auth/register         |             |
+| [**resetPassword**](AuthControllerApi.md#resetpasswordoperation)   | **POST** /api/v1/auth/reset-password   |             |
+| [**userLogin**](AuthControllerApi.md#userloginoperation)           | **POST** /api/v1/auth/login/user       |             |
+| [**userLoginWith2fa**](AuthControllerApi.md#userloginwith2fa)      | **POST** /api/v1/auth/login/user/2fa   |             |
 
 ## agentLogin
 
 > LoginResponse agentLogin(agentLoginRequest)
-
-
 
 ### Example
 
@@ -36,7 +32,7 @@ import type { AgentLoginOperationRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -61,10 +57,9 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **agentLoginRequest** | [AgentLoginRequest](AgentLoginRequest.md) |  | |
+| Name                  | Type                                      | Description | Notes |
+| --------------------- | ----------------------------------------- | ----------- | ----- |
+| **agentLoginRequest** | [AgentLoginRequest](AgentLoginRequest.md) |             |       |
 
 ### Return type
 
@@ -79,20 +74,17 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `*/*`
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## changePassword
 
 > changePassword(changePasswordRequest)
-
-
 
 ### Example
 
@@ -105,7 +97,7 @@ import type { ChangePasswordOperationRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -130,10 +122,9 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **changePasswordRequest** | [ChangePasswordRequest](ChangePasswordRequest.md) |  | |
+| Name                      | Type                                              | Description | Notes |
+| ------------------------- | ------------------------------------------------- | ----------- | ----- |
+| **changePasswordRequest** | [ChangePasswordRequest](ChangePasswordRequest.md) |             |       |
 
 ### Return type
 
@@ -148,33 +139,27 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: Not defined
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## disableTotp
 
 > disableTotp()
 
-
-
 ### Example
 
 ```ts
-import {
-  Configuration,
-  AuthControllerApi,
-} from '';
-import type { DisableTotpRequest } from '';
+import { Configuration, AuthControllerApi } from "";
+import type { DisableTotpRequest } from "";
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -209,20 +194,17 @@ This endpoint does not need any parameter.
 - **Content-Type**: Not defined
 - **Accept**: Not defined
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## enableTotp
 
 > enableTotp(totpVerifyRequest)
-
-
 
 ### Example
 
@@ -235,7 +217,7 @@ import type { EnableTotpRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -260,10 +242,9 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **totpVerifyRequest** | [TotpVerifyRequest](TotpVerifyRequest.md) |  | |
+| Name                  | Type                                      | Description | Notes |
+| --------------------- | ----------------------------------------- | ----------- | ----- |
+| **totpVerifyRequest** | [TotpVerifyRequest](TotpVerifyRequest.md) |             |       |
 
 ### Return type
 
@@ -278,20 +259,17 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: Not defined
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## forgotPassword
 
 > { [key: string]: string; } forgotPassword(forgotPasswordRequest)
-
-
 
 ### Example
 
@@ -304,7 +282,7 @@ import type { ForgotPasswordOperationRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -329,10 +307,9 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **forgotPasswordRequest** | [ForgotPasswordRequest](ForgotPasswordRequest.md) |  | |
+| Name                      | Type                                              | Description | Notes |
+| ------------------------- | ------------------------------------------------- | ----------- | ----- |
+| **forgotPasswordRequest** | [ForgotPasswordRequest](ForgotPasswordRequest.md) |             |       |
 
 ### Return type
 
@@ -347,33 +324,27 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `*/*`
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## getTotpSetup
 
 > TotpSetupResponse getTotpSetup()
 
-
-
 ### Example
 
 ```ts
-import {
-  Configuration,
-  AuthControllerApi,
-} from '';
-import type { GetTotpSetupRequest } from '';
+import { Configuration, AuthControllerApi } from "";
+import type { GetTotpSetupRequest } from "";
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -408,33 +379,27 @@ This endpoint does not need any parameter.
 - **Content-Type**: Not defined
 - **Accept**: `*/*`
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## ping
 
 > { [key: string]: object; } ping()
 
-
-
 ### Example
 
 ```ts
-import {
-  Configuration,
-  AuthControllerApi,
-} from '';
-import type { PingRequest } from '';
+import { Configuration, AuthControllerApi } from "";
+import type { PingRequest } from "";
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -469,20 +434,17 @@ This endpoint does not need any parameter.
 - **Content-Type**: Not defined
 - **Accept**: `*/*`
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## refresh
 
 > LoginResponse refresh(refreshTokenRequest)
-
-
 
 ### Example
 
@@ -495,7 +457,7 @@ import type { RefreshRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -520,10 +482,9 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **refreshTokenRequest** | [RefreshTokenRequest](RefreshTokenRequest.md) |  | |
+| Name                    | Type                                          | Description | Notes |
+| ----------------------- | --------------------------------------------- | ----------- | ----- |
+| **refreshTokenRequest** | [RefreshTokenRequest](RefreshTokenRequest.md) |             |       |
 
 ### Return type
 
@@ -538,20 +499,17 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `*/*`
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## register
 
 > RegistrationResponse register(registrationRequest)
-
-
 
 ### Example
 
@@ -564,7 +522,7 @@ import type { RegisterRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -589,10 +547,9 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **registrationRequest** | [RegistrationRequest](RegistrationRequest.md) |  | |
+| Name                    | Type                                          | Description | Notes |
+| ----------------------- | --------------------------------------------- | ----------- | ----- |
+| **registrationRequest** | [RegistrationRequest](RegistrationRequest.md) |             |       |
 
 ### Return type
 
@@ -607,20 +564,17 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `*/*`
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## resetPassword
 
 > resetPassword(resetPasswordRequest)
-
-
 
 ### Example
 
@@ -633,7 +587,7 @@ import type { ResetPasswordOperationRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -658,10 +612,9 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **resetPasswordRequest** | [ResetPasswordRequest](ResetPasswordRequest.md) |  | |
+| Name                     | Type                                            | Description | Notes |
+| ------------------------ | ----------------------------------------------- | ----------- | ----- |
+| **resetPasswordRequest** | [ResetPasswordRequest](ResetPasswordRequest.md) |             |       |
 
 ### Return type
 
@@ -676,20 +629,17 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: Not defined
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## userLogin
 
 > LoginResponse userLogin(userLoginRequest)
-
-
 
 ### Example
 
@@ -702,7 +652,7 @@ import type { UserLoginOperationRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -727,10 +677,9 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **userLoginRequest** | [UserLoginRequest](UserLoginRequest.md) |  | |
+| Name                 | Type                                    | Description | Notes |
+| -------------------- | --------------------------------------- | ----------- | ----- |
+| **userLoginRequest** | [UserLoginRequest](UserLoginRequest.md) |             |       |
 
 ### Return type
 
@@ -745,20 +694,17 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `*/*`
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## userLoginWith2fa
 
 > LoginResponse userLoginWith2fa(twoFactorLoginRequest)
-
-
 
 ### Example
 
@@ -771,7 +717,7 @@ import type { UserLoginWith2faRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -796,10 +742,9 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **twoFactorLoginRequest** | [TwoFactorLoginRequest](TwoFactorLoginRequest.md) |  | |
+| Name                      | Type                                              | Description | Notes |
+| ------------------------- | ------------------------------------------------- | ----------- | ----- |
+| **twoFactorLoginRequest** | [TwoFactorLoginRequest](TwoFactorLoginRequest.md) |             |       |
 
 ### Return type
 
@@ -814,11 +759,10 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `*/*`
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-

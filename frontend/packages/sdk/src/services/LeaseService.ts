@@ -1,6 +1,6 @@
-import { CryptoService } from '../crypto/CryptoService';
-import { MasterKeys } from '../crypto/MasterKeyService';
-import { Secret, LeasedSecret } from '../models';
+import { CryptoService } from "../crypto/CryptoService";
+import { MasterKeys } from "../crypto/MasterKeyService";
+import { Secret, LeasedSecret } from "../models";
 
 export class LeaseService {
   /**
@@ -12,22 +12,23 @@ export class LeaseService {
     masterKeys: MasterKeys,
     agentPublicKeyB64: string,
     agentId: string,
-    expiresAt: string | null = null
+    expiresAt: string | null = null,
   ): Promise<Partial<LeasedSecret>> {
     // 1. Decrypt the secret using Master Key
     const plaintext = await CryptoService.decryptSymmetric(
       secret.encryptedValue,
       masterKeys.encKey,
-      masterKeys.macKey
+      masterKeys.macKey,
     );
 
     // 2. Import Agent Public Key
-    const agentPublicKey = await CryptoService.importPublicKey(agentPublicKeyB64);
+    const agentPublicKey =
+      await CryptoService.importPublicKey(agentPublicKeyB64);
 
     // 3. Encrypt with Agent Public Key (RSA-OAEP)
     const encryptedForAgent = await CryptoService.encryptAsymmetric(
       plaintext,
-      agentPublicKey
+      agentPublicKey,
     );
 
     return {

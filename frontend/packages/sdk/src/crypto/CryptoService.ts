@@ -1,4 +1,4 @@
-import { CipherStringParser } from './CipherString';
+import { CipherStringParser } from "./CipherString";
 
 /**
  * CryptoService handles symmetric (AES-CBC + HMAC) and asymmetric (RSA-OAEP) encryption.
@@ -12,7 +12,7 @@ export class CryptoService {
   static async encryptSymmetric(
     plaintext: string,
     encKey: CryptoKey,
-    macKey: CryptoKey
+    macKey: CryptoKey,
   ): Promise<string> {
     const encoder = new TextEncoder();
     const data = encoder.encode(plaintext);
@@ -20,9 +20,9 @@ export class CryptoService {
 
     // 1. Encrypt with AES-CBC
     const ciphertext = await crypto.subtle.encrypt(
-      { name: 'AES-CBC', iv },
+      { name: "AES-CBC", iv },
       encKey,
-      data
+      data,
     );
 
     // 2. Sign the ciphertext (Encrypt-then-MAC)
@@ -32,16 +32,16 @@ export class CryptoService {
     combinedData.set(new Uint8Array(ciphertext), iv.length);
 
     const mac = await crypto.subtle.sign(
-      { name: 'HMAC' },
+      { name: "HMAC" },
       macKey,
-      combinedData
+      combinedData,
     );
 
     // 3. Format as Type 2 Cipher String using Parser
     return CipherStringParser.serialize(
       iv,
       new Uint8Array(ciphertext),
-      new Uint8Array(mac)
+      new Uint8Array(mac),
     );
   }
 
@@ -51,7 +51,7 @@ export class CryptoService {
   static async decryptSymmetric(
     cipherString: string,
     encKey: CryptoKey,
-    macKey: CryptoKey
+    macKey: CryptoKey,
   ): Promise<string> {
     const { iv, ciphertext, mac } = CipherStringParser.parse(cipherString);
 
@@ -61,21 +61,23 @@ export class CryptoService {
     combinedData.set(ciphertext, iv.length);
 
     const isValid = await crypto.subtle.verify(
-      { name: 'HMAC' },
+      { name: "HMAC" },
       macKey,
       mac as any,
-      combinedData
+      combinedData,
     );
 
     if (!isValid) {
-      throw new Error('MAC verification failed. The data may have been tampered with or the key is incorrect.');
+      throw new Error(
+        "MAC verification failed. The data may have been tampered with or the key is incorrect.",
+      );
     }
 
     // 2. Decrypt
     const plaintext = await crypto.subtle.decrypt(
-      { name: 'AES-CBC', iv: iv as any },
+      { name: "AES-CBC", iv: iv as any },
       encKey,
-      ciphertext as any
+      ciphertext as any,
     );
 
     return new TextDecoder().decode(plaintext);
@@ -86,15 +88,15 @@ export class CryptoService {
    */
   static async encryptAsymmetric(
     plaintext: string,
-    publicKey: CryptoKey
+    publicKey: CryptoKey,
   ): Promise<string> {
     const encoder = new TextEncoder();
     const data = encoder.encode(plaintext);
 
     const encrypted = await crypto.subtle.encrypt(
-      { name: 'RSA-OAEP' },
+      { name: "RSA-OAEP" },
       publicKey,
-      data
+      data,
     );
 
     return btoa(String.fromCharCode(...new Uint8Array(encrypted)));
@@ -105,14 +107,18 @@ export class CryptoService {
    */
   static async decryptAsymmetric(
     ciphertextB64: string,
-    privateKey: CryptoKey
+    privateKey: CryptoKey,
   ): Promise<string> {
-    const data = new Uint8Array(atob(ciphertextB64).split('').map(c => c.charCodeAt(0)));
+    const data = new Uint8Array(
+      atob(ciphertextB64)
+        .split("")
+        .map((c) => c.charCodeAt(0)),
+    );
 
     const decrypted = await crypto.subtle.decrypt(
-      { name: 'RSA-OAEP' },
+      { name: "RSA-OAEP" },
       privateKey,
-      data
+      data,
     );
 
     return new TextDecoder().decode(decrypted);
@@ -124,13 +130,13 @@ export class CryptoService {
   static async generateAgentKeyPair(): Promise<CryptoKeyPair> {
     return crypto.subtle.generateKey(
       {
-        name: 'RSA-OAEP',
+        name: "RSA-OAEP",
         modulusLength: 4096,
         publicExponent: new Uint8Array([1, 0, 1]),
-        hash: 'SHA-256',
+        hash: "SHA-256",
       },
       true,
-      ['encrypt', 'decrypt']
+      ["encrypt", "decrypt"],
     );
   }
 
@@ -138,7 +144,7 @@ export class CryptoService {
    * Exports a public key to SPKI format (base64).
    */
   static async exportPublicKey(key: CryptoKey): Promise<string> {
-    const exported = await crypto.subtle.exportKey('spki', key);
+    const exported = await crypto.subtle.exportKey("spki", key);
     return btoa(String.fromCharCode(...new Uint8Array(exported)));
   }
 
@@ -146,16 +152,20 @@ export class CryptoService {
    * Imports a public key from SPKI format (base64).
    */
   static async importPublicKey(spkiB64: string): Promise<CryptoKey> {
-    const data = new Uint8Array(atob(spkiB64).split('').map(c => c.charCodeAt(0)));
+    const data = new Uint8Array(
+      atob(spkiB64)
+        .split("")
+        .map((c) => c.charCodeAt(0)),
+    );
     return crypto.subtle.importKey(
-      'spki',
+      "spki",
       data,
       {
-        name: 'RSA-OAEP',
-        hash: 'SHA-256',
+        name: "RSA-OAEP",
+        hash: "SHA-256",
       },
       true,
-      ['encrypt']
+      ["encrypt"],
     );
   }
 
@@ -163,7 +173,7 @@ export class CryptoService {
    * Exports a private key to PKCS8 format (base64).
    */
   static async exportPrivateKey(key: CryptoKey): Promise<string> {
-    const exported = await crypto.subtle.exportKey('pkcs8', key);
+    const exported = await crypto.subtle.exportKey("pkcs8", key);
     return btoa(String.fromCharCode(...new Uint8Array(exported)));
   }
 
@@ -171,16 +181,20 @@ export class CryptoService {
    * Imports a private key from PKCS8 format (base64).
    */
   static async importPrivateKey(pkcs8B64: string): Promise<CryptoKey> {
-    const data = new Uint8Array(atob(pkcs8B64).split('').map(c => c.charCodeAt(0)));
+    const data = new Uint8Array(
+      atob(pkcs8B64)
+        .split("")
+        .map((c) => c.charCodeAt(0)),
+    );
     return crypto.subtle.importKey(
-      'pkcs8',
+      "pkcs8",
       data,
       {
-        name: 'RSA-OAEP',
-        hash: 'SHA-256',
+        name: "RSA-OAEP",
+        hash: "SHA-256",
       },
       true,
-      ['decrypt']
+      ["decrypt"],
     );
   }
 }

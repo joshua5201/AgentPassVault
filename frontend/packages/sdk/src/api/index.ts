@@ -1,2 +1,2 @@
-export * from './generated/models';
-export * from './VaultClient';
+export * from "./generated/models";
+export * from "./VaultClient";

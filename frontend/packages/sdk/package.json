@@ -8,6 +8,7 @@
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
     "dev": "tsup src/index.ts --format cjs,esm --watch --dts",
     "lint": "tsc --noEmit",
     "test": "vitest run"

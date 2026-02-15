@@ -1,22 +1,18 @@
 # SecretControllerApi
 
-All URIs are relative to *http://localhost:8080*
+All URIs are relative to _http://localhost:8080_
 
-| Method | HTTP request | Description |
-|------------- | ------------- | -------------|
-| [**createSecret**](SecretControllerApi.md#createsecretoperation) | **POST** /api/v1/secrets |  |
-| [**deleteSecret**](SecretControllerApi.md#deletesecret) | **DELETE** /api/v1/secrets/{id} |  |
-| [**getSecret**](SecretControllerApi.md#getsecret) | **GET** /api/v1/secrets/{id} |  |
-| [**searchSecrets**](SecretControllerApi.md#searchsecrets) | **POST** /api/v1/secrets/search |  |
-| [**updateSecret**](SecretControllerApi.md#updatesecretoperation) | **PATCH** /api/v1/secrets/{id} |  |
-
-
+| Method                                                           | HTTP request                    | Description |
+| ---------------------------------------------------------------- | ------------------------------- | ----------- |
+| [**createSecret**](SecretControllerApi.md#createsecretoperation) | **POST** /api/v1/secrets        |             |
+| [**deleteSecret**](SecretControllerApi.md#deletesecret)          | **DELETE** /api/v1/secrets/{id} |             |
+| [**getSecret**](SecretControllerApi.md#getsecret)                | **GET** /api/v1/secrets/{id}    |             |
+| [**searchSecrets**](SecretControllerApi.md#searchsecrets)        | **POST** /api/v1/secrets/search |             |
+| [**updateSecret**](SecretControllerApi.md#updatesecretoperation) | **PATCH** /api/v1/secrets/{id}  |             |
 
 ## createSecret
 
 > SecretMetadataResponse createSecret(createSecretRequest)
-
-
 
 ### Example
 
@@ -29,7 +25,7 @@ import type { CreateSecretOperationRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -54,10 +50,9 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **createSecretRequest** | [CreateSecretRequest](CreateSecretRequest.md) |  | |
+| Name                    | Type                                          | Description | Notes |
+| ----------------------- | --------------------------------------------- | ----------- | ----- |
+| **createSecretRequest** | [CreateSecretRequest](CreateSecretRequest.md) |             |       |
 
 ### Return type
 
@@ -72,33 +67,27 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `*/*`
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## deleteSecret
 
 > deleteSecret(id)
 
-
-
 ### Example
 
 ```ts
-import {
-  Configuration,
-  SecretControllerApi,
-} from '';
-import type { DeleteSecretRequest } from '';
+import { Configuration, SecretControllerApi } from "";
+import type { DeleteSecretRequest } from "";
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -123,10 +112,9 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **id** | `number` |  | [Defaults to `undefined`] |
+| Name   | Type     | Description | Notes                     |
+| ------ | -------- | ----------- | ------------------------- |
+| **id** | `number` |             | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -141,33 +129,27 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: Not defined
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## getSecret
 
 > SecretResponse getSecret(id, leaseToken)
 
-
-
 ### Example
 
 ```ts
-import {
-  Configuration,
-  SecretControllerApi,
-} from '';
-import type { GetSecretRequest } from '';
+import { Configuration, SecretControllerApi } from "";
+import type { GetSecretRequest } from "";
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -194,11 +176,10 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **id** | `number` |  | [Defaults to `undefined`] |
-| **leaseToken** | `string` |  | [Optional] [Defaults to `undefined`] |
+| Name           | Type     | Description | Notes                                |
+| -------------- | -------- | ----------- | ------------------------------------ |
+| **id**         | `number` |             | [Defaults to `undefined`]            |
+| **leaseToken** | `string` |             | [Optional] [Defaults to `undefined`] |
 
 ### Return type
 
@@ -213,20 +194,17 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: `*/*`
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## searchSecrets
 
 > Array&lt;SecretMetadataResponse&gt; searchSecrets(searchSecretRequest)
-
-
 
 ### Example
 
@@ -239,7 +217,7 @@ import type { SearchSecretsRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -264,10 +242,9 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **searchSecretRequest** | [SearchSecretRequest](SearchSecretRequest.md) |  | |
+| Name                    | Type                                          | Description | Notes |
+| ----------------------- | --------------------------------------------- | ----------- | ----- |
+| **searchSecretRequest** | [SearchSecretRequest](SearchSecretRequest.md) |             |       |
 
 ### Return type
 
@@ -282,20 +259,17 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `*/*`
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## updateSecret
 
 > SecretMetadataResponse updateSecret(id, updateSecretRequest)
-
-
 
 ### Example
 
@@ -308,7 +282,7 @@ import type { UpdateSecretOperationRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -335,11 +309,10 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **id** | `number` |  | [Defaults to `undefined`] |
-| **updateSecretRequest** | [UpdateSecretRequest](UpdateSecretRequest.md) |  | |
+| Name                    | Type                                          | Description | Notes                     |
+| ----------------------- | --------------------------------------------- | ----------- | ------------------------- |
+| **id**                  | `number`                                      |             | [Defaults to `undefined`] |
+| **updateSecretRequest** | [UpdateSecretRequest](UpdateSecretRequest.md) |             |                           |
 
 ### Return type
 
@@ -354,11 +327,10 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `*/*`
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-

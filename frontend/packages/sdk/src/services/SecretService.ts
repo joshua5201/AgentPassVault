@@ -1,6 +1,6 @@
-import { CryptoService } from '../crypto/CryptoService';
-import { MasterKeys } from '../crypto/MasterKeyService';
-import { Metadata, Secret } from '../models';
+import { CryptoService } from "../crypto/CryptoService";
+import { MasterKeys } from "../crypto/MasterKeyService";
+import { Metadata, Secret } from "../models";
 
 export class SecretService {
   /**
@@ -10,12 +10,12 @@ export class SecretService {
     name: string,
     value: string,
     metadata: Metadata,
-    masterKeys: MasterKeys
+    masterKeys: MasterKeys,
   ): Promise<Partial<Secret>> {
     const encryptedValue = await CryptoService.encryptSymmetric(
       value,
       masterKeys.encKey,
-      masterKeys.macKey
+      masterKeys.macKey,
     );
 
     return {
@@ -30,12 +30,12 @@ export class SecretService {
    */
   static async decryptSecret(
     secret: Secret,
-    masterKeys: MasterKeys
+    masterKeys: MasterKeys,
   ): Promise<string> {
     return CryptoService.decryptSymmetric(
       secret.encryptedValue,
       masterKeys.encKey,
-      masterKeys.macKey
+      masterKeys.macKey,
     );
   }
 }
