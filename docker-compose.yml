@@ -9,6 +9,11 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: agentpassvault_dev
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   flyway:
     image: flyway/flyway:10
@@ -17,7 +22,8 @@ services:
     volumes:
       - ./src/main/resources/db/migration:/flyway/sql
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
 
   integration_test:
     image: agentpassvault-backend
@@ -27,7 +33,14 @@ services:
     ports:
       - "127.0.0.1:58080:8080"
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
 volumes:
   mysql_data:

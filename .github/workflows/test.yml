@@ -27,7 +27,14 @@ jobs:
     - name: Start mysql & flyway  
       run: docker compose up mysql flyway -d
 
-    #TODO: wait for port 3306
+    - name: Wait for MySQL
+      run: |
+        timeout 60s sh -c "until [ \"$(docker inspect -f {{.State.Health.Status}} agentpassvault-mysql)\" == \"healthy\" ]; do sleep 2; done"
+
+    - name: Create databases
+      run: |
+        docker exec agentpassvault-mysql mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS agentpassvault_dev; CREATE DATABASE IF NOT EXISTS agentpassvault_test;"
+
     - name: Run flyway migration
       run: ./scripts/database/flyway.sh migrate
 
@@ -48,6 +55,7 @@ jobs:
       with:
         version: 8.15.1
         package_json_file: ./frontend/package.json
+        run_install: true
 
     - name: Build frontend
       working-directory: ./frontend
@@ -62,6 +70,10 @@ jobs:
       
     - name: Start integration test container 
       run: docker compose up integration_test -d
+
+    - name: Wait for integration test container
+      run: |
+        timeout 60s sh -c "until [ \"$(docker inspect -f {{.State.Health.Status}} agentpassvault-integration_test)\" == \"healthy\" ]; do sleep 5; done"
       
     - name: Run E2E test
       working-directory: ./frontend
