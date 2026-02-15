@@ -2,146 +2,95 @@ name: Test
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ["master"]
   pull_request:
-    branches: [ "master" ]
+    branches: ["master"]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     permissions:
       contents: read
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Setup Docker
-      uses: docker/setup-docker-action@v4.7.0
-    
-    - name: Set up docker compose
-      uses: docker/setup-compose-action@v1.2.0
-      with:
-        version: v5.0.2
-        
-    - name: Start mysql & flyway  
-      run: docker compose up mysql flyway -d
+      - name: Setup Docker
+        uses: docker/setup-docker-action@v4.7.0
 
-    - name: Wait for MySQL
-      shell: bash
-      run: |
-        timeout 60s bash -c 'until [ "$(docker inspect -f "{{.State.Health.Status}}" agentpassvault-mysql)" == "healthy" ]; do echo "Waiting for MySQL..."; sleep 2; done'
+      - name: Set up docker compose
+        uses: docker/setup-compose-action@v1.2.0
+        with:
+          version: v5.0.2
 
-    - name: Create databases
-      run: |
-        docker exec agentpassvault-mysql mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS agentpassvault_dev; CREATE DATABASE IF NOT EXISTS agentpassvault_test; GRANT ALL PRIVILEGES ON agentpassvault_dev.* TO 'user'@'%'; GRANT ALL PRIVILEGES ON agentpassvault_test.* TO 'user'@'%'; FLUSH PRIVILEGES;"
+      - name: Start mysql & flyway
+        run: docker compose up mysql flyway -d
 
-    - name: Run flyway migration
-      run: ./scripts/database/flyway.sh migrate
+      - name: Wait for MySQL
+        shell: bash
+        run: |
+          timeout 60s bash -c 'until [ "$(docker inspect -f "{{.State.Health.Status}}" agentpassvault-mysql)" == "healthy" ]; do echo "Waiting for MySQL..."; sleep 2; done'
 
-    - name: Set up JDK 21
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'corretto'
+      - name: Create databases
+        run: |
+          docker exec agentpassvault-mysql mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS agentpassvault_dev; CREATE DATABASE IF NOT EXISTS agentpassvault_test; GRANT ALL PRIVILEGES ON agentpassvault_dev.* TO 'user'@'%'; GRANT ALL PRIVILEGES ON agentpassvault_test.* TO 'user'@'%'; FLUSH PRIVILEGES;"
 
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
-      
-            - name: Build and test with Gradle Wrapper
-      
-              run: ./gradlew build
-      
-        
-      
-            - name: Upload Test Report
-      
-              uses: actions/upload-artifact@v4
-      
-              if: failure()
-      
-              with:
-      
-                name: test-report
-      
-                path: build/reports/tests/test/
-      
-        
-      
-            - name: Docker logs on failure
-      
-        
-      
-          if: failure()
-      
-          run: |
-      
-            docker ps -a
-      
-            docker logs agentpassvault-mysql
-      
-            docker logs agentpassvault-flyway
-      
-            docker logs agentpassvault-integration-test || true
-      
-    
-      
-        - name: Setup pnpm
-      
-          uses: pnpm/action-setup@v4.2.0
-      
-          with:
-      
-            version: 8.15.1
-      
-            package_json_file: ./frontend/package.json
-      
-            run_install: true
-      
-    
-      
-        - name: Build frontend
-      
-          working-directory: ./frontend
-      
-          run: pnpm build
-      
-    
-      
-        - name: Run frontend unit tests
-      
-          working-directory: ./frontend
-      
-          run: pnpm test:unit
-      
-    
-      
-        - name: Build and publish the docker image locally with Gradle Wrapper
-      
-          run: ./gradlew jibDockerBuild
-      
-          
-      
-        - name: Start integration test container 
-      
-          run: docker compose up integration_test -d
-      
-    
-      
-        - name: Wait for integration test container
-      
-          shell: bash
-      
-          run: |
-      
-            timeout 120s bash -c 'until [ "$(docker inspect -f "{{.State.Health.Status}}" agentpassvault-integration-test)" == "healthy" ]; do echo "Waiting for integration test..."; sleep 5; done'
-      
-          
-      
-        - name: Run E2E test
-      
-    
-      working-directory: ./frontend
-      run: pnpm test:integration
-          
+      - name: Run flyway migration
+        run: ./scripts/database/flyway.sh migrate
 
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "corretto"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4.0.0
+
+      - name: Build and test with Gradle Wrapper
+        run: ./gradlew build
+
+      - name: Upload Test Report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-report
+          path: build/reports/tests/test/
+
+      - name: Docker logs on failure
+        if: failure()
+        run: |
+          docker ps -a
+          docker logs agentpassvault-mysql
+          docker logs agentpassvault-flyway
+          docker logs agentpassvault-integration-test || true
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4.2.0
+        with:
+          version: 8.15.1
+          package_json_file: ./frontend/package.json
+          run_install: true
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: pnpm build
+
+      - name: Run frontend unit tests
+        working-directory: ./frontend
+        run: pnpm test:unit
+
+      - name: Build and publish the docker image locally with Gradle Wrapper
+        run: ./gradlew jibDockerBuild
+
+      - name: Start integration test container
+        run: docker compose up integration_test -d
+
+      - name: Wait for integration test container
+        shell: bash
+        run: |
+          timeout 120s bash -c 'until [ "$(docker inspect -f "{{.State.Health.Status}}" agentpassvault-integration-test)" == "healthy" ]; do echo "Waiting for integration test..."; sleep 5; done'
+
+      - name: Run E2E test
+        working-directory: ./frontend
+        run: pnpm test:integration
