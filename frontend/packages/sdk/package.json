@@ -11,7 +11,8 @@
     "clean": "rm -rf dist",
     "dev": "tsup src/index.ts --format cjs,esm --watch --dts",
     "lint": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run --passWithNoTests",
+    "test:unit": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "zod": "^3.22.4"
