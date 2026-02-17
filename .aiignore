@@ -1,0 +1,25 @@
+# Ignore common build artifacts
+build/
+.gradle/
+
+# Ignore IDE-specific files
+.idea/
+.vscode/
+*.iml
+
+# Ignore dependencies (if any large ones are not already in build/)
+# node_modules/
+# vendor/
+
+# Ignore large binaries and generated files
+gradle/wrapper/gradle-wrapper.jar
+*.jar
+*.log
+
+# Ignore local environment files
+.env
+local.properties
+
+# Ignore custom temporary files
+*.tmp
+frontend/repos/bitwarden-clients/bitwarden_license

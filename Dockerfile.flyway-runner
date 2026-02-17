@@ -1,0 +1,4 @@
+FROM flyway/flyway:12-alpine
+
+# Copy migration files
+COPY src/main/resources/db/migration/ /flyway/sql/
