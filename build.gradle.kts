@@ -23,7 +23,7 @@ openApi {
 
 jib {
 	from {
-		image = "docker.io/amazoncorretto:21-alpine"
+		image = "amazoncorretto:21-alpine"
 	}
 	to {
 		image = "agentpassvault-backend"
