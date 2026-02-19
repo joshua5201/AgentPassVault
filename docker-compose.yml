@@ -6,13 +6,14 @@ services:
       - "${MYSQL_PORT_3306:-53306}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./docker/init_scripts/mysql:/docker-entrypoint-initdb.d
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: agentpassvault_dev
       MYSQL_USER: user
       MYSQL_PASSWORD: password
     healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost && mysql -u root -proot -e 'USE agentpassvault_dev'"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -22,6 +23,7 @@ services:
     container_name: agentpassvault-integration-test
     environment:
       SPRING_PROFILES_ACTIVE: integration_test
+      SPRING_FLYWAY_ENABLED: "true"
     ports:
       - "127.0.0.1:58080:8080"
     depends_on:
