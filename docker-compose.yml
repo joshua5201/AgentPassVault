@@ -17,16 +17,6 @@ services:
       timeout: 5s
       retries: 5
 
-  flyway:
-    image: flyway/flyway:12-alpine
-    container_name: agentpassvault-flyway
-    entrypoint: ["sh", "-c", "sleep infinity"]
-    volumes:
-      - ./src/main/resources/db/migration:/flyway/sql
-    depends_on:
-      mysql:
-        condition: service_healthy
-
   integration_test:
     image: agentpassvault-backend
     container_name: agentpassvault-integration-test

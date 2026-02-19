@@ -23,7 +23,7 @@ openApi {
 
 jib {
 	from {
-		image = "gcr.io/distroless/java21-debian12@sha256:3525cafa2114ed879d3554acbbd3ba1b388e3cd3e8833ff58713ba133b0e1173"
+		image = "gcr.io/distroless/java21-debian12:nonroot-1d8908e5c48cc27b0e52f67fe8163c6572137506"
 	}
 	to {
 		image = "agentpassvault-backend"
@@ -71,8 +71,10 @@ dependencies {
 
 	// MySQL and JSON support
 	runtimeOnly("com.mysql:mysql-connector-j")
+	implementation("com.google.cloud.sql:mysql-socket-factory-connector-j-8:1.28.1")
 	implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.9.0")
 	implementation("io.hypersistence:hypersistence-tsid:2.1.1")
+	implementation("org.flywaydb:flyway-core:12.0.1")
 
  	// JJWT for JWT generation and validation
  	implementation("io.jsonwebtoken:jjwt-api:0.12.3")
