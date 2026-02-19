@@ -98,8 +98,6 @@ dependencies {
 	implementation("org.flywaydb:flyway-mysql:12.0.1")
 
 	implementation("org.mariadb.jdbc:mariadb-java-client")
-	implementation("net.java.dev.jna:jna")
-	implementation("net.java.dev.jna:jna-platform")
 
  	// JJWT for JWT generation and validation
  	implementation("io.jsonwebtoken:jjwt-api:0.12.3")
