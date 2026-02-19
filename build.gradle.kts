@@ -74,7 +74,7 @@ dependencies {
 	implementation("com.google.cloud.sql:mysql-socket-factory-connector-j-8:1.28.1")
 	implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.9.0")
 	implementation("io.hypersistence:hypersistence-tsid:2.1.1")
-	implementation("org.flywaydb:flyway-core:12.0.1")
+	implementation("org.flywaydb:flyway-core")
 
  	// JJWT for JWT generation and validation
  	implementation("io.jsonwebtoken:jjwt-api:0.12.3")
