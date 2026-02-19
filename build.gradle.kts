@@ -96,6 +96,8 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-flyway")
 	implementation("org.flywaydb:flyway-core:12.0.1")
 	implementation("org.flywaydb:flyway-mysql:12.0.1")
+	implementation("net.java.dev.jna:jna:5.18.1")
+	implementation("net.java.dev.jna:jna-platform:5.18.1")
 
 	implementation("org.mariadb.jdbc:mariadb-java-client")
 
