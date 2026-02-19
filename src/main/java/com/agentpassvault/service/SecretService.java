@@ -19,8 +19,6 @@ import com.agentpassvault.repository.SecretRepository;
 import com.agentpassvault.repository.TenantRepository;
 import com.agentpassvault.repository.UserRepository;
 import com.agentpassvault.security.AgentPassVaultAuthentication;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import java.nio.charset.StandardCharsets;
@@ -31,6 +29,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -291,7 +291,7 @@ public class SecretService {
       if (json.getBytes(StandardCharsets.UTF_8).length > MAX_METADATA_SIZE_BYTES) {
         throw new IllegalArgumentException("Metadata size exceeds limit of 8 KB");
       }
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       throw new IllegalArgumentException("Invalid metadata format", e);
     }
   }
