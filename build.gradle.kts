@@ -91,7 +91,6 @@ dependencies {
 
 	// MySQL and JSON support
 	runtimeOnly("com.mysql:mysql-connector-j")
-	implementation("com.google.cloud.sql:mysql-socket-factory-connector-j-8:1.28.1")
 	implementation("io.hypersistence:hypersistence-utils-hibernate-73:3.15.2")
 	implementation("io.hypersistence:hypersistence-tsid:2.1.1")
 	implementation("org.springframework.boot:spring-boot-starter-flyway")

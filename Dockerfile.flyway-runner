@@ -1,0 +1,8 @@
+FROM flyway/flyway:12-alpine
+
+ENV FLYWAY_HOME=/flyway
+
+COPY src/main/resources/db/migration/ /flyway/sql
+
+ENTRYPOINT ["flyway"]
+
