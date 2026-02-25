@@ -1,30 +1,36 @@
+
 # SearchSecretRequest
+
 
 ## Properties
 
-| Name       | Type                       |
-| ---------- | -------------------------- |
-| `metadata` | { [key: string]: object; } |
+Name | Type
+------------ | -------------
+`name` | string
+`metadata` | { [key: string]: object; }
 
 ## Example
 
 ```typescript
-import type { SearchSecretRequest } from "";
+import type { SearchSecretRequest } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  metadata: null,
-} satisfies SearchSecretRequest;
+  "name": null,
+  "metadata": null,
+} satisfies SearchSecretRequest
 
-console.log(example);
+console.log(example)
 
 // Convert the instance to a JSON string
-const exampleJSON: string = JSON.stringify(example);
-console.log(exampleJSON);
+const exampleJSON: string = JSON.stringify(example)
+console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as SearchSecretRequest;
-console.log(exampleParsed);
+const exampleParsed = JSON.parse(exampleJSON) as SearchSecretRequest
+console.log(exampleParsed)
 ```
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+

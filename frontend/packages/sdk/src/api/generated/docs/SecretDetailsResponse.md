@@ -1,28 +1,32 @@
 
-# CreateLeaseRequest
+# SecretDetailsResponse
 
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`agentId` | string
-`publicKey` | string
-`encryptedData` | string
-`expiry` | Date
+`secretId` | string
+`name` | string
+`metadata` | { [key: string]: object; }
+`activeLeases` | [Array&lt;LeaseInfo&gt;](LeaseInfo.md)
+`createdAt` | Date
+`updatedAt` | Date
 
 ## Example
 
 ```typescript
-import type { CreateLeaseRequest } from ''
+import type { SecretDetailsResponse } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "agentId": null,
-  "publicKey": null,
-  "encryptedData": null,
-  "expiry": null,
-} satisfies CreateLeaseRequest
+  "secretId": null,
+  "name": null,
+  "metadata": null,
+  "activeLeases": null,
+  "createdAt": null,
+  "updatedAt": null,
+} satisfies SecretDetailsResponse
 
 console.log(example)
 
@@ -31,7 +35,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as CreateLeaseRequest
+const exampleParsed = JSON.parse(exampleJSON) as SecretDetailsResponse
 console.log(exampleParsed)
 ```
 

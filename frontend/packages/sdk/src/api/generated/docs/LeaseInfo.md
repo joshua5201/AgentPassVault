@@ -1,28 +1,30 @@
 
-# CreateLeaseRequest
+# LeaseInfo
 
 
 ## Properties
 
 Name | Type
 ------------ | -------------
+`leaseId` | string
 `agentId` | string
+`agentDisplayName` | string
 `publicKey` | string
-`encryptedData` | string
-`expiry` | Date
+`expiresAt` | Date
 
 ## Example
 
 ```typescript
-import type { CreateLeaseRequest } from ''
+import type { LeaseInfo } from ''
 
 // TODO: Update the object below with actual values
 const example = {
+  "leaseId": null,
   "agentId": null,
+  "agentDisplayName": null,
   "publicKey": null,
-  "encryptedData": null,
-  "expiry": null,
-} satisfies CreateLeaseRequest
+  "expiresAt": null,
+} satisfies LeaseInfo
 
 console.log(example)
 
@@ -31,7 +33,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as CreateLeaseRequest
+const exampleParsed = JSON.parse(exampleJSON) as LeaseInfo
 console.log(exampleParsed)
 ```
 
