@@ -43,25 +43,34 @@ This document outlines the plan to implement two new features: searching for sec
     2.  Get all secret IDs from the list.
     3.  **Conditional Lease Fetching:**
         -   **If role is ADMIN**: Fetch all leases for all secrets: `leaseRepository.findAllBySecretIdInAndExpiresAtAfter(secretIds, Instant.now())`.
-        -   **If role is AGENT**: Fetch only the leases for this specific agent: `leaseRepository.findAllByAgentIdAndTenantIdAndExpiresAtAfter(principal.getAgentId(), tenantId, Instant.now())`.
+        -   **If role is AGENT**: 
+            - Fetch the agent's user record to get its *current* `publicKey`.
+            - Fetch leases for this specific agent: `leaseRepository.findAllByAgentIdAndTenantIdAndExpiresAtAfter(principal.getUserId(), tenantId, Instant.now())`.
+            - **Filter** the fetched leases to exclude any where `lease.publicKey` does not match the agent's current `publicKey`.
     4.  Create a `Map<Long, List<Lease>>` where the key is the `secretId` for efficient lookups.
     5.  Iterate through the full list of secrets. For each secret, create a new `SecretDetailsResponse` DTO. Look up its leases in the map and populate the `activeLeases` field.
     6.  Return the list of these new, enriched DTOs.
+
+### `AgentService.java`
+- **Method**: `registerPublicKey(Long tenantId, Long agentId, String publicKey)`
+  - **Change**: When a new public key is registered, "soft delete" (or hard delete if soft delete isn't implemented system-wide) all existing leases for this agent that use the old public key, as the agent can no longer decrypt them. We will implement this as a hard delete (`deleteAllByAgentIdAndPublicKeyNot`) to keep the DB clean, or add a `deleted` flag if auditability is strictly required.
 
 ### `SecretRepository.java`
 - **New Method**: `findByNameContainingIgnoreCaseAndTenantId(String name, Long tenantId)`
 - **New/Existing Method**: `findAllByTenantId(Long tenantId)`.
 
 ### `LeaseRepository.java`
+- **N+1 Prevention**: All new lease fetching methods will use `@Query` with `JOIN FETCH l.agent` and `JOIN FETCH l.secret` to prevent N+1 queries caused by default `FetchType.EAGER` annotations on those relationships.
 - **New Method**: `findAllByAgentIdAndTenantIdAndExpiresAtAfter(Long agentId, Long tenantId, Instant timestamp)`
 - **New Method**: `findAllBySecretIdInAndExpiresAtAfter(List<Long> secretIds, Instant timestamp)`
+- **New Method**: `deleteAllByAgentIdAndPublicKeyNot(Long agentId, String publicKey)` (for cleaning up old leases)
 
 ---
 
 ## 3. API/DTO Changes
 - `SearchSecretRequest.java` will be updated to include `String name`.
 - A new `SecretDetailsResponse.java` DTO will be created. It will contain `Secret` metadata (ID, name) and a list of `LeaseInfo` objects in a field named `activeLeases`.
-- A new `LeaseInfo.java` DTO will be created to hold public lease data (e.g., `leaseId`, `agentId`, `expiresAt`).
+- A new `LeaseInfo.java` DTO will be created to hold public lease data (e.g., `leaseId`, `agentId`, `expiresAt`, **`publicKey`**).
 - A new entry will be added to `openapi.yaml` for the `GET /api/v1/secrets` endpoint.
 - After backend changes, run the `./scripts/management/sync-dtos.sh` script to update the frontend SDK.
 
