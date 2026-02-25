@@ -6,11 +6,15 @@
  */
 package com.agentpassvault.exception;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -23,8 +27,14 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 public class GlobalExceptionHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+  private final Environment env;
 
-  public record ErrorResponse(int status, String message, String path, LocalDateTime timestamp) {}
+  public GlobalExceptionHandler(Environment env) {
+    this.env = env;
+  }
+
+  public record ErrorResponse(
+      int status, String message, String path, LocalDateTime timestamp, String stackTrace) {}
 
   @ExceptionHandler(MethodArgumentTypeMismatchException.class)
   public ResponseEntity<ErrorResponse> handleTypeMismatchException(
@@ -34,7 +44,8 @@ public class GlobalExceptionHandler {
             HttpStatus.BAD_REQUEST.value(),
             "Invalid parameter format",
             request.getDescription(false).replace("uri=", ""),
-            LocalDateTime.now(ZoneId.of("UTC")));
+            LocalDateTime.now(ZoneId.of("UTC")),
+            null);
     return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
   }
 
@@ -50,7 +61,8 @@ public class GlobalExceptionHandler {
             HttpStatus.BAD_REQUEST.value(),
             message,
             request.getDescription(false).replace("uri=", ""),
-            LocalDateTime.now(ZoneId.of("UTC")));
+            LocalDateTime.now(ZoneId.of("UTC")),
+            null);
     return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
   }
 
@@ -62,7 +74,8 @@ public class GlobalExceptionHandler {
             HttpStatus.UNAUTHORIZED.value(),
             "Invalid credentials",
             request.getDescription(false).replace("uri=", ""),
-            LocalDateTime.now(ZoneId.of("UTC")));
+            LocalDateTime.now(ZoneId.of("UTC")),
+            null);
     return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
   }
 
@@ -74,7 +87,8 @@ public class GlobalExceptionHandler {
             HttpStatus.UNAUTHORIZED.value(),
             "TWO_FACTOR_REQUIRED",
             request.getDescription(false).replace("uri=", ""),
-            LocalDateTime.now(ZoneId.of("UTC")));
+            LocalDateTime.now(ZoneId.of("UTC")),
+            null);
     return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
   }
 
@@ -86,7 +100,8 @@ public class GlobalExceptionHandler {
             HttpStatus.BAD_REQUEST.value(),
             ex.getMessage(),
             request.getDescription(false).replace("uri=", ""),
-            LocalDateTime.now(ZoneId.of("UTC")));
+            LocalDateTime.now(ZoneId.of("UTC")),
+            null);
     return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
   }
 
@@ -98,7 +113,8 @@ public class GlobalExceptionHandler {
             HttpStatus.NOT_FOUND.value(),
             ex.getMessage(),
             request.getDescription(false).replace("uri=", ""),
-            LocalDateTime.now(ZoneId.of("UTC")));
+            LocalDateTime.now(ZoneId.of("UTC")),
+            null);
     return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
   }
 
@@ -110,19 +126,30 @@ public class GlobalExceptionHandler {
             HttpStatus.FORBIDDEN.value(),
             ex.getMessage(),
             request.getDescription(false).replace("uri=", ""),
-            LocalDateTime.now(ZoneId.of("UTC")));
+            LocalDateTime.now(ZoneId.of("UTC")),
+            null);
     return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
   }
 
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
     logger.error("Unhandled exception occurred", ex);
+
+    String stackTrace = null;
+    if (!Arrays.asList(env.getActiveProfiles()).contains("production")) {
+      StringWriter sw = new StringWriter();
+      PrintWriter pw = new PrintWriter(sw);
+      ex.printStackTrace(pw);
+      stackTrace = sw.toString();
+    }
+
     ErrorResponse error =
         new ErrorResponse(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
-            "An unexpected error occurred",
+            "An unexpected error occurred: " + ex.getMessage(),
             request.getDescription(false).replace("uri=", ""),
-            LocalDateTime.now(ZoneId.of("UTC")));
+            LocalDateTime.now(ZoneId.of("UTC")),
+            stackTrace);
     return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 }
