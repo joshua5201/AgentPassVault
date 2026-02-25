@@ -1,6 +1,6 @@
 # Agent Secret Listing & Search by Name - Implementation Plan
 
-This document outlines the plan to implement two new features for the Agent CLI: searching for secrets by name and listing all secrets available to an agent within its tenant.
+This document outlines the plan to implement two new features: searching for secrets by name and a unified command to list all secrets for both admins and agents, showing relevant lease information.
 
 ---
 
@@ -11,23 +11,19 @@ This document outlines the plan to implement two new features for the Agent CLI:
 - **Change**: Add a new `--name <string>` option to the `search-secrets` command.
 - **Example**: `agentpassvault search-secrets --name "database"`
 
-- **File**: `frontend/apps/cli/src/commands/secrets.ts`
-- **Change**: Update the `searchSecrets` function to handle the new `name` option. It will need to pass this new parameter to the `VaultClient`.
-
-### `list-secrets` Command (New)
+### `list-secrets` Command (New & Unified)
 - **File**: `frontend/apps/cli/src/index.ts`
-- **Change**: Create a new command `program.command("list-secrets")`.
-- **Description**: "List all secrets in the tenant, showing lease status for the current agent."
-- **Action**: It will call a new function, `listAllSecretsForAgent()`.
+- **Change**: Create a new top-level command `program.command("list-secrets")`.
+- **Description**: "Lists all secrets in the tenant. For agents, shows only their active lease. For admins, shows all active leases."
+- **Action**: It will call a new function, `listAllSecrets()`.
 
-- **File**: `frontend/apps/cli/src/commands/secrets.ts`
-- **Change**: Implement `listAllSecretsForAgent()`. This function will call a new method on the `VaultClient` (e.g., `client.listAllSecrets()`) and print the resulting JSON array.
+- **File**: `frontend/apps/cli/src/commands/secrets.ts` (or a shared command file)
+- **Change**: Implement `listAllSecrets()`. This function will call a new method on the `VaultClient` (e.g., `client.listSecrets()`) and print the resulting JSON array.
 
 ### SDK (`VaultClient`)
 - **File**: `frontend/packages/sdk/src/api/VaultClient.ts`
 - **Change**:
-    - Update the `searchSecrets` method to accept an optional `name` in its request body.
-    - Add a new method `listAllSecrets()` that makes a `GET` request to `/api/v1/agent/secrets`.
+    - Add a new method `listSecrets()` that makes a `GET` request to `/api/v1/secrets`.
 
 ---
 
@@ -36,37 +32,37 @@ This document outlines the plan to implement two new features for the Agent CLI:
 ### `SecretController.java`
 - **Endpoint**: `/api/v1/secrets/search` (POST)
   - **Change**: The `SearchSecretRequest` DTO will be updated to include an optional `String name`. The controller method will pass this to the service layer.
-- **New Endpoint**: `/api/v1/agent/secrets` (GET)
-  - **Change**: Create a new endpoint that is secured for agent access only (`@PreAuthorize("hasRole('AGENT')")`).
-  - **Logic**: It will take the `AgentPassVaultAuthentication` principal, extract the `agentId` and `tenantId`, and call a new service method `secretService.listAllSecretsForAgent(agentId, tenantId)`.
+- **New Endpoint**: `GET /api/v1/secrets`
+  - **Change**: Create a new endpoint that is secured for any authenticated user (`@PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")`).
+  - **Logic**: It will take the `AgentPassVaultAuthentication` principal and call a new service method `secretService.listAllSecretsForPrincipal(principal)`.
 
 ### `SecretService.java`
-- **Method**: `searchSecrets`
-  - **Change**: Update the logic to check if a `name` is provided in the `SearchSecretRequest`. If so, it will call a new repository method, always passing the `tenantId` from the authentication principal.
-- **New Method**: `listAllSecretsForAgent(Long agentId, Long tenantId)`
+- **New Method**: `listAllSecretsForPrincipal(AgentPassVaultAuthentication principal)`
   - **Logic**:
-    1. Fetch all secrets for the tenant: `secretRepository.findAllByTenantId(tenantId)`.
-    2. Fetch all of this agent's valid leases for the tenant: `leaseRepository.findAllByAgentIdAndTenantId(agentId, tenantId)`.
-    3. Create a `Map<Long, Lease>` where the key is the `secretId` for quick lookups.
-    4. Iterate through the full list of secrets. For each secret, create a new `AgentSecretListItemResponse` DTO. Check the map to see if a lease exists for that secret's ID. If it does, populate the `lease` field in the DTO.
-    5. Return the list of new DTOs.
+    1.  Get `tenantId` from the principal. Fetch all secrets for the tenant: `secretRepository.findAllByTenantId(tenantId)`.
+    2.  Get all secret IDs from the list.
+    3.  **Conditional Lease Fetching:**
+        -   **If role is ADMIN**: Fetch all leases for all secrets: `leaseRepository.findAllBySecretIdIn(secretIds)`.
+        -   **If role is AGENT**: Fetch only the leases for this specific agent: `leaseRepository.findAllByAgentIdAndTenantId(principal.getAgentId(), tenantId)`.
+    4.  Create a `Map<Long, List<Lease>>` where the key is the `secretId` for efficient lookups.
+    5.  Iterate through the full list of secrets. For each secret, create a new `SecretDetailsResponse` DTO. Look up its leases in the map and populate the `activeLeases` field.
+    6.  Return the list of these new, enriched DTOs.
 
 ### `SecretRepository.java`
 - **New Method**: `findByNameContainingIgnoreCaseAndTenantId(String name, Long tenantId)`
-  - **Query**: A straightforward JPA query to find secrets by name within a specific tenant.
 - **New/Existing Method**: `findAllByTenantId(Long tenantId)`.
 
 ### `LeaseRepository.java`
 - **New Method**: `findAllByAgentIdAndTenantId(Long agentId, Long tenantId)`
-  - **Query**: The `Lease` entity is joined with the `Secret` entity to filter by `tenantId`. This ensures an agent from one tenant cannot list leases belonging to a secret in another tenant, even if the agent ID was somehow reused.
+- **New Method**: `findAllBySecretIdIn(List<Long> secretIds)`
 
 ---
 
 ## 3. API/DTO Changes
 - `SearchSecretRequest.java` will be updated to include `String name`.
-- A new `AgentSecretListItemResponse.java` DTO will be created. It will contain `Secret` metadata (ID, name) and a nullable `LeaseInfo` field.
-- A new `LeaseInfo.java` DTO will be created to hold basic lease data (e.g., `leaseId`, `expiresAt`).
-- A new entry will be added to `openapi.yaml` for the `GET /api/v1/agent/secrets` endpoint.
+- A new `SecretDetailsResponse.java` DTO will be created. It will contain `Secret` metadata (ID, name) and a list of `LeaseInfo` objects in a field named `activeLeases`.
+- A new `LeaseInfo.java` DTO will be created to hold public lease data (e.g., `leaseId`, `agentId`, `expiresAt`).
+- A new entry will be added to `openapi.yaml` for the `GET /api/v1/secrets` endpoint.
 - After backend changes, run the `./scripts/management/sync-dtos.sh` script to update the frontend SDK.
 
 ---
@@ -76,15 +72,10 @@ This document outlines the plan to implement two new features for the Agent CLI:
 ### Backend Tests
 - **File**: `src/test/java/com/agentpassvault/controller/SecretControllerTest.java`
 - **New Tests**:
-    - Add a test for `searchSecrets` that uses the new `name` parameter and verifies that only matching secrets are returned.
-    - Add a new test for the `GET /api/v1/agent/secrets` endpoint. This will involve:
-        1. Creating an agent and two secrets (A and B).
-        2. Leasing only secret A to the agent.
-        3. Calling the endpoint and verifying that both secrets are returned.
-        4. Asserting that secret A's response has a non-null `lease` field and secret B's has a null `lease` field.
+    - **Admin Test**: Call `GET /api/v1/secrets` as an Admin. Create 2 agents and 1 secret. Lease the secret to both agents. Verify the response contains 1 secret with 2 leases in its `activeLeases` list.
+    - **Agent Test**: Call `GET /api/v1/secrets` as Agent A. Use the same setup as the admin test. Verify the response contains 1 secret, but its `activeLeases` list has only 1 entry (the lease for Agent A).
 
 ### Frontend Tests
 - **File**: `frontend/apps/cli/test/e2e/cli.test.ts`
 - **New Scenarios**:
-    - Add a test scenario where a secret is created, and then `agentpassvault search-secrets --name "partial-name"` is run to ensure the correct secret is found.
-    - Add a test scenario for `agentpassvault list-secrets` that mimics the backend test logic to ensure the CLI correctly displays the lease status.
+    - Add a test scenario for `agentpassvault list-secrets`. This test will call the command as an agent and verify that the `activeLeases` field is correctly populated for a leased secret and empty for a non-leased one.
