@@ -1,5 +1,10 @@
 import { Command } from "commander";
-import { setup, generateKey, registerAgent } from "./commands/identity.js";
+import {
+  setup,
+  generateKey,
+  registerAgent,
+  init,
+} from "./commands/identity.js";
 import {
   getSecret,
   searchSecrets,
@@ -16,6 +21,7 @@ import {
   adminUpdateSecret,
   adminDeleteSecret,
   adminListAgents,
+  adminShowAgent,
   adminCreateAgent,
   adminRotateAgentToken,
   adminDeleteAgent,
@@ -23,13 +29,18 @@ import {
   adminFulfillRequest,
   adminRejectRequest,
 } from "./commands/admin.js";
+import { setVerbose } from "./utils/output.js";
 
 const program = new Command();
 
 program
   .name("agentpassvault")
   .description("CLI for AgentPassVault")
-  .version("0.1.0");
+  .version("0.1.0")
+  .option("-v, --verbose", "Enable verbose output")
+  .hook("preAction", (thisCommand) => {
+    setVerbose(thisCommand.opts().verbose);
+  });
 
 // Identity Commands
 const identity = program
@@ -54,6 +65,15 @@ identity
   .command("register")
   .description("Register the agent public key with the server")
   .action(registerAgent);
+
+identity
+  .command("init")
+  .description("One-shot initialization for the agent (setup, generate-key, register)")
+  .requiredOption("--api-url <url>", "Base URL of the AgentPassVault API")
+  .requiredOption("--tenant-id <id>", "Tenant ID")
+  .requiredOption("--agent-id <id>", "Agent ID")
+  .requiredOption("--app-token <token>", "Application Token")
+  .action(init);
 
 // Secret Commands
 program
@@ -158,6 +178,11 @@ adminAgent
   .description("List all agents")
 
   .action(adminListAgents);
+
+adminAgent
+  .command("show <id>")
+  .description("Show details of an agent")
+  .action(adminShowAgent);
 
 adminAgent
   .command("create <name>")

@@ -84,10 +84,14 @@ class RequestControllerTest extends BaseIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("pending"))
             .andExpect(jsonPath("$.requestId").exists())
+            .andExpect(jsonPath("$.fulfillmentUrl").exists())
+            .andExpect(jsonPath("$.fulfillmentUrl").isString())
             .andReturn()
             .getResponse()
             .getContentAsString();
     String requestId = objectMapper.readTree(reqResponse).get("requestId").asText();
+    String fulfillmentUrl = objectMapper.readTree(reqResponse).get("fulfillmentUrl").asText();
+    assert fulfillmentUrl.endsWith(requestId);
 
     // 2. Create Secret
     CreateSecretRequest createSecretReq =

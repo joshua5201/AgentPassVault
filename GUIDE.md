@@ -3,43 +3,61 @@
 
 A short reference for automated agents to request and retrieve secrets securely using the agentpassvault CLI.
 
-# Security first
+## Security first
 
 - Never expose secrets or private keys in chat, logs, or model prompts.
 - Keep private keys local with strict permissions (600). Decrypt and use secrets only locally.
 
-# Required values (keep secret)
+## CLI Setup and Execution
 
-- AGENTPASSVAULT_API_URL — e.g. https://api.agentpassvault.com
-- TENANT_ID — numeric tenant id
-- AGENT_ID — numeric agent id
-- APP_TOKEN — agent app token
+If you need a standalone executable (so you don't need Node.js at runtime), you can compile the CLI. Run this in the `frontend/apps/cli` directory of the repository:
+```bash
+npm install -g pkg
+pkg package.json
+```
+This produces single binaries (e.g. `agentpassvault-linux`) you can use directly.
 
-# Quick agent flow
+**JSON Output:** By default, all CLI commands output clean, machine-readable JSON to standard output (`stdout`). If you need human-readable progress logs, pass the `-v` or `--verbose` flag (which prints to `stderr`). Errors are also output as JSON to `stderr`.
 
-1. Configure CLI:
-agentpassvault identity setup --api-url <URL> --tenant-id <TENANT_ID> --agent-id <AGENT_ID> --app-token <TOKEN>
-2. Ensure keypair:
-agentpassvault identity generate-key
-(private: ~/.config/agentpassvault/keys/agent.priv, mode 600)
-3. Register public key:
-agentpassvault identity register
-(CLI calls agentLogin then uploads public key)
-4. Create request (Ask a human):
-agentpassvault request-secret "plurk-account" --metadata '{"account":"joshua5201"}'
-→ Share the printed fulfillment URL with a human approver
-5. Poll request:
+## Required values (keep secret)
+
+- `AGENTPASSVAULT_API_URL` — e.g. https://api.agentpassvault.com
+- `TENANT_ID` — numeric tenant id
+- `AGENT_ID` — numeric agent id
+- `APP_TOKEN` — agent app token
+
+## Quick agent flow
+
+1. **Initialize Agent (One-shot Setup, Key Gen, & Registration):**
+```bash
+agentpassvault identity init --api-url <URL> --tenant-id <TENANT_ID> --agent-id <AGENT_ID> --app-token <TOKEN>
+```
+*(This sets up your configuration in `~/.config/agentpassvault/config.json`, generates a 4096-bit RSA keypair in `~/.config/agentpassvault/keys/`, and registers your public key with the server).*
+
+2. **Create request (Ask a human):**
+```bash
+agentpassvault request-secret "some-account" --metadata '{"account":"joshua5201"}'
+```
+→ Share the `fulfillmentUrl` from the JSON response with a human approver.
+
+3. **Poll request:**
+```bash
 agentpassvault get-request <requestId>
-→ Wait for status fulfilled and note mappedSecretId
-6. Retrieve secret and decrypt locally:
+```
+→ Wait for `"status": "fulfilled"` in the JSON response and note the `mappedSecretId`.
+
+4. **Retrieve secret and decrypt locally:**
+```bash
 agentpassvault get-secret <secretId>
-→ CLI decrypts locally using private key. Do not forward plaintext.
+```
+→ The CLI securely fetches the encrypted payload and decrypts it locally using your private key, outputting the secret as JSON. Do not forward the plaintext.
 
-# Using secrets safely
+## Using secrets safely
 
-- Pipe into the action (stdin) or use ephemeral file with mode 600, then delete.
+- Parse the JSON output programmatically (e.g., using `jq` or built-in JSON parsers).
+- Pipe into the action (stdin) or use an ephemeral file with mode 600, then delete immediately.
 - Avoid logging plaintext.
 
-# Minimal test checklist
+## Minimal test checklist
 
-- setup → generate-key → register → request-secret → fulfill in UI → get-request → get-secret → clean up.
+- `init` → `request-secret` → fulfill in UI (or via admin CLI) → `get-request` → `get-secret` → clean up.

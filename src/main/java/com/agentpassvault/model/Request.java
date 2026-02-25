@@ -65,7 +65,4 @@ public class Request extends BaseEntity {
 
   @Column(name = "rejection_reason")
   private String rejectionReason;
-
-  @Column(name = "fulfillment_url")
-  private String fulfillmentUrl;
 }

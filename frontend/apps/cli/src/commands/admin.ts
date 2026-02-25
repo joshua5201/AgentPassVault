@@ -8,6 +8,8 @@ import {
   AgentResponse,
 } from "@agentpassvault/sdk";
 import { loadConfig, saveConfig, Config, ensureConfigDir } from "../config.js";
+import { handleError } from "../utils/error-handler.js";
+import { printOutput, logMessage } from "../utils/output.js";
 
 import { Writable } from "node:stream";
 
@@ -18,7 +20,7 @@ async function prompt(
   const mutableStdout = new Writable({
     write: (chunk, encoding, callback) => {
       if (!silent) {
-        process.stdout.write(chunk, encoding);
+        process.stderr.write(chunk, encoding);
       }
       callback();
     },
@@ -31,14 +33,14 @@ async function prompt(
   });
 
   if (silent) {
-    process.stdout.write(question);
+    process.stderr.write(question);
   }
 
   const answer = await rl.question(silent ? "" : question);
   rl.close();
 
   if (silent) {
-    process.stdout.write("\n");
+    process.stderr.write("\n");
   }
 
   return answer;
@@ -73,7 +75,7 @@ export async function adminLogin(options: {
   const password =
     options.password || (await prompt("Master Password: ", true));
 
-  console.log("Deriving login credentials...");
+  logMessage("Deriving login credentials...");
   const masterKeys = await MasterKeyService.deriveMasterKeys(
     password,
     username,
@@ -83,7 +85,7 @@ export async function adminLogin(options: {
     password,
   );
 
-  console.log("Logging in...");
+  logMessage("Logging in...");
   const client = new VaultClient(config.apiUrl);
 
   try {
@@ -108,10 +110,9 @@ export async function adminLogin(options: {
     };
 
     await saveConfig(newConfig);
-    console.log("Login successful.");
+    printOutput({ message: "Login successful.", tenantId: newConfig.tenantId });
   } catch (error: any) {
-    console.error("Login failed:", error.message);
-    process.exit(1);
+    handleError(error, "Login failed");
   }
 }
 
@@ -132,15 +133,14 @@ export async function adminRegister(options: {
     const p1 = await prompt("Master Password: ", true);
     const p2 = await prompt("Confirm Master Password: ", true);
     if (p1 !== p2) {
-      console.error("Passwords do not match.");
-      process.exit(1);
+      handleError(new Error("Passwords do not match."));
     }
     password = p1;
   }
 
   const displayName = options.displayName || (await prompt("Display Name: "));
 
-  console.log("Deriving credentials...");
+  logMessage("Deriving credentials...");
   const masterKeys = await MasterKeyService.deriveMasterKeys(
     password,
     username,
@@ -150,7 +150,7 @@ export async function adminRegister(options: {
     password,
   );
 
-  console.log("Registering...");
+  logMessage("Registering...");
   const client = new VaultClient(apiUrl);
 
   try {
@@ -160,11 +160,7 @@ export async function adminRegister(options: {
       displayName,
     });
 
-    console.log("Registration successful.");
-    console.log(`Tenant ID: ${resp.tenantId}`);
-    console.log(`User ID: ${resp.userId}`);
-
-    console.log("\nLogging in automatically...");
+    logMessage("\nLogging in automatically...");
     const loginResp = await client.userLogin({
       username,
       password: loginHash,
@@ -185,43 +181,36 @@ export async function adminRegister(options: {
     };
 
     await saveConfig(newConfig);
-    console.log("Login successful and configuration updated.");
+    printOutput({
+      message: "Registration and login successful.",
+      tenantId: newConfig.tenantId,
+      userId: resp.userId,
+    });
   } catch (error: any) {
-    console.error("Registration failed:", error.message);
-    process.exit(1);
+    handleError(error, "Registration failed");
   }
 }
 
 export async function adminDeleteTenant(id: string) {
   try {
     const { client } = await getAdminClient();
-    console.log(`Deleting tenant ${id} and all associated data...`);
+    logMessage(`Deleting tenant ${id} and all associated data...`);
     await client.deleteTenant(id);
-    console.log("Tenant deleted.");
+    printOutput({ message: "Tenant deleted." });
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }
 
 export async function adminListSecrets() {
   try {
     const { client } = await getAdminClient();
-    console.log("Fetching secrets...");
+    logMessage("Fetching secrets...");
     const secrets = await client.searchSecrets({ metadata: {} });
 
-    if (secrets.length === 0) {
-      console.log("No secrets found.");
-      return;
-    }
-
-    console.log(`Found ${secrets.length} secret(s):`);
-    secrets.forEach((s: any) => {
-      console.log(`- ${s.name} (ID: ${s.secretId})`);
-    });
+    printOutput(secrets);
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }
 
@@ -235,30 +224,28 @@ export async function adminViewSecret(
     const password =
       options.password || (await prompt("Confirm Master Password: ", true));
 
-    console.log("Fetching secret...");
+    logMessage("Fetching secret...");
     const secret = await client.getSecret(id);
 
-    console.log("Deriving Master Key...");
+    logMessage("Deriving Master Key...");
     const masterKeys = await MasterKeyService.deriveMasterKeys(
       password,
       config.adminUsername!,
     );
 
-    console.log("Decrypting...");
+    logMessage("Decrypting...");
     const decrypted = await SecretService.decryptSecret(
       secret as any,
       masterKeys,
     );
 
-    console.log("\nSecret Details:");
-    console.log(`Name: ${secret.name}`);
-    console.log(`Value: ${decrypted}`);
-    if (secret.metadata && Object.keys(secret.metadata).length > 0) {
-      console.log("Metadata:", JSON.stringify(secret.metadata, null, 2));
-    }
+    printOutput({
+      name: secret.name,
+      value: decrypted,
+      metadata: secret.metadata,
+    });
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }
 
@@ -287,13 +274,13 @@ export async function adminCreateSecret(options: {
     const value = JSON.stringify(secretValueObj);
     const metadata = { name };
 
-    console.log("Deriving Master Key...");
+    logMessage("Deriving Master Key...");
     const masterKeys = await MasterKeyService.deriveMasterKeys(
       password,
       config.adminUsername!,
     );
 
-    console.log("Encrypting...");
+    logMessage("Encrypting...");
     const secretData = await SecretService.createSecret(
       name,
       value,
@@ -301,25 +288,26 @@ export async function adminCreateSecret(options: {
       masterKeys,
     );
 
-    console.log("Uploading...");
-    await client.createSecret(secretData as any);
+    logMessage("Uploading...");
+    const newSecret = await client.createSecret(secretData as any);
 
-    console.log("Secret created successfully.");
+    printOutput({
+      message: "Secret created successfully.",
+      secretId: newSecret.secretId,
+    });
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }
 
 export async function adminDeleteSecret(id: string) {
   try {
     const { client } = await getAdminClient();
-    console.log(`Deleting secret ${id}...`);
+    logMessage(`Deleting secret ${id}...`);
     await client.deleteSecret(id);
-    console.log("Secret deleted.");
+    printOutput({ message: "Secret deleted." });
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }
 
@@ -355,104 +343,103 @@ export async function adminUpdateSecret(
       ? JSON.parse(options.metadata)
       : undefined;
 
-    console.log(`Updating secret ${id}...`);
+    logMessage(`Updating secret ${id}...`);
     await client.updateSecret(id, {
       name: options.name,
       encryptedValue,
       metadata,
     });
-    console.log("Secret updated.");
+    printOutput({ message: "Secret updated." });
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }
 
 // Agent Management
 export async function adminListAgents() {
   try {
-    const { client } = await getAdminClient();
+    const { client, config } = await getAdminClient();
     const agents = await client.listAgents();
 
-    if (agents.length === 0) {
-      console.log("No agents found.");
-      return;
-    }
-
-    console.log(`Found ${agents.length} agent(s):`);
-    agents.forEach((a: AgentResponse) => {
-      console.log(`- ${a.displayName} (${a.name}) ID: ${a.agentId}`);
-      console.log(`  Public Key: ${a.publicKey ? "Registered" : "Pending"}`);
+    printOutput({
+      tenantId: config.tenantId,
+      agents,
     });
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
+  }
+}
+
+export async function adminShowAgent(id: string) {
+  try {
+    const { client, config } = await getAdminClient();
+    const agent = await client.getAgent(id);
+
+    printOutput({
+      tenantId: config.tenantId,
+      agent,
+    });
+  } catch (error: any) {
+    handleError(error);
   }
 }
 
 export async function adminCreateAgent(name: string) {
   try {
-    const { client } = await getAdminClient();
-    console.log(`Creating agent "${name}"...`);
+    const { client, config } = await getAdminClient();
+    logMessage(`Creating agent "${name}"...`);
     const resp = await client.createAgent({ name });
-    console.log("Agent created successfully.");
-    console.log(`Agent ID: ${resp.agentId}`);
-    console.log(`App Token: ${resp.appToken}`);
-    console.log(
-      "\nIMPORTANT: Store the App Token safely. It will not be shown again.",
-    );
+    
+    printOutput({
+      message: "Agent created successfully.",
+      tenantId: config.tenantId,
+      agentId: resp.agentId,
+      appToken: resp.appToken,
+      warning: "IMPORTANT: Store the App Token safely. It will not be shown again.",
+    });
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }
 
 export async function adminRotateAgentToken(id: string) {
   try {
     const { client } = await getAdminClient();
-    console.log(`Rotating token for agent ${id}...`);
+    logMessage(`Rotating token for agent ${id}...`);
     const resp = await client.rotateAgentToken(id);
-    console.log("Token rotated successfully.");
-    console.log(`New App Token: ${resp.appToken}`);
+    printOutput({
+      message: "Token rotated successfully.",
+      appToken: resp.appToken,
+    });
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }
 
 export async function adminDeleteAgent(id: string) {
   try {
     const { client } = await getAdminClient();
-    console.log(`Deleting agent ${id}...`);
+    logMessage(`Deleting agent ${id}...`);
     await client.deleteAgent(id);
-    console.log("Agent deleted.");
+    printOutput({ message: "Agent deleted." });
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }
 
 // Request Management
 export async function adminListRequests() {
   try {
-    const { client } = await getAdminClient();
-    console.log("Fetching requests...");
+    const { client, config } = await getAdminClient();
+    logMessage("Fetching requests...");
     const secretRequestResponses = await client.listRequests();
 
-    if (secretRequestResponses.length === 0) {
-      console.log("No requests found.");
-      return;
-    }
-
-    console.log(`Found ${secretRequestResponses.length} request(s):`);
-    secretRequestResponses.forEach((r: any) => {
-      console.log(`- ${r.name} (ID: ${r.requestId})`);
-      console.log(`  Status: ${r.status}, Type: ${r.type}`);
-      if (r.context) console.log(`  Context: ${r.context}`);
+    printOutput({
+      tenantId: config.tenantId,
+      requests: secretRequestResponses,
     });
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }
 
@@ -463,10 +450,9 @@ export async function adminRejectRequest(id: string, reason: string) {
       status: "rejected" as any,
       rejectionReason: reason,
     });
-    console.log("Request rejected.");
+    printOutput({ message: "Request rejected." });
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }
 
@@ -483,10 +469,10 @@ export async function adminFulfillRequest(
       );
     }
 
-    console.log("Fetching request details...");
+    logMessage("Fetching request details...");
     const secretRequestResponse = await client.getRequest(requestId);
 
-    console.log("Fetching agent details...");
+    logMessage("Fetching agent details...");
     const agent = await client.getAgent(secretRequestResponse.agentId!);
     if (!agent.publicKey) {
       throw new Error("Agent has not registered a public key yet.");
@@ -495,7 +481,7 @@ export async function adminFulfillRequest(
     const password =
       options.password ||
       (await prompt("Confirm Master Password to decrypt/encrypt: ", true));
-    console.log("Deriving Master Key...");
+    logMessage("Deriving Master Key...");
     const masterKeys = await MasterKeyService.deriveMasterKeys(
       password,
       config.adminUsername!,
@@ -506,7 +492,7 @@ export async function adminFulfillRequest(
 
     if (plaintext && !secretId) {
       // Create a new secret first
-      console.log("Creating new secret...");
+      logMessage("Creating new secret...");
       const secretData = await SecretService.createSecret(
         secretRequestResponse.name || "Fulfilling Request",
         plaintext,
@@ -517,7 +503,7 @@ export async function adminFulfillRequest(
       secretId = newSecret.secretId;
     } else if (secretId && !plaintext) {
       // Fetch and decrypt existing secret
-      console.log("Fetching existing secret...");
+      logMessage("Fetching existing secret...");
       const secret = await client.getSecret(secretId);
       plaintext = await SecretService.decryptSecret(secret as any, masterKeys);
     }
@@ -527,7 +513,7 @@ export async function adminFulfillRequest(
     }
 
     // Create Lease
-    console.log("Creating lease for agent...");
+    logMessage("Creating lease for agent...");
     const agentPublicKey = await CryptoService.importPublicKey(agent.publicKey);
     const encryptedForAgent = await CryptoService.encryptAsymmetric(
       plaintext,
@@ -541,15 +527,14 @@ export async function adminFulfillRequest(
     });
 
     // Update Request Status
-    console.log("Marking request as fulfilled...");
+    logMessage("Marking request as fulfilled...");
     await client.updateRequest(requestId, {
       status: "fulfilled" as any,
       secretId: secretId,
     });
 
-    console.log("Request fulfilled successfully.");
+    printOutput({ message: "Request fulfilled successfully." });
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }

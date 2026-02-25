@@ -10,6 +10,8 @@ import {
   Config,
   KEYS_DIR,
 } from "../config.js";
+import { handleError } from "../utils/error-handler.js";
+import { printOutput, logMessage } from "../utils/output.js";
 
 export async function setup(options: {
   apiUrl: string;
@@ -26,10 +28,10 @@ export async function setup(options: {
     appToken: options.appToken,
   };
   await saveConfig(config);
-  console.log("Configuration saved successfully.");
+  printOutput({ message: "Configuration saved successfully.", config });
 }
 
-export async function generateKey() {
+export async function generateKey(silent: boolean = false) {
   await ensureConfigDir();
 
   // Check permissions for keys directory (should be 700 or 600)
@@ -37,13 +39,13 @@ export async function generateKey() {
     const stats = await fs.stat(KEYS_DIR);
     const mode = stats.mode & 0o777;
     if (mode !== 0o700 && mode !== 0o600) {
-      console.warn(
+      logMessage(
         `Warning: Keys directory has insecure permissions: ${mode.toString(8)}. Recommended: 700`,
       );
     }
   }
 
-  console.log("Generating 4096-bit RSA-OAEP key pair...");
+  logMessage("Generating 4096-bit RSA-OAEP key pair...");
   const keyPair = await CryptoService.generateAgentKeyPair();
 
   const privPath = await getPrivateKeyPath();
@@ -58,9 +60,15 @@ export async function generateKey() {
   // Set permissions for private key
   await fs.chmod(privPath, 0o600);
 
-  console.log(`Keys generated and saved to:`);
-  console.log(`- Private: ${privPath}`);
-  console.log(`- Public:  ${pubPath}`);
+  if (!silent) {
+    printOutput({
+      message: "Keys generated and saved successfully.",
+      paths: {
+        private: privPath,
+        public: pubPath,
+      },
+    });
+  }
 }
 
 export async function registerAgent() {
@@ -72,8 +80,7 @@ export async function registerAgent() {
     !config.agentId ||
     !config.appToken
   ) {
-    console.error('Configuration missing. Please run "setup" first.');
-    process.exit(1);
+    handleError(new Error('Configuration missing. Please run "setup" first.'));
   }
 
   // 1. Generate keys if they don't exist
@@ -83,16 +90,20 @@ export async function registerAgent() {
   try {
     await fs.access(pubPath);
     await fs.access(privPath);
-    console.log("Existing keys found.");
+    logMessage("Existing keys found.");
   } catch {
-    await generateKey();
+    await generateKey(true);
   }
 
   // 2. Load public key
   const pubB64 = await fs.readFile(pubPath, "utf-8");
 
   // 3. Register with server
-  console.log("Registering public key with server...");
+  logMessage("Registering public key with server...");
+  if (!config || !config.apiUrl || !config.tenantId || !config.agentId || !config.appToken) {
+    handleError(new Error('Configuration missing or incomplete.'));
+  }
+  
   const client = new VaultClient(config.apiUrl);
 
   try {
@@ -107,9 +118,68 @@ export async function registerAgent() {
       publicKey: pubB64,
     });
 
-    console.log("Agent registered successfully.");
+    printOutput({ message: "Agent registered successfully." });
   } catch (error: any) {
-    console.error("Registration failed:", error.message);
-    process.exit(1);
+    handleError(error, "Registration failed");
+  }
+}
+
+export async function init(options: {
+  apiUrl: string;
+  tenantId: string;
+  agentId: string;
+  appToken: string;
+}) {
+  try {
+    logMessage("Starting agent initialization...");
+    
+    // 1. Setup
+    logMessage("Saving configuration...");
+    const existingConfig = (await loadConfig()) || {};
+    const config: Config = {
+      ...existingConfig,
+      apiUrl: options.apiUrl,
+      tenantId: options.tenantId,
+      agentId: options.agentId,
+      appToken: options.appToken,
+    };
+    await saveConfig(config);
+
+    // 2. Generate Keys
+    logMessage("Generating keys...");
+    await ensureConfigDir();
+    const keyPair = await CryptoService.generateAgentKeyPair();
+    const privPath = await getPrivateKeyPath();
+    const pubPath = await getPublicKeyPath();
+    const privB64 = await CryptoService.exportPrivateKey(keyPair.privateKey);
+    const pubB64 = await CryptoService.exportPublicKey(keyPair.publicKey);
+    await fs.writeFile(privPath, privB64, "utf-8");
+    await fs.writeFile(pubPath, pubB64, "utf-8");
+    if (process.platform !== "win32") {
+      await fs.chmod(privPath, 0o600);
+    }
+
+    // 3. Register
+    logMessage("Registering with server...");
+    const client = new VaultClient(options.apiUrl);
+    const loginResp = await client.agentLogin({
+      tenantId: options.tenantId,
+      appToken: options.appToken,
+    });
+    client.setAccessToken(loginResp.accessToken || null);
+    await client.registerAgentPublicKey(options.agentId, {
+      publicKey: pubB64,
+    });
+
+    printOutput({
+      message: "Agent initialization complete.",
+      config,
+      paths: {
+        private: privPath,
+        public: pubPath,
+      },
+    });
+  } catch (error: any) {
+    handleError(error, "Initialization failed");
   }
 }

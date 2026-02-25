@@ -43,8 +43,9 @@ docker compose up -d
 ```
 
 ### 2. Setup Database
+
 ```bash
-./scripts/database/flyway.sh migrate
+./scripts/database/flyway.sh
 ```
 
 ### 3. Run the Application
@@ -78,6 +79,9 @@ The frontend is a TypeScript monorepo managed by **Turborepo** and **pnpm**. It 
 
 ### Working with the Agent CLI
 
+> [!TIP]
+> Are you an automated agent looking for integration instructions? Check out the **[Agent Integration Guide (GUIDE.md)](GUIDE.md)** for a quick overview of required values, secure CLI commands, and JSON parsing.
+
 #### Local Execution
 After building the project (`pnpm build`), you can run the CLI directly using Node.js without installing it globally:
 ```bash
@@ -98,6 +102,19 @@ To make the `agentpassvault` command available everywhere on your system:
 cd frontend/apps/cli
 npm link
 ```
+
+#### Compiling to a Single Executable
+If you want to distribute the AgentPassVault CLI as a single, standalone binary (so agents do not need Node.js installed), you can compile it using `pkg`:
+```bash
+cd frontend/apps/cli
+
+# Install pkg globally if you haven't already
+npm install -g pkg
+
+# Compile into an executable for Linux, macOS, and Windows
+pkg package.json
+```
+The compiled binaries will be generated in the `frontend/apps/cli` folder.
 
 ### Troubleshooting
 If you encounter weird build errors or type mismatches after a git pull:

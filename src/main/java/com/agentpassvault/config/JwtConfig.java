@@ -8,9 +8,15 @@ package com.agentpassvault.config;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.proc.SecurityContext;
+import io.jsonwebtoken.Jwts;
+import jakarta.annotation.PostConstruct;
+import java.time.Instant;
 import java.util.Base64;
+import java.util.Date;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,6 +27,8 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 
 @Configuration
 public class JwtConfig {
+
+  private static final Logger logger = LoggerFactory.getLogger(JwtConfig.class);
 
   @Value("${agentpassvault.jwt.secret}")
   private String jwtSecret;
@@ -35,6 +43,28 @@ public class JwtConfig {
   private long leaseExpirationMinutes;
 
   private SecretKey secretKey;
+
+  @PostConstruct
+  public void init() {
+    try {
+      // Fail fast if the provided JWT secret is invalid (e.g., too short for HMAC-SHA256)
+      logger.info("Verifying JWT configuration and secret length...");
+      SecretKey key = getSecretKey();
+      Jwts.builder()
+          .subject("startup-test-dummy")
+          .issuedAt(Date.from(Instant.now()))
+          .signWith(key)
+          .compact();
+      logger.info("JWT secret is valid and token generation is functioning correctly.");
+    } catch (Exception e) {
+      logger.error(
+          "FATAL ERROR: JWT Token generation failed. Your 'agentpassvault.jwt.secret' might be invalid or too short. It must be at least 256 bits (32 bytes) for HMAC-SHA256.",
+          e);
+      throw new IllegalStateException(
+          "Invalid JWT secret configuration. Please check 'agentpassvault.jwt.secret' property.",
+          e);
+    }
+  }
 
   public SecretKey getSecretKey() {
     if (this.secretKey == null) {
