@@ -59,7 +59,6 @@ public class RequestService {
       request.setSecretId(Long.valueOf(dto.secretId()));
     }
 
-    // Persist to obtain an ID
     Request saved = requestRepository.save(request);
 
     return mapToResponse(saved);
