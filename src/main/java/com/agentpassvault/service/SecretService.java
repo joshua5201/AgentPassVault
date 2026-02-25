@@ -6,12 +6,7 @@
  */
 package com.agentpassvault.service;
 
-import com.agentpassvault.dto.CreateLeaseRequest;
-import com.agentpassvault.dto.CreateSecretRequest;
-import com.agentpassvault.dto.LeaseResponse;
-import com.agentpassvault.dto.SecretMetadataResponse;
-import com.agentpassvault.dto.SecretResponse;
-import com.agentpassvault.dto.UpdateSecretRequest;
+import com.agentpassvault.dto.*;
 import com.agentpassvault.exception.ResourceNotFoundException;
 import com.agentpassvault.model.*;
 import com.agentpassvault.repository.LeaseRepository;
@@ -22,6 +17,8 @@ import com.agentpassvault.security.AgentPassVaultAuthentication;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -250,36 +247,96 @@ public class SecretService {
   }
 
   @SuppressWarnings("unchecked")
-  public List<SecretMetadataResponse> searchSecrets(
-      Long tenantId, Map<String, Object> metadataQuery) {
+  public List<SecretMetadataResponse> searchSecrets(Long tenantId, SearchSecretRequest request) {
+
+    if (request.name() != null && !request.name().isBlank()) {
+      return secretRepository
+          .findByNameContainingIgnoreCaseAndTenantId(request.name(), tenantId)
+          .stream()
+          .map(this::mapToMetadataResponse)
+          .collect(Collectors.toList());
+    }
+
     StringBuilder sql = new StringBuilder("SELECT s.* FROM secrets s ");
     sql.append("JOIN tenants t ON s.tenant_id = t.id ");
     sql.append("WHERE t.id = :tenantId ");
 
-    if (metadataQuery != null && !metadataQuery.isEmpty()) {
-      metadataQuery.forEach(
-          (key, value) -> {
-            sql.append("AND JSON_EXTRACT(s.metadata, '$.")
-                .append(key)
-                .append("') = :")
-                .append(key.replace(".", "_"))
-                .append(" ");
-          });
+    if (request.metadata() != null && !request.metadata().isEmpty()) {
+      request
+          .metadata()
+          .forEach(
+              (key, value) -> {
+                sql.append("AND JSON_EXTRACT(s.metadata, '$.")
+                    .append(key)
+                    .append("') = :")
+                    .append(key.replace(".", "_"))
+                    .append(" ");
+              });
     }
 
     Query query = entityManager.createNativeQuery(sql.toString(), Secret.class);
     query.setParameter("tenantId", tenantId);
 
-    if (metadataQuery != null && !metadataQuery.isEmpty()) {
-      metadataQuery.forEach(
-          (key, value) -> {
-            query.setParameter(key.replace(".", "_"), value.toString());
-          });
+    if (request.metadata() != null && !request.metadata().isEmpty()) {
+      request
+          .metadata()
+          .forEach(
+              (key, value) -> {
+                query.setParameter(key.replace(".", "_"), value.toString());
+              });
     }
 
     List<Secret> secrets = query.getResultList();
 
     return secrets.stream().map(this::mapToMetadataResponse).collect(Collectors.toList());
+  }
+
+  public List<SecretDetailsResponse> listAllSecretsForPrincipal(
+      AgentPassVaultAuthentication principal) {
+    Long tenantId = principal.getTenantId();
+    List<Secret> secrets = secretRepository.findAllByTenantId(tenantId);
+    List<Long> secretIds = secrets.stream().map(Secret::getId).collect(Collectors.toList());
+
+    if (secretIds.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<Lease> leases;
+    if (principal.getRole() == Role.ADMIN) {
+      leases = leaseRepository.findAllBySecretIdInAndExpiresAtAfter(secretIds, Instant.now());
+    } else {
+      User agent =
+          userRepository
+              .findById((Long) principal.getPrincipal())
+              .orElseThrow(() -> new AccessDeniedException("Agent not found"));
+
+      leases =
+          leaseRepository.findAllByAgentIdAndTenantIdAndExpiresAtAfter(
+              agent.getId(), tenantId, Instant.now());
+
+      // Filter out leases that do not match the agent's current public key
+      String currentPublicKey = agent.getPublicKey();
+      if (currentPublicKey != null) {
+        leases =
+            leases.stream()
+                .filter(l -> currentPublicKey.equals(l.getPublicKey()))
+                .collect(Collectors.toList());
+      } else {
+        leases = Collections.emptyList(); // If no public key is registered, no leases are valid
+      }
+    }
+
+    Map<Long, List<Lease>> leasesBySecretId =
+        leases.stream().collect(Collectors.groupingBy(l -> l.getSecret().getId()));
+
+    return secrets.stream()
+        .map(
+            secret -> {
+              List<Lease> secretLeases =
+                  leasesBySecretId.getOrDefault(secret.getId(), Collections.emptyList());
+              return mapToDetailsResponse(secret, secretLeases);
+            })
+        .collect(Collectors.toList());
   }
 
   private void validateMetadataSize(Map<String, Object> metadata) {
@@ -311,6 +368,27 @@ public class SecretService {
         secret.getId().toString(),
         secret.getName(),
         secret.getMetadata(),
+        secret.getCreatedAt(),
+        secret.getUpdatedAt());
+  }
+
+  private SecretDetailsResponse mapToDetailsResponse(Secret secret, List<Lease> leases) {
+    List<LeaseInfo> leaseInfos =
+        leases.stream()
+            .map(
+                l ->
+                    new LeaseInfo(
+                        l.getId().toString(),
+                        l.getAgent().getId().toString(),
+                        l.getPublicKey(),
+                        l.getExpiry()))
+            .collect(Collectors.toList());
+
+    return new SecretDetailsResponse(
+        secret.getId().toString(),
+        secret.getName(),
+        secret.getMetadata(),
+        leaseInfos,
         secret.getCreatedAt(),
         secret.getUpdatedAt());
   }

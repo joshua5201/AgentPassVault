@@ -7,12 +7,21 @@
 package com.agentpassvault.repository;
 
 import com.agentpassvault.model.Secret;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface SecretRepository extends JpaRepository<Secret, Long> {
   @Modifying
   void deleteAllByTenantId(Long tenantId);
+
+  @Query(
+      "SELECT s FROM Secret s JOIN FETCH s.tenant WHERE LOWER(s.name) LIKE LOWER(CONCAT('%', :name, '%')) AND s.tenant.id = :tenantId")
+  List<Secret> findByNameContainingIgnoreCaseAndTenantId(String name, Long tenantId);
+
+  @Query("SELECT s FROM Secret s JOIN FETCH s.tenant WHERE s.tenant.id = :tenantId")
+  List<Secret> findAllByTenantId(Long tenantId);
 }
