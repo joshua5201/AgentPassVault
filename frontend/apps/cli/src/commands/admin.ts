@@ -428,15 +428,19 @@ export async function adminDeleteAgent(id: string) {
 }
 
 // Request Management
-export async function adminListRequests() {
+export async function adminListRequests(options: { all?: boolean }) {
   try {
     const { client, config } = await getAdminClient();
     logMessage("Fetching requests...");
-    const secretRequestResponses = await client.listRequests();
+    let requests = await client.listRequests();
+
+    if (!options.all) {
+      requests = requests.filter((r: any) => r.status === "pending");
+    }
 
     printOutput({
       tenantId: config.tenantId,
-      requests: secretRequestResponses,
+      requests,
     });
   } catch (error: any) {
     handleError(error);
