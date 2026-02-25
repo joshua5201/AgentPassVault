@@ -32,11 +32,11 @@ This produces single binaries (e.g. `agentpassvault-linux`) you can use directly
 ```bash
 agentpassvault identity init --api-url <URL> --tenant-id <TENANT_ID> --agent-id <AGENT_ID> --app-token <TOKEN>
 ```
-*(This sets up your configuration, generates a 4096-bit RSA keypair in `~/.config/agentpassvault/keys/`, and registers your public key with the server).*
+*(This sets up your configuration in `~/.config/agentpassvault/config.json`, generates a 4096-bit RSA keypair in `~/.config/agentpassvault/keys/`, and registers your public key with the server).*
 
 2. **Create request (Ask a human):**
 ```bash
-agentpassvault request-secret "plurk-account" --metadata '{"account":"joshua5201"}'
+agentpassvault request-secret "some-account" --metadata '{"account":"joshua5201"}'
 ```
 → Share the `fulfillmentUrl` from the JSON response with a human approver.
 
