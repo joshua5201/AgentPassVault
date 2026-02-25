@@ -8,4 +8,5 @@ package com.agentpassvault.dto;
 
 import java.time.Instant;
 
-public record LeaseInfo(String leaseId, String agentId, String publicKey, Instant expiresAt) {}
+public record LeaseInfo(
+    String leaseId, String agentId, String agentDisplayName, String publicKey, Instant expiresAt) {}

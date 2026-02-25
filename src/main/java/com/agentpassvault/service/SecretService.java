@@ -380,6 +380,7 @@ public class SecretService {
                     new LeaseInfo(
                         l.getId().toString(),
                         l.getAgent().getId().toString(),
+                        l.getAgent().getDisplayName(),
                         l.getPublicKey(),
                         l.getExpiry()))
             .collect(Collectors.toList());

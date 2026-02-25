@@ -451,6 +451,7 @@ class SecretControllerTest extends BaseIntegrationTest {
         .andExpect(content().string(containsString("\"name\":\"Secret 1\"")))
         .andExpect(content().string(containsString("\"name\":\"Secret 2\"")))
         .andExpect(content().string(containsString("\"agentId\":\"" + agentId + "\"")))
+        .andExpect(content().string(containsString("\"agentDisplayName\":\"test-agent\"")))
         .andExpect(
             content().string(not(containsString("\"name\":\"Secret 2\",\"activeLeases\":[{\""))));
 
