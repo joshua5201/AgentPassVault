@@ -42,9 +42,10 @@ AgentPassVault uses a **Zero-Knowledge Architecture**:
 docker compose up -d
 ```
 
-### 2. Setup Database
+### 2. Setup Database (Optional)
+The database schema is automatically migrated on startup when using the `dev` or `integration_test` profiles. However, if you need to run migrations manually, you can use the provided script:
 ```bash
-./scripts/database/flyway.sh migrate
+./scripts/database/flyway.sh
 ```
 
 ### 3. Run the Application

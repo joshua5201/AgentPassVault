@@ -22,9 +22,9 @@ buildscript {
 }
 
 flyway {
-    url = "jdbc:mysql://127.0.0.1:53306/agentpassvault_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
-    user = "root"
-    password = "root"
+    url = (project.findProperty("dbUrl") as String?) ?: "jdbc:mysql://127.0.0.1:53306/agentpassvault_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+    user = (project.findProperty("dbUser") as String?) ?: "root"
+    password = (project.findProperty("dbPassword") as String?) ?: "root"
 
     baselineOnMigrate = true
 }
