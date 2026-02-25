@@ -102,7 +102,6 @@ export async function registerAgent() {
   logMessage("Registering public key with server...");
   if (!config || !config.apiUrl || !config.tenantId || !config.agentId || !config.appToken) {
     handleError(new Error('Configuration missing or incomplete.'));
-    return; // Should be unreachable due to process.exit in handleError
   }
   
   const client = new VaultClient(config.apiUrl);

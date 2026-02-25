@@ -10,7 +10,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Arrays;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -135,8 +134,12 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
     logger.error("Unhandled exception occurred", ex);
 
+    String message = "An unexpected error occurred";
     String stackTrace = null;
-    if (!Arrays.asList(env.getActiveProfiles()).contains("production")) {
+
+    if (env.acceptsProfiles(
+        org.springframework.core.env.Profiles.of("dev", "test", "integration_test"))) {
+      message += ": " + ex.getMessage();
       StringWriter sw = new StringWriter();
       PrintWriter pw = new PrintWriter(sw);
       ex.printStackTrace(pw);
@@ -146,7 +149,7 @@ public class GlobalExceptionHandler {
     ErrorResponse error =
         new ErrorResponse(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
-            "An unexpected error occurred: " + ex.getMessage(),
+            message,
             request.getDescription(false).replace("uri=", ""),
             LocalDateTime.now(ZoneId.of("UTC")),
             stackTrace);

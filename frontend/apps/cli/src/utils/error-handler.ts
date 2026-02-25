@@ -1,4 +1,4 @@
-export function handleError(error: any, prefix: string = "Error") {
+export function handleError(error: any, prefix: string = "Error"): never {
   const errorOutput = {
     error: true,
     prefix,

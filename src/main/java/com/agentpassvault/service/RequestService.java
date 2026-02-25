@@ -59,12 +59,10 @@ public class RequestService {
       request.setSecretId(Long.valueOf(dto.secretId()));
     }
 
-    // Persist to obtain an ID, then generate & set the fulfillment URL and persist again
+    // Persist to obtain an ID
     Request saved = requestRepository.save(request);
-    saved.setFulfillmentUrl(fulfillmentUrlService.generate(saved));
-    Request finalSaved = requestRepository.save(saved);
 
-    return mapToResponse(finalSaved);
+    return mapToResponse(saved);
   }
 
   public RequestResponse getRequest(Long tenantId, Long requestId) {
@@ -143,7 +141,7 @@ public class RequestService {
         request.getRequiredFieldsInSecretValue(),
         request.getMappedSecretId() != null ? request.getMappedSecretId().toString() : null,
         request.getRejectionReason(),
-        request.getFulfillmentUrl(),
+        fulfillmentUrlService.generate(request),
         request.getCreatedAt(),
         request.getUpdatedAt());
   }
