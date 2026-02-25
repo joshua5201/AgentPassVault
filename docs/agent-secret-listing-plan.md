@@ -42,8 +42,8 @@ This document outlines the plan to implement two new features: searching for sec
     1.  Get `tenantId` from the principal. Fetch all secrets for the tenant: `secretRepository.findAllByTenantId(tenantId)`.
     2.  Get all secret IDs from the list.
     3.  **Conditional Lease Fetching:**
-        -   **If role is ADMIN**: Fetch all leases for all secrets: `leaseRepository.findAllBySecretIdIn(secretIds)`.
-        -   **If role is AGENT**: Fetch only the leases for this specific agent: `leaseRepository.findAllByAgentIdAndTenantId(principal.getAgentId(), tenantId)`.
+        -   **If role is ADMIN**: Fetch all leases for all secrets: `leaseRepository.findAllBySecretIdInAndExpiresAtAfter(secretIds, Instant.now())`.
+        -   **If role is AGENT**: Fetch only the leases for this specific agent: `leaseRepository.findAllByAgentIdAndTenantIdAndExpiresAtAfter(principal.getAgentId(), tenantId, Instant.now())`.
     4.  Create a `Map<Long, List<Lease>>` where the key is the `secretId` for efficient lookups.
     5.  Iterate through the full list of secrets. For each secret, create a new `SecretDetailsResponse` DTO. Look up its leases in the map and populate the `activeLeases` field.
     6.  Return the list of these new, enriched DTOs.
@@ -53,8 +53,8 @@ This document outlines the plan to implement two new features: searching for sec
 - **New/Existing Method**: `findAllByTenantId(Long tenantId)`.
 
 ### `LeaseRepository.java`
-- **New Method**: `findAllByAgentIdAndTenantId(Long agentId, Long tenantId)`
-- **New Method**: `findAllBySecretIdIn(List<Long> secretIds)`
+- **New Method**: `findAllByAgentIdAndTenantIdAndExpiresAtAfter(Long agentId, Long tenantId, Instant timestamp)`
+- **New Method**: `findAllBySecretIdInAndExpiresAtAfter(List<Long> secretIds, Instant timestamp)`
 
 ---
 
@@ -78,4 +78,5 @@ This document outlines the plan to implement two new features: searching for sec
 ### Frontend Tests
 - **File**: `frontend/apps/cli/test/e2e/cli.test.ts`
 - **New Scenarios**:
-    - Add a test scenario for `agentpassvault list-secrets`. This test will call the command as an agent and verify that the `activeLeases` field is correctly populated for a leased secret and empty for a non-leased one.
+    - Add a test scenario where a secret is created, and then `agentpassvault search-secrets --name "partial-name"` is run to ensure the correct secret is found.
+    - Add a test scenario for `agentpassvault list-secrets` that mimics the backend test logic to ensure the CLI correctly displays the lease status.
