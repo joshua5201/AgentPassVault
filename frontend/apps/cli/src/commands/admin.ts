@@ -20,7 +20,7 @@ async function prompt(
   const mutableStdout = new Writable({
     write: (chunk, encoding, callback) => {
       if (!silent) {
-        process.stdout.write(chunk, encoding);
+        process.stderr.write(chunk, encoding);
       }
       callback();
     },
@@ -33,14 +33,14 @@ async function prompt(
   });
 
   if (silent) {
-    process.stdout.write(question);
+    process.stderr.write(question);
   }
 
   const answer = await rl.question(silent ? "" : question);
   rl.close();
 
   if (silent) {
-    process.stdout.write("\n");
+    process.stderr.write("\n");
   }
 
   return answer;

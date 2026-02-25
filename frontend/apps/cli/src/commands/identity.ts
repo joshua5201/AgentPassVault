@@ -31,7 +31,7 @@ export async function setup(options: {
   printOutput({ message: "Configuration saved successfully.", config });
 }
 
-export async function generateKey() {
+export async function generateKey(silent: boolean = false) {
   await ensureConfigDir();
 
   // Check permissions for keys directory (should be 700 or 600)
@@ -60,13 +60,15 @@ export async function generateKey() {
   // Set permissions for private key
   await fs.chmod(privPath, 0o600);
 
-  printOutput({
-    message: "Keys generated and saved successfully.",
-    paths: {
-      private: privPath,
-      public: pubPath,
-    },
-  });
+  if (!silent) {
+    printOutput({
+      message: "Keys generated and saved successfully.",
+      paths: {
+        private: privPath,
+        public: pubPath,
+      },
+    });
+  }
 }
 
 export async function registerAgent() {
@@ -90,7 +92,7 @@ export async function registerAgent() {
     await fs.access(privPath);
     logMessage("Existing keys found.");
   } catch {
-    await generateKey();
+    await generateKey(true);
   }
 
   // 2. Load public key

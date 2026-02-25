@@ -199,7 +199,7 @@ describe("AgentPassVault CLI E2E Scenarios", () => {
         "Should have failed to retrieve secret after update because lease was invalidated",
       );
     } catch (error: any) {
-      const errorJson = JSON.parse(error.stdout);
+      const errorJson = JSON.parse(error.stderr);
       expect(errorJson.message).toContain("No valid lease found");
     }
   });

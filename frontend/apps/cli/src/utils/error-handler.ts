@@ -9,6 +9,6 @@ export function handleError(error: any, prefix: string = "Error") {
     localStack: error.stack,
   };
   
-  console.log(JSON.stringify(errorOutput, null, 2));
+  console.error(JSON.stringify(errorOutput, null, 2));
   process.exit(1);
 }
