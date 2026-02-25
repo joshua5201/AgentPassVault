@@ -100,6 +100,19 @@ cd frontend/apps/cli
 npm link
 ```
 
+#### Compiling to a Single Executable
+If you want to distribute the AgentPassVault CLI as a single, standalone binary (so agents do not need Node.js installed), you can compile it using `pkg`:
+```bash
+cd frontend/apps/cli
+
+# Install pkg globally if you haven't already
+npm install -g pkg
+
+# Compile into an executable for Linux, macOS, and Windows
+pkg package.json
+```
+The compiled binaries will be generated in the `frontend/apps/cli` folder.
+
 ### Troubleshooting
 If you encounter weird build errors or type mismatches after a git pull:
 1. `pnpm clean`
