@@ -40,10 +40,6 @@ agentpassvault get-secret <secretId>
 • Pipe into the action (stdin) or use ephemeral file with mode 600, then delete.
 • Avoid logging plaintext.
 
-# Backend note
-
-• Fulfillment URL must be generated after the request is saved (save first, then generate) to avoid URLs ending with /requests/null.
-
 # Minimal test checklist
 
 • setup → generate-key → register → request-secret → fulfill in UI → get-request → get-secret → clean up.
