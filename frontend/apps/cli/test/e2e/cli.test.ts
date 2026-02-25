@@ -13,9 +13,18 @@ const TEST_CONFIG_DIR = path.join(
 
 function runCli(args: string[], input?: string) {
   const cmd = `node ${CLI_PATH} ${args.join(" ")}`;
+  
+  // Filter out any global AGENTPASSVAULT_ env vars to prevent poisoning test config
+  const cleanEnv: Record<string, string | undefined> = { ...process.env };
+  for (const key of Object.keys(cleanEnv)) {
+    if (key.startsWith("AGENTPASSVAULT_")) {
+      delete cleanEnv[key];
+    }
+  }
+  
   return execSync(cmd, {
     env: {
-      ...process.env,
+      ...cleanEnv,
       HOME: TEST_CONFIG_DIR,
     },
     input: input,
