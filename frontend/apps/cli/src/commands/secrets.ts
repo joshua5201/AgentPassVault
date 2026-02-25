@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import { CryptoService, VaultClient, RequestType } from "@agentpassvault/sdk";
 import { loadConfig, getPrivateKeyPath } from "../config.js";
 import { handleError } from "../utils/error-handler.js";
+import { printOutput, logMessage } from "../utils/output.js";
 
 async function getClient() {
   const config = await loadConfig();
@@ -22,12 +23,7 @@ export async function getSecret(id: string) {
   try {
     const { client } = await getClient();
 
-    // 1. Get secret (this might return the secret directly or we might need to check leases)
-    // Actually, according to the plan, agents get secrets via leases.
-    // The server returns SecretResponse which includes encryptedValue.
-    // If it's for an agent, it's encrypted with agent's public key.
-
-    console.log(`Fetching secret ${id}...`);
+    logMessage(`Fetching secret ${id}...`);
     const secret = await client.getSecret(id);
 
     // 2. Load private key
@@ -36,18 +32,17 @@ export async function getSecret(id: string) {
     const privateKey = await CryptoService.importPrivateKey(privB64);
 
     // 3. Decrypt
-    console.log("Decrypting secret...");
+    logMessage("Decrypting secret...");
     const decrypted = await CryptoService.decryptAsymmetric(
       secret.encryptedValue!,
       privateKey,
     );
 
-    console.log("\nSecret Details:");
-    console.log(`Name: ${secret.name}`);
-    console.log(`Value: ${decrypted}`);
-    if (secret.metadata && Object.keys(secret.metadata).length > 0) {
-      console.log("Metadata:", JSON.stringify(secret.metadata, null, 2));
-    }
+    printOutput({
+      name: secret.name,
+      value: decrypted,
+      metadata: secret.metadata,
+    });
   } catch (error: any) {
     handleError(error);
   }
@@ -60,16 +55,7 @@ export async function searchSecrets(metadataStr: string) {
 
     const results = await client.searchSecrets({ metadata });
 
-    if (results.length === 0) {
-      console.log("No secrets found.");
-      return;
-    }
-
-    console.log(`Found ${results.length} secret(s):`);
-    results.forEach((s: any) => {
-      console.log(`- ${s.name} (ID: ${s.secretId})`);
-      console.log(`  Metadata: ${JSON.stringify(s.metadata)}`);
-    });
+    printOutput(results);
   } catch (error: any) {
     handleError(error);
   }
@@ -86,7 +72,7 @@ export async function requestSecret(
       ? JSON.parse(options.metadata)
       : {};
 
-    console.log(`Creating secret request for "${name}"...`);
+    logMessage(`Creating secret request for "${name}"...`);
     const secretRequestResponse = await client.createRequest({
       name,
       type: RequestType.CREATE,
@@ -94,11 +80,12 @@ export async function requestSecret(
       requiredMetadata,
     });
 
-    console.log("Request created successfully.");
-    console.log(`ID: ${secretRequestResponse.requestId}`);
-    console.log(`Status: ${secretRequestResponse.status}`);
-    console.log(`Fulfillment URL: ${secretRequestResponse.fulfillmentUrl}`);
-    console.log("\nPlease share this URL with a human administrator.");
+    printOutput({
+      message: "Request created successfully.",
+      requestId: secretRequestResponse.requestId,
+      status: secretRequestResponse.status,
+      fulfillmentUrl: secretRequestResponse.fulfillmentUrl,
+    });
   } catch (error: any) {
     handleError(error);
   }
@@ -109,16 +96,7 @@ export async function getRequestStatus(id: string) {
     const { client } = await getClient();
     const secretRequestResponse = await client.getRequest(id);
 
-    console.log("Request Status:");
-    console.log(`ID: ${secretRequestResponse.requestId}`);
-    console.log(`Name: ${secretRequestResponse.name}`);
-    console.log(`Status: ${secretRequestResponse.status}`);
-    if (secretRequestResponse.mappedSecretId) {
-      console.log(`Mapped Secret ID: ${secretRequestResponse.mappedSecretId}`);
-    }
-    if (secretRequestResponse.rejectionReason) {
-      console.log(`Rejection Reason: ${secretRequestResponse.rejectionReason}`);
-    }
+    printOutput(secretRequestResponse);
   } catch (error: any) {
     handleError(error);
   }

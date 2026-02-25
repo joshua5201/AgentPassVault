@@ -1,19 +1,14 @@
 export function handleError(error: any, prefix: string = "Error") {
-  console.error(`${prefix}:`);
-  if (error.status) {
-    console.error(`  Status: ${error.status}`);
-  }
-  if (error.code) {
-    console.error(`  Code: ${error.code}`);
-  }
-  console.error(`  Message: ${error.message}`);
-
-  if (error.serverStackTrace) {
-    console.error("\n--- Server Stack Trace ---");
-    console.error(error.serverStackTrace);
-    console.error("--------------------------\n");
-  } else if (error.stack) {
-    console.error("  Local Stack Trace:", error.stack);
-  }
+  const errorOutput = {
+    error: true,
+    prefix,
+    message: error.message,
+    status: error.status,
+    code: error.code,
+    serverStackTrace: error.serverStackTrace,
+    localStack: error.stack,
+  };
+  
+  console.log(JSON.stringify(errorOutput, null, 2));
   process.exit(1);
 }
