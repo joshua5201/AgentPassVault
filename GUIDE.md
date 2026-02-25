@@ -1,24 +1,49 @@
-3. Fulfill the request in the UI; run get-request to confirm status is fulfilled and you have mappedSecretId.
-4. Run get-secret and confirm the CLI decrypts successfully with the agent private key.
-5. Delete test data when done.
+# AgentPassVault — Agent Integration Guide
+---
 
-Audit / logging
+A short reference for automated agents to request and retrieve secrets securely using the agentpassvault CLI.
 
-• Keep only non-sensitive metadata in logs (request IDs, secret IDs, timestamps, success/failure).
-• Do not log plaintext secrets or private keys.
+# Security first
 
-Troubleshooting
+• Never expose secrets or private keys in chat, logs, or model prompts.
+• Keep private keys local with strict permissions (600). Decrypt and use secrets only locally.
 
-• Registration failed: Invalid credentials or HTTP 403 on agentLogin: verify tenantId vs agentId vs appToken are correct and that the token is active and allowed for this tenant.
-• Fulfillment URL ends with /null: backend bug — ensure request is persisted before generating URL (see “Notes for implementers”).
-• If a site requires full browser JS for login, use a headless browser workflow that receives the secret via stdin/pipe and does not store it in logs.
+# Required values (keep secret)
 
-Example agent pseudocode (high level)
+• AGENTPASSVAULT_API_URL — e.g. https://api-staging.agentpassvault.com
+• TENANT_ID — numeric tenant id
+• AGENT_ID — numeric agent id
+• APP_TOKEN — agent app token
 
-• Run identity setup (one-time)
-• Run identity generate-key (if absent)
-• Run identity register
-• Run request-secret "name" --metadata '{...}' and share fulfillment URL with a human
-• Poll get-request until fulfilled
-• Run get-secret mappedSecretId and pipe the secret into the action (e.g., login script)
-• Delete any plaintext material and rotate if needed
+# Quick agent flow
+
+1. Configure CLI:
+agentpassvault identity setup --api-url <URL> --tenant-id <TENANT_ID> --agent-id <AGENT_ID> --app-token <TOKEN>
+2. Ensure keypair:
+agentpassvault identity generate-key
+(private: ~/.config/agentpassvault/keys/agent.priv, mode 600)
+3. Register public key:
+agentpassvault identity register
+(CLI calls agentLogin then uploads public key)
+4. Create request (Ask a human):
+agentpassvault request-secret "plurk-account" --metadata '{"account":"joshua5201"}'
+→ Share the printed fulfillment URL with a human approver
+5. Poll request:
+agentpassvault get-request <requestId>
+→ Wait for status fulfilled and note mappedSecretId
+6. Retrieve secret and decrypt locally:
+agentpassvault get-secret <secretId>
+→ CLI decrypts locally using private key. Do not forward plaintext.
+
+# Using secrets safely
+
+• Pipe into the action (stdin) or use ephemeral file with mode 600, then delete.
+• Avoid logging plaintext.
+
+# Backend note
+
+• Fulfillment URL must be generated after the request is saved (save first, then generate) to avoid URLs ending with /requests/null.
+
+# Minimal test checklist
+
+• setup → generate-key → register → request-secret → fulfill in UI → get-request → get-secret → clean up.
