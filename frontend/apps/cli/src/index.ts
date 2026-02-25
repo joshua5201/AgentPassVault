@@ -82,8 +82,10 @@ program
   .action(getSecret);
 
 program
-  .command("search-secrets <metadata-json>")
-  .description("Search for secrets by metadata (JSON string)")
+  .command("search-secrets")
+  .description("Search for secrets by metadata")
+  .option("--metadata-json <json>", "Metadata as a JSON string")
+  .option("--from-file <path>", "Path to a file containing metadata as JSON")
   .action(searchSecrets);
 
 program
@@ -152,7 +154,10 @@ adminSecret
   .option("--username <username>", "Username/Email for the secret")
   .option("--secret-password <password>", "Password for the secret")
   .option("--password <pass>", "Master Password")
-  .action(adminCreateSecret);
+  .action((options) => {
+    // Commander converts --secret-password to secretPassword in the options object
+    adminCreateSecret(options);
+  });
 
 adminSecret
   .command("update <id>")
@@ -211,10 +216,9 @@ const adminRequest = admin
 
 adminRequest
   .command("list")
-
-  .description("List all pending and fulfilled requests")
-
-  .action(adminListRequests);
+  .description("List secret requests (shows only pending by default)")
+  .option("--all", "Show all requests (including fulfilled and rejected)")
+  .action((options) => adminListRequests(options));
 
 adminRequest
   .command("fulfill <requestId>")

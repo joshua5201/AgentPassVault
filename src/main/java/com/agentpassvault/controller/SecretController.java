@@ -6,11 +6,7 @@
  */
 package com.agentpassvault.controller;
 
-import com.agentpassvault.dto.CreateSecretRequest;
-import com.agentpassvault.dto.SearchSecretRequest;
-import com.agentpassvault.dto.SecretMetadataResponse;
-import com.agentpassvault.dto.SecretResponse;
-import com.agentpassvault.dto.UpdateSecretRequest;
+import com.agentpassvault.dto.*;
 import com.agentpassvault.security.AgentPassVaultAuthentication;
 import com.agentpassvault.service.SecretService;
 import jakarta.validation.Valid;
@@ -27,6 +23,12 @@ import org.springframework.web.bind.annotation.*;
 public class SecretController {
 
   private final SecretService secretService;
+
+  @GetMapping
+  @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
+  public List<SecretDetailsResponse> listSecrets(AgentPassVaultAuthentication authentication) {
+    return secretService.listAllSecretsForPrincipal(authentication);
+  }
 
   @PostMapping
   @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
@@ -67,6 +69,6 @@ public class SecretController {
   @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
   public List<SecretMetadataResponse> searchSecrets(
       AgentPassVaultAuthentication authentication, @RequestBody SearchSecretRequest request) {
-    return secretService.searchSecrets(authentication.getTenantId(), request.metadata());
+    return secretService.searchSecrets(authentication.getTenantId(), request);
   }
 }

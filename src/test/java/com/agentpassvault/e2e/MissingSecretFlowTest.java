@@ -67,7 +67,8 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
         .andExpect(status().isOk());
 
     // 2. Agent Searches for "Prod DB" (and finds nothing)
-    SearchSecretRequest searchReq = new SearchSecretRequest(Map.of("service", "db", "env", "prod"));
+    SearchSecretRequest searchReq =
+        new SearchSecretRequest(null, Map.of("service", "db", "env", "prod"));
     mockMvc
         .perform(
             post("/api/v1/secrets/search")

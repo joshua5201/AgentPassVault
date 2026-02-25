@@ -13,56 +13,70 @@
  */
 
 import { mapValues } from '../runtime';
+import type { LeaseInfo } from './LeaseInfo';
+import {
+    LeaseInfoFromJSON,
+    LeaseInfoFromJSONTyped,
+    LeaseInfoToJSON,
+    LeaseInfoToJSONTyped,
+} from './LeaseInfo';
+
 /**
  * 
  * @export
- * @interface SecretMetadataResponse
+ * @interface SecretDetailsResponse
  */
-export interface SecretMetadataResponse {
+export interface SecretDetailsResponse {
     /**
      * 
      * @type {string}
-     * @memberof SecretMetadataResponse
+     * @memberof SecretDetailsResponse
      */
     secretId?: string;
     /**
      * 
      * @type {string}
-     * @memberof SecretMetadataResponse
+     * @memberof SecretDetailsResponse
      */
     name?: string;
     /**
      * 
      * @type {{ [key: string]: object; }}
-     * @memberof SecretMetadataResponse
+     * @memberof SecretDetailsResponse
      */
     metadata?: { [key: string]: object; };
     /**
      * 
+     * @type {Array<LeaseInfo>}
+     * @memberof SecretDetailsResponse
+     */
+    activeLeases?: Array<LeaseInfo>;
+    /**
+     * 
      * @type {Date}
-     * @memberof SecretMetadataResponse
+     * @memberof SecretDetailsResponse
      */
     createdAt?: Date;
     /**
      * 
      * @type {Date}
-     * @memberof SecretMetadataResponse
+     * @memberof SecretDetailsResponse
      */
     updatedAt?: Date;
 }
 
 /**
- * Check if a given object implements the SecretMetadataResponse interface.
+ * Check if a given object implements the SecretDetailsResponse interface.
  */
-export function instanceOfSecretMetadataResponse(value: object): value is SecretMetadataResponse {
+export function instanceOfSecretDetailsResponse(value: object): value is SecretDetailsResponse {
     return true;
 }
 
-export function SecretMetadataResponseFromJSON(json: any): SecretMetadataResponse {
-    return SecretMetadataResponseFromJSONTyped(json, false);
+export function SecretDetailsResponseFromJSON(json: any): SecretDetailsResponse {
+    return SecretDetailsResponseFromJSONTyped(json, false);
 }
 
-export function SecretMetadataResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): SecretMetadataResponse {
+export function SecretDetailsResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): SecretDetailsResponse {
     if (json == null) {
         return json;
     }
@@ -71,16 +85,17 @@ export function SecretMetadataResponseFromJSONTyped(json: any, ignoreDiscriminat
         'secretId': json['secretId'] == null ? undefined : json['secretId'],
         'name': json['name'] == null ? undefined : json['name'],
         'metadata': json['metadata'] == null ? undefined : json['metadata'],
+        'activeLeases': json['activeLeases'] == null ? undefined : ((json['activeLeases'] as Array<any>).map(LeaseInfoFromJSON)),
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
     };
 }
 
-export function SecretMetadataResponseToJSON(json: any): SecretMetadataResponse {
-    return SecretMetadataResponseToJSONTyped(json, false);
+export function SecretDetailsResponseToJSON(json: any): SecretDetailsResponse {
+    return SecretDetailsResponseToJSONTyped(json, false);
 }
 
-export function SecretMetadataResponseToJSONTyped(value?: SecretMetadataResponse | null, ignoreDiscriminator: boolean = false): any {
+export function SecretDetailsResponseToJSONTyped(value?: SecretDetailsResponse | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
@@ -90,6 +105,7 @@ export function SecretMetadataResponseToJSONTyped(value?: SecretMetadataResponse
         'secretId': value['secretId'],
         'name': value['name'],
         'metadata': value['metadata'],
+        'activeLeases': value['activeLeases'] == null ? undefined : ((value['activeLeases'] as Array<any>).map(LeaseInfoToJSON)),
         'createdAt': value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
         'updatedAt': value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
     };

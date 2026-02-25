@@ -6,6 +6,7 @@
  */
 package com.agentpassvault.dto;
 
-import java.util.Map;
+import java.time.Instant;
 
-public record SearchSecretRequest(String name, Map<String, Object> metadata) {}
+public record LeaseInfo(
+    String leaseId, String agentId, String agentDisplayName, String publicKey, Instant expiresAt) {}

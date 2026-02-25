@@ -7,6 +7,7 @@
 package com.agentpassvault.repository;
 
 import com.agentpassvault.model.Lease;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -26,4 +27,17 @@ public interface LeaseRepository extends JpaRepository<Lease, Long> {
   @Modifying
   @Query("DELETE FROM Lease l WHERE l.secret.tenant.id = :tenantId")
   void deleteAllBySecretTenantId(Long tenantId);
+
+  @Query(
+      "SELECT l FROM Lease l JOIN FETCH l.secret JOIN FETCH l.agent WHERE l.agent.id = :agentId AND l.agent.tenant.id = :tenantId AND l.expiry > :timestamp")
+  List<Lease> findAllByAgentIdAndTenantIdAndExpiresAtAfter(
+      Long agentId, Long tenantId, Instant timestamp);
+
+  @Query(
+      "SELECT l FROM Lease l JOIN FETCH l.secret JOIN FETCH l.agent WHERE l.secret.id IN :secretIds AND l.expiry > :timestamp")
+  List<Lease> findAllBySecretIdInAndExpiresAtAfter(List<Long> secretIds, Instant timestamp);
+
+  @Modifying
+  @Query("DELETE FROM Lease l WHERE l.agent.id = :agentId AND l.publicKey != :publicKey")
+  void deleteAllByAgentIdAndPublicKeyNot(Long agentId, String publicKey);
 }

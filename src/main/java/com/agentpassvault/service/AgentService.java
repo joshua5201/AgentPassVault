@@ -11,6 +11,7 @@ import com.agentpassvault.dto.AgentTokenResponse;
 import com.agentpassvault.exception.ResourceNotFoundException;
 import com.agentpassvault.model.Role;
 import com.agentpassvault.model.User;
+import com.agentpassvault.repository.LeaseRepository;
 import com.agentpassvault.repository.UserRepository;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -28,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AgentService {
 
   private final UserRepository userRepository;
+  private final LeaseRepository leaseRepository;
   private final UserService userService;
 
   @Transactional
@@ -74,6 +76,9 @@ public class AgentService {
     User agent = getAgent(tenantId, agentId);
     agent.setPublicKey(publicKey);
     userRepository.save(agent);
+
+    // Delete any existing leases for this agent that use an old public key
+    leaseRepository.deleteAllByAgentIdAndPublicKeyNot(agentId, publicKey);
   }
 
   private User getAgent(Long tenantId, Long agentId) {

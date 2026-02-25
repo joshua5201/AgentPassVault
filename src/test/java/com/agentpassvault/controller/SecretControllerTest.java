@@ -129,7 +129,7 @@ class SecretControllerTest extends BaseIntegrationTest {
                     new CreateSecretRequest("S2", "v2", Map.of("env", "dev", "app", "web")))));
 
     // Search for env=prod
-    SearchSecretRequest searchProd = new SearchSecretRequest(Map.of("env", "prod"));
+    SearchSecretRequest searchProd = new SearchSecretRequest(null, Map.of("env", "prod"));
     mockMvc
         .perform(
             post("/api/v1/secrets/search")
@@ -142,7 +142,7 @@ class SecretControllerTest extends BaseIntegrationTest {
         .andExpect(jsonPath("$[0].value").doesNotExist()); // Verify value is NOT returned
 
     // Search for app=web
-    SearchSecretRequest searchWeb = new SearchSecretRequest(Map.of("app", "web"));
+    SearchSecretRequest searchWeb = new SearchSecretRequest(null, Map.of("app", "web"));
     mockMvc
         .perform(
             post("/api/v1/secrets/search")
@@ -392,6 +392,78 @@ class SecretControllerTest extends BaseIntegrationTest {
                 .header("Authorization", "Bearer " + token))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$", hasSize(0)));
+  }
+
+  @Test
+  void listSecrets_Success() throws Exception {
+    Long tenantId = createTenant();
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
+    String adminToken = getAuthToken("admin@example.com", "password");
+
+    // 1. Create two secrets and get the ID of the first one
+    String secretId1 = createSecret(adminToken, "Secret 1");
+    createSecret(adminToken, "Secret 2");
+
+    // 2. Create Agent and get token
+    AgentTokenResponse agentResp = agentService.createAgent(tenantId, "test-agent");
+    String agentAppToken = agentResp.appToken();
+    String agentId = agentResp.agentId();
+
+    String agentLoginResp =
+        mockMvc
+            .perform(
+                post("/api/v1/auth/login/agent")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        objectMapper.writeValueAsString(
+                            new AgentLoginRequest(tenantId.toString(), agentAppToken))))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    String agentJwt = objectMapper.readTree(agentLoginResp).get("accessToken").asText();
+
+    // 3. Register public key for agent
+    String publicKey = "test-public-key";
+    mockMvc
+        .perform(
+            post("/api/v1/agents/" + agentId + "/register")
+                .header("Authorization", "Bearer " + agentJwt)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new RegisterAgentRequest(publicKey))))
+        .andExpect(status().isOk());
+
+    // 4. Create lease for secret 1 only
+    CreateLeaseRequest leaseReq =
+        new CreateLeaseRequest(
+            agentId, publicKey, "agent_encrypted_val", java.time.Instant.now().plusSeconds(3600));
+    mockMvc
+        .perform(
+            post("/api/v1/secrets/" + secretId1 + "/leases")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(leaseReq)))
+        .andExpect(status().isOk());
+
+    // 5. Test Admin List
+    mockMvc
+        .perform(get("/api/v1/secrets").header("Authorization", "Bearer " + adminToken))
+        .andExpect(status().isOk())
+        .andExpect(content().string(containsString("\"name\":\"Secret 1\"")))
+        .andExpect(content().string(containsString("\"name\":\"Secret 2\"")))
+        .andExpect(content().string(containsString("\"agentId\":\"" + agentId + "\"")))
+        .andExpect(content().string(containsString("\"agentDisplayName\":\"test-agent\"")))
+        .andExpect(
+            content().string(not(containsString("\"name\":\"Secret 2\",\"activeLeases\":[{\""))));
+
+    // 6. Test Agent List
+    mockMvc
+        .perform(get("/api/v1/secrets").header("Authorization", "Bearer " + agentJwt))
+        .andExpect(status().isOk())
+        .andExpect(content().string(containsString("\"name\":\"Secret 1\"")))
+        .andExpect(content().string(containsString("\"name\":\"Secret 2\"")))
+        .andExpect(content().string(containsString("\"publicKey\":\"" + publicKey + "\"")))
+        .andExpect(
+            content().string(not(containsString("\"name\":\"Secret 2\",\"activeLeases\":[{\""))));
   }
 
   // Helper methods

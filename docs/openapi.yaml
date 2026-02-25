@@ -10,6 +10,19 @@ security:
 - bearerAuth: []
 paths:
   /api/v1/secrets:
+    get:
+      tags:
+      - secret-controller
+      operationId: listSecrets
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SecretDetailsResponse"
     post:
       tags:
       - secret-controller
@@ -610,6 +623,8 @@ components:
     SearchSecretRequest:
       type: object
       properties:
+        name:
+          type: string
         metadata:
           type: object
           additionalProperties:
@@ -862,6 +877,41 @@ components:
           type: string
       required:
       - status
+    LeaseInfo:
+      type: object
+      properties:
+        leaseId:
+          type: string
+        agentId:
+          type: string
+        agentDisplayName:
+          type: string
+        publicKey:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+    SecretDetailsResponse:
+      type: object
+      properties:
+        secretId:
+          type: string
+        name:
+          type: string
+        metadata:
+          type: object
+          additionalProperties:
+            type: object
+        activeLeases:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeaseInfo"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
     LeaseResponse:
       type: object
       properties:

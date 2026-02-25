@@ -16,6 +16,7 @@ docs/CreateRequestRequest.md
 docs/CreateSecretRequest.md
 docs/ForgotPasswordRequest.md
 docs/LeaseControllerApi.md
+docs/LeaseInfo.md
 docs/LeaseResponse.md
 docs/LeaseUpdateRequest.md
 docs/LoginResponse.md
@@ -28,6 +29,7 @@ docs/RequestResponse.md
 docs/ResetPasswordRequest.md
 docs/SearchSecretRequest.md
 docs/SecretControllerApi.md
+docs/SecretDetailsResponse.md
 docs/SecretMetadataResponse.md
 docs/SecretResponse.md
 docs/TotpSetupResponse.md
@@ -46,6 +48,7 @@ models/CreateLeaseRequest.ts
 models/CreateRequestRequest.ts
 models/CreateSecretRequest.ts
 models/ForgotPasswordRequest.ts
+models/LeaseInfo.ts
 models/LeaseResponse.ts
 models/LeaseUpdateRequest.ts
 models/LoginResponse.ts
@@ -56,6 +59,7 @@ models/RegistrationResponse.ts
 models/RequestResponse.ts
 models/ResetPasswordRequest.ts
 models/SearchSecretRequest.ts
+models/SecretDetailsResponse.ts
 models/SecretMetadataResponse.ts
 models/SecretResponse.ts
 models/TotpSetupResponse.ts
