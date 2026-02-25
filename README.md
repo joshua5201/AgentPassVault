@@ -79,6 +79,9 @@ The frontend is a TypeScript monorepo managed by **Turborepo** and **pnpm**. It 
 
 ### Working with the Agent CLI
 
+> [!TIP]
+> Are you an automated agent looking for integration instructions? Check out the **[Agent Integration Guide (GUIDE.md)](GUIDE.md)** for a quick overview of required values, secure CLI commands, and JSON parsing.
+
 #### Local Execution
 After building the project (`pnpm build`), you can run the CLI directly using Node.js without installing it globally:
 ```bash
