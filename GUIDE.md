@@ -5,15 +5,15 @@ A short reference for automated agents to request and retrieve secrets securely 
 
 # Security first
 
-• Never expose secrets or private keys in chat, logs, or model prompts.
-• Keep private keys local with strict permissions (600). Decrypt and use secrets only locally.
+- Never expose secrets or private keys in chat, logs, or model prompts.
+- Keep private keys local with strict permissions (600). Decrypt and use secrets only locally.
 
 # Required values (keep secret)
 
-• AGENTPASSVAULT_API_URL — e.g. https://api-staging.agentpassvault.com
-• TENANT_ID — numeric tenant id
-• AGENT_ID — numeric agent id
-• APP_TOKEN — agent app token
+- AGENTPASSVAULT_API_URL — e.g. https://api-staging.agentpassvault.com
+- TENANT_ID — numeric tenant id
+- AGENT_ID — numeric agent id
+- APP_TOKEN — agent app token
 
 # Quick agent flow
 
@@ -37,9 +37,9 @@ agentpassvault get-secret <secretId>
 
 # Using secrets safely
 
-• Pipe into the action (stdin) or use ephemeral file with mode 600, then delete.
-• Avoid logging plaintext.
+- Pipe into the action (stdin) or use ephemeral file with mode 600, then delete.
+- Avoid logging plaintext.
 
 # Minimal test checklist
 
-• setup → generate-key → register → request-secret → fulfill in UI → get-request → get-secret → clean up.
+- setup → generate-key → register → request-secret → fulfill in UI → get-request → get-secret → clean up.
