@@ -10,7 +10,7 @@ A short reference for automated agents to request and retrieve secrets securely 
 
 # Required values (keep secret)
 
-- AGENTPASSVAULT_API_URL — e.g. https://api-staging.agentpassvault.com
+- AGENTPASSVAULT_API_URL — e.g. https://api.agentpassvault.com
 - TENANT_ID — numeric tenant id
 - AGENT_ID — numeric agent id
 - APP_TOKEN — agent app token
