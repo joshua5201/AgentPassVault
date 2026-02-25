@@ -48,10 +48,25 @@ export async function getSecret(id: string) {
   }
 }
 
-export async function searchSecrets(metadataStr: string) {
+export async function searchSecrets(options: {
+  metadataJson?: string;
+  fromFile?: string;
+}) {
   try {
     const { client } = await getClient();
-    const metadata = JSON.parse(metadataStr);
+    let metadata;
+
+    if (options.fromFile) {
+      logMessage(`Reading metadata from file: ${options.fromFile}`);
+      const fileContent = await fs.readFile(options.fromFile, "utf-8");
+      metadata = JSON.parse(fileContent);
+    } else if (options.metadataJson) {
+      metadata = JSON.parse(options.metadataJson);
+    } else {
+      handleError(
+        new Error("Either --metadata-json or --from-file must be provided."),
+      );
+    }
 
     const results = await client.searchSecrets({ metadata });
 

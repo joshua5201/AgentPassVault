@@ -52,6 +52,18 @@ agentpassvault get-secret <secretId>
 ```
 → The CLI securely fetches the encrypted payload and decrypts it locally using your private key, outputting the secret as JSON. Do not forward the plaintext.
 
+5. **(Optional) Search for secrets by metadata:**
+```bash
+# Create a temporary file with your search query
+echo '{"service":"aws","region":"us-east-1"}' > /tmp/query.json
+
+# Search using the file
+agentpassvault search-secrets --from-file /tmp/query.json
+
+# Clean up the temp file
+rm /tmp/query.json
+```
+
 ## Using secrets safely
 
 - Parse the JSON output programmatically (e.g., using `jq` or built-in JSON parsers).

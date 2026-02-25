@@ -82,8 +82,10 @@ program
   .action(getSecret);
 
 program
-  .command("search-secrets <metadata-json>")
-  .description("Search for secrets by metadata (JSON string)")
+  .command("search-secrets")
+  .description("Search for secrets by metadata")
+  .option("--metadata-json <json>", "Metadata as a JSON string")
+  .option("--from-file <path>", "Path to a file containing metadata as JSON")
   .action(searchSecrets);
 
 program
