@@ -10,6 +10,7 @@ import {
   Config,
   KEYS_DIR,
 } from "../config.js";
+import { handleError } from "../utils/error-handler.js";
 
 export async function setup(options: {
   apiUrl: string;
@@ -109,7 +110,6 @@ export async function registerAgent() {
 
     console.log("Agent registered successfully.");
   } catch (error: any) {
-    console.error("Registration failed:", error.message);
-    process.exit(1);
+    handleError(error, "Registration failed");
   }
 }

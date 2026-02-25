@@ -8,6 +8,7 @@ import {
   AgentResponse,
 } from "@agentpassvault/sdk";
 import { loadConfig, saveConfig, Config, ensureConfigDir } from "../config.js";
+import { handleError } from "../utils/error-handler.js";
 
 import { Writable } from "node:stream";
 
@@ -110,8 +111,7 @@ export async function adminLogin(options: {
     await saveConfig(newConfig);
     console.log("Login successful.");
   } catch (error: any) {
-    console.error("Login failed:", error.message);
-    process.exit(1);
+    handleError(error, "Login failed");
   }
 }
 
@@ -187,8 +187,7 @@ export async function adminRegister(options: {
     await saveConfig(newConfig);
     console.log("Login successful and configuration updated.");
   } catch (error: any) {
-    console.error("Registration failed:", error.message);
-    process.exit(1);
+    handleError(error, "Registration failed");
   }
 }
 
@@ -199,8 +198,7 @@ export async function adminDeleteTenant(id: string) {
     await client.deleteTenant(id);
     console.log("Tenant deleted.");
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }
 
@@ -220,8 +218,7 @@ export async function adminListSecrets() {
       console.log(`- ${s.name} (ID: ${s.secretId})`);
     });
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }
 
@@ -257,8 +254,7 @@ export async function adminViewSecret(
       console.log("Metadata:", JSON.stringify(secret.metadata, null, 2));
     }
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }
 
@@ -306,8 +302,7 @@ export async function adminCreateSecret(options: {
 
     console.log("Secret created successfully.");
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }
 
@@ -318,8 +313,7 @@ export async function adminDeleteSecret(id: string) {
     await client.deleteSecret(id);
     console.log("Secret deleted.");
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }
 
@@ -363,15 +357,14 @@ export async function adminUpdateSecret(
     });
     console.log("Secret updated.");
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }
 
 // Agent Management
 export async function adminListAgents() {
   try {
-    const { client } = await getAdminClient();
+    const { client, config } = await getAdminClient();
     const agents = await client.listAgents();
 
     if (agents.length === 0) {
@@ -379,31 +372,48 @@ export async function adminListAgents() {
       return;
     }
 
+    console.log(`Tenant ID: ${config.tenantId}`);
     console.log(`Found ${agents.length} agent(s):`);
     agents.forEach((a: AgentResponse) => {
       console.log(`- ${a.displayName} (${a.name}) ID: ${a.agentId}`);
       console.log(`  Public Key: ${a.publicKey ? "Registered" : "Pending"}`);
     });
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
+  }
+}
+
+export async function adminShowAgent(id: string) {
+  try {
+    const { client, config } = await getAdminClient();
+    const agent = await client.getAgent(id);
+
+    console.log("Agent Details:");
+    console.log(`Tenant ID: ${config.tenantId}`);
+    console.log(`Agent ID:  ${agent.agentId}`);
+    console.log(`Name:      ${agent.name}`);
+    console.log(`Display Name: ${agent.displayName}`);
+    console.log(`Public Key:   ${agent.publicKey ? "Registered" : "Pending"}`);
+    console.log(`Created At:   ${agent.createdAt}`);
+  } catch (error: any) {
+    handleError(error);
   }
 }
 
 export async function adminCreateAgent(name: string) {
   try {
-    const { client } = await getAdminClient();
+    const { client, config } = await getAdminClient();
     console.log(`Creating agent "${name}"...`);
     const resp = await client.createAgent({ name });
     console.log("Agent created successfully.");
+    console.log(`Tenant ID: ${config.tenantId}`);
     console.log(`Agent ID: ${resp.agentId}`);
     console.log(`App Token: ${resp.appToken}`);
     console.log(
       "\nIMPORTANT: Store the App Token safely. It will not be shown again.",
     );
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }
 
@@ -415,8 +425,7 @@ export async function adminRotateAgentToken(id: string) {
     console.log("Token rotated successfully.");
     console.log(`New App Token: ${resp.appToken}`);
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }
 
@@ -427,15 +436,14 @@ export async function adminDeleteAgent(id: string) {
     await client.deleteAgent(id);
     console.log("Agent deleted.");
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }
 
 // Request Management
 export async function adminListRequests() {
   try {
-    const { client } = await getAdminClient();
+    const { client, config } = await getAdminClient();
     console.log("Fetching requests...");
     const secretRequestResponses = await client.listRequests();
 
@@ -444,6 +452,7 @@ export async function adminListRequests() {
       return;
     }
 
+    console.log(`Tenant ID: ${config.tenantId}`);
     console.log(`Found ${secretRequestResponses.length} request(s):`);
     secretRequestResponses.forEach((r: any) => {
       console.log(`- ${r.name} (ID: ${r.requestId})`);
@@ -451,8 +460,7 @@ export async function adminListRequests() {
       if (r.context) console.log(`  Context: ${r.context}`);
     });
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }
 
@@ -465,8 +473,7 @@ export async function adminRejectRequest(id: string, reason: string) {
     });
     console.log("Request rejected.");
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }
 
@@ -549,7 +556,6 @@ export async function adminFulfillRequest(
 
     console.log("Request fulfilled successfully.");
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }

@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import { CryptoService, VaultClient, RequestType } from "@agentpassvault/sdk";
 import { loadConfig, getPrivateKeyPath } from "../config.js";
+import { handleError } from "../utils/error-handler.js";
 
 async function getClient() {
   const config = await loadConfig();
@@ -48,8 +49,7 @@ export async function getSecret(id: string) {
       console.log("Metadata:", JSON.stringify(secret.metadata, null, 2));
     }
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }
 
@@ -71,8 +71,7 @@ export async function searchSecrets(metadataStr: string) {
       console.log(`  Metadata: ${JSON.stringify(s.metadata)}`);
     });
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }
 
@@ -101,8 +100,7 @@ export async function requestSecret(
     console.log(`Fulfillment URL: ${secretRequestResponse.fulfillmentUrl}`);
     console.log("\nPlease share this URL with a human administrator.");
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }
 
@@ -122,7 +120,6 @@ export async function getRequestStatus(id: string) {
       console.log(`Rejection Reason: ${secretRequestResponse.rejectionReason}`);
     }
   } catch (error: any) {
-    console.error("Error:", error.message);
-    process.exit(1);
+    handleError(error);
   }
 }

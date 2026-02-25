@@ -16,6 +16,7 @@ import {
   adminUpdateSecret,
   adminDeleteSecret,
   adminListAgents,
+  adminShowAgent,
   adminCreateAgent,
   adminRotateAgentToken,
   adminDeleteAgent,
@@ -158,6 +159,11 @@ adminAgent
   .description("List all agents")
 
   .action(adminListAgents);
+
+adminAgent
+  .command("show <id>")
+  .description("Show details of an agent")
+  .action(adminShowAgent);
 
 adminAgent
   .command("create <name>")

@@ -32,6 +32,7 @@ export class VaultError extends Error {
     public status: number,
     public message: string,
     public code?: string,
+    public serverStackTrace?: string,
   ) {
     super(message);
   }
@@ -75,7 +76,8 @@ export class VaultClient {
       throw new VaultError(
         response.status,
         errorData.message || response.statusText,
-        errorData.message, // In our case, the message might be the code like 'TWO_FACTOR_REQUIRED'
+        errorData.code || errorData.message,
+        errorData.stackTrace,
       );
     }
 
