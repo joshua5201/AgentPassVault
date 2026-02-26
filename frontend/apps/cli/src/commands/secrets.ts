@@ -49,26 +49,50 @@ export async function getSecret(id: string) {
 }
 
 export async function searchSecrets(options: {
+  name?: string;
   metadataJson?: string;
   fromFile?: string;
 }) {
   try {
     const { client } = await getClient();
     let metadata;
+    const hasName = !!options.name;
+    const metadataJson = options.metadataJson;
+    const metadataFile = options.fromFile;
+    const hasMetadataJson = !!metadataJson;
+    const hasMetadataFile = !!metadataFile;
+    const hasMetadata = hasMetadataJson || hasMetadataFile;
 
-    if (options.fromFile) {
-      logMessage(`Reading metadata from file: ${options.fromFile}`);
-      const fileContent = await fs.readFile(options.fromFile, "utf-8");
-      metadata = JSON.parse(fileContent);
-    } else if (options.metadataJson) {
-      metadata = JSON.parse(options.metadataJson);
-    } else {
+    if (hasMetadataJson && hasMetadataFile) {
       handleError(
-        new Error("Either --metadata-json or --from-file must be provided."),
+        new Error(
+          "Provide either --metadata-json or --from-file (not both).",
+        ),
       );
+      return;
     }
 
-    const results = await client.searchSecrets({ metadata });
+    if (metadataFile) {
+      logMessage(`Reading metadata from file: ${metadataFile}`);
+      const fileContent = await fs.readFile(metadataFile, "utf-8");
+      metadata = JSON.parse(fileContent);
+    } else if (metadataJson) {
+      metadata = JSON.parse(metadataJson);
+    }
+
+    if (!options.name && !metadata) {
+      handleError(
+        new Error(
+          "Either --name, --metadata-json, or --from-file must be provided.",
+        ),
+      );
+      return; // Ensure the function exits after handling the error
+    }
+
+    const results = await client.searchSecrets({
+      name: options.name,
+      metadata,
+    });
 
     printOutput(results);
   } catch (error: any) {
