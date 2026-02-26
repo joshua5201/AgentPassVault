@@ -54,3 +54,6 @@ Agents working on this project must adhere to the specifications and workflows d
 - Find useful scripts under scripts/
 - Always use flyway to create new field. Don't modify existing flyway migrations that are already committed
 - Use scripts/database/flyway.sh to do flyway operations
+
+## Spotless
+There is a git push hook for Spotless. Make sure ./gradlew spotlessApply before committing anything.

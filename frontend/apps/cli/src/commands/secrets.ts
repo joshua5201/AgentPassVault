@@ -57,8 +57,10 @@ export async function searchSecrets(options: {
     const { client } = await getClient();
     let metadata;
     const hasName = !!options.name;
-    const hasMetadataJson = !!options.metadataJson;
-    const hasMetadataFile = !!options.fromFile;
+    const metadataJson = options.metadataJson;
+    const metadataFile = options.fromFile;
+    const hasMetadataJson = !!metadataJson;
+    const hasMetadataFile = !!metadataFile;
     const hasMetadata = hasMetadataJson || hasMetadataFile;
 
     if (hasMetadataJson && hasMetadataFile) {
@@ -70,12 +72,12 @@ export async function searchSecrets(options: {
       return;
     }
 
-    if (hasMetadataFile) {
-      logMessage(`Reading metadata from file: ${options.fromFile}`);
-      const fileContent = await fs.readFile(options.fromFile, "utf-8");
+    if (metadataFile) {
+      logMessage(`Reading metadata from file: ${metadataFile}`);
+      const fileContent = await fs.readFile(metadataFile, "utf-8");
       metadata = JSON.parse(fileContent);
-    } else if (hasMetadataJson) {
-      metadata = JSON.parse(options.metadataJson);
+    } else if (metadataJson) {
+      metadata = JSON.parse(metadataJson);
     }
 
     if (!options.name && !metadata) {
