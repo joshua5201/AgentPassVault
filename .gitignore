@@ -40,3 +40,5 @@ out/
 gha-creds-*.json
 .env
 .env.sh
+plans/
+reports/

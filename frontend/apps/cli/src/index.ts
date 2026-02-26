@@ -87,6 +87,10 @@ program
   .option("--name <name>", "Search by secret name (case-insensitive, partial match)")
   .option("--metadata-json <json>", "Metadata as a JSON string (exclusive with --from-file)")
   .option("--from-file <path>", "Path to a file containing metadata as JSON (exclusive with --metadata-json)")
+  .addHelpText(
+    "after",
+    "\nRequires at least one of `--name`, `--metadata-json`, or `--from-file`.",
+  )
   .action(searchSecrets);
 
 program
@@ -227,6 +231,10 @@ adminRequest
   .option("--secret-id <id>", "Fulfill using an existing secret")
   .option("--value <plain>", "Fulfill by creating a new secret with this value")
   .option("--password <pass>", "Master Password")
+  .addHelpText(
+    "after",
+    "\nRequires either `--secret-id` or `--value` to provide encrypted data for the agent.",
+  )
   .action(adminFulfillRequest);
 
 adminRequest
