@@ -17,6 +17,20 @@ Agents working on this project must adhere to the specifications and workflows d
 - **Feature Branches:** Always create a new feature branch (e.g., `feat/my-feature`) for development work. Do not commit directly to `master`. Avoid generic branch names like `feat/java-implementation`; prefer specific, feature-driven names (e.g., `feat/agent-self-registration`).
 - **Merge Strategy:** When merging to `master`, always use the `--no-ff` (no fast-forward) option to preserve the branch topology.
 
+## Local Development (Quick Start)
+- **Build backend Docker image:** `./gradlew jibDockerBuild`
+- **Start integration stack:** `docker compose up -d --force-recreate`
+  - Exposes backend at `http://localhost:58080`
+  - MySQL binds to `${MYSQL_PORT_3306:-53306}` on host
+- **Run Flyway (if needed):** `./scripts/database/flyway.sh`
+
+## Tests
+- **Backend targeted tests:** `./gradlew test --tests <TestClass>`
+  - Example: `./gradlew test --tests com.agentpassvault.controller.SecretControllerTest`
+- **Frontend unit tests (all apps):** `cd frontend && pnpm test:unit`
+- **Frontend integration tests (CLI E2E):** `cd frontend && pnpm test:integration`
+  - Requires the backend integration stack running (`docker compose up -d --force-recreate`)
+
 ## Java Implementation Note
 - **Coding Standards:** NEVER use `java.util.Date`. Always use `java.time` APIs (e.g., `Instant`, `LocalDateTime`, `OffsetDateTime`).
 
@@ -26,17 +40,7 @@ Agents working on this project must adhere to the specifications and workflows d
 - **License:** **GPLv3**. We may refer to Bitwarden's GPL-licensed logic for encryption/decryption and formats.
 - **Bitwarden Restriction:** **NEVER** refer to or use code from `bitwarden_license/` (Commercial Modules). This is enforced via `.geminiignore`.
 - **Architecture:** Monorepo using Turborepo + PNPM.
-- **Detailed Plan:** [Frontend Implementation Plan](./docs/frontend-implementation-plan.md)
-- **Implementation Status:**
-    - [x] **SDK - Models:** Core interfaces for Secrets, Leases, Requests - Finished.
-    - [x] **SDK - Crypto:** `MasterKeyService` (PBKDF2 derivation) - Finished.
-    - [x] **SDK - Crypto:** `CryptoService` (Symmetric AES-CBC+HMAC, Asymmetric RSA-OAEP) - Finished.
-    - [x] **SDK - Crypto:** `CipherStringParser` (Type 2 support) - Finished.
-    - [x] **SDK - Services:** `SecretService` (Local secret management) - Finished.
-    - [x] **SDK - Services:** `LeaseService` (Agent re-encryption logic) - Finished.
-    - [x] **SDK - API:** Client-side API definitions and request handling - Finished.
-    - [x] **CLI:** Agent CLI implementation - Finished.
-    - [ ] **Web:** Admin/Fulfillment UI - Pending.
+- **Frontend Plan:** The initial implementation plan has been completed. Do not rely on a separate plan document unless explicitly provided for new work.
 
 ## DTO Generation
 - **NEVER** manually create or modify TypeScript DTOs in `frontend/packages/sdk/src/api/generated`.

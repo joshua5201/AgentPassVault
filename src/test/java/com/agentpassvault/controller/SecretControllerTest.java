@@ -128,6 +128,12 @@ class SecretControllerTest extends BaseIntegrationTest {
                 objectMapper.writeValueAsString(
                     new CreateSecretRequest("S2", "v2", Map.of("env", "dev", "app", "web")))));
 
+    mockMvc.perform(
+        post("/api/v1/secrets")
+            .header("Authorization", "Bearer " + token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(new CreateSecretRequest("S3", "v3", null))));
+
     // Search for env=prod
     SearchSecretRequest searchProd = new SearchSecretRequest(null, Map.of("env", "prod"));
     mockMvc
@@ -151,6 +157,65 @@ class SecretControllerTest extends BaseIntegrationTest {
                 .content(objectMapper.writeValueAsString(searchWeb)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$", hasSize(2)));
+
+    // Search by name only
+    SearchSecretRequest searchByName = new SearchSecretRequest("S2", null);
+    mockMvc
+        .perform(
+            post("/api/v1/secrets/search")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(searchByName)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$", hasSize(1)))
+        .andExpect(jsonPath("$[0].name").value("S2"));
+
+    // Search by name + metadata
+    SearchSecretRequest searchNameAndMetadata =
+        new SearchSecretRequest("S1", Map.of("env", "prod"));
+    mockMvc
+        .perform(
+            post("/api/v1/secrets/search")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(searchNameAndMetadata)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$", hasSize(1)))
+        .andExpect(jsonPath("$[0].name").value("S1"));
+
+    // Search by name + metadata with no match
+    SearchSecretRequest searchNameAndMetadataNoMatch =
+        new SearchSecretRequest("S1", Map.of("env", "dev"));
+    mockMvc
+        .perform(
+            post("/api/v1/secrets/search")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(searchNameAndMetadataNoMatch)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$", hasSize(0)));
+
+    // Search with no criteria
+    SearchSecretRequest searchNoCriteria = new SearchSecretRequest(null, null);
+    mockMvc
+        .perform(
+            post("/api/v1/secrets/search")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(searchNoCriteria)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$", hasSize(3)));
+
+    // Search with empty metadata map should list all
+    SearchSecretRequest searchEmptyMetadata = new SearchSecretRequest(null, Map.of());
+    mockMvc
+        .perform(
+            post("/api/v1/secrets/search")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(searchEmptyMetadata)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$", hasSize(3)));
   }
 
   @Test

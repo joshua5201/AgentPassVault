@@ -14,8 +14,6 @@ import com.agentpassvault.repository.SecretRepository;
 import com.agentpassvault.repository.TenantRepository;
 import com.agentpassvault.repository.UserRepository;
 import com.agentpassvault.security.AgentPassVaultAuthentication;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.Query;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Collections;
@@ -39,7 +37,6 @@ public class SecretService {
   private final TenantRepository tenantRepository;
   private final LeaseRepository leaseRepository;
   private final UserRepository userRepository;
-  private final EntityManager entityManager;
   private final TokenService tokenService;
   private final ObjectMapper objectMapper;
 
@@ -248,8 +245,19 @@ public class SecretService {
 
   @SuppressWarnings("unchecked")
   public List<SecretMetadataResponse> searchSecrets(Long tenantId, SearchSecretRequest request) {
+    boolean hasName = request.name() != null && !request.name().isBlank();
+    boolean hasMetadata = request.metadata() != null && !request.metadata().isEmpty();
 
-    if (request.name() != null && !request.name().isBlank()) {
+    if (hasName) {
+      if (hasMetadata) {
+        String metadataJson = serializeMetadata(request.metadata());
+        return secretRepository
+            .findByNameAndMetadataAndTenantId(request.name(), metadataJson, tenantId)
+            .stream()
+            .map(this::mapToMetadataResponse)
+            .collect(Collectors.toList());
+      }
+
       return secretRepository
           .findByNameContainingIgnoreCaseAndTenantId(request.name(), tenantId)
           .stream()
@@ -257,38 +265,16 @@ public class SecretService {
           .collect(Collectors.toList());
     }
 
-    StringBuilder sql = new StringBuilder("SELECT s.* FROM secrets s ");
-    sql.append("JOIN tenants t ON s.tenant_id = t.id ");
-    sql.append("WHERE t.id = :tenantId ");
-
-    if (request.metadata() != null && !request.metadata().isEmpty()) {
-      request
-          .metadata()
-          .forEach(
-              (key, value) -> {
-                sql.append("AND JSON_EXTRACT(s.metadata, '$.")
-                    .append(key)
-                    .append("') = :")
-                    .append(key.replace(".", "_"))
-                    .append(" ");
-              });
+    if (hasMetadata) {
+      String metadataJson = serializeMetadata(request.metadata());
+      return secretRepository.findByMetadataAndTenantId(metadataJson, tenantId).stream()
+          .map(this::mapToMetadataResponse)
+          .collect(Collectors.toList());
     }
 
-    Query query = entityManager.createNativeQuery(sql.toString(), Secret.class);
-    query.setParameter("tenantId", tenantId);
-
-    if (request.metadata() != null && !request.metadata().isEmpty()) {
-      request
-          .metadata()
-          .forEach(
-              (key, value) -> {
-                query.setParameter(key.replace(".", "_"), value.toString());
-              });
-    }
-
-    List<Secret> secrets = query.getResultList();
-
-    return secrets.stream().map(this::mapToMetadataResponse).collect(Collectors.toList());
+    return secretRepository.findAllByTenantId(tenantId).stream()
+        .map(this::mapToMetadataResponse)
+        .collect(Collectors.toList());
   }
 
   public List<SecretDetailsResponse> listAllSecretsForPrincipal(
@@ -348,6 +334,14 @@ public class SecretService {
       if (json.getBytes(StandardCharsets.UTF_8).length > MAX_METADATA_SIZE_BYTES) {
         throw new IllegalArgumentException("Metadata size exceeds limit of 8 KB");
       }
+    } catch (JacksonException e) {
+      throw new IllegalArgumentException("Invalid metadata format", e);
+    }
+  }
+
+  private String serializeMetadata(Map<String, Object> metadata) {
+    try {
+      return objectMapper.writeValueAsString(metadata);
     } catch (JacksonException e) {
       throw new IllegalArgumentException("Invalid metadata format", e);
     }

@@ -83,9 +83,10 @@ program
 
 program
   .command("search-secrets")
-  .description("Search for secrets by metadata")
-  .option("--metadata-json <json>", "Metadata as a JSON string")
-  .option("--from-file <path>", "Path to a file containing metadata as JSON")
+  .description("Search for secrets by name and/or metadata")
+  .option("--name <name>", "Search by secret name (case-insensitive, partial match)")
+  .option("--metadata-json <json>", "Metadata as a JSON string (exclusive with --from-file)")
+  .option("--from-file <path>", "Path to a file containing metadata as JSON (exclusive with --metadata-json)")
   .action(searchSecrets);
 
 program
