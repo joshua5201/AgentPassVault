@@ -1,3 +1,4 @@
+import { Card, Button, Badge } from "../components/ui";
 import { ErrorState } from "../components/states/ErrorState";
 
 interface RequestDetailPageProps {
@@ -36,38 +37,33 @@ export function RequestDetailPage({ requestId, onBack }: RequestDetailPageProps)
     <section className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">{detail.name}</h1>
-          <p className="mt-1 text-sm text-slate-600">{detail.context}</p>
+          <h1 className="text-2xl font-semibold text-[var(--color-text)]">{detail.name}</h1>
+          <p className="mt-1 text-sm text-[var(--color-text-muted)]">{detail.context}</p>
         </div>
 
-        <button
-          type="button"
-          onClick={onBack}
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-        >
+        <Button variant="secondary" onClick={onBack}>
           Back
-        </button>
+        </Button>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <article className="rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="text-lg font-semibold text-slate-900">Request Requirements</h2>
-          <ul className="mt-3 space-y-2 text-sm text-slate-700">
+        <Card title="Request Requirements">
+          <ul className="space-y-2 text-sm text-[var(--color-text)]">
             {detail.requiredFields.map((field) => (
-              <li key={field} className="rounded-md bg-slate-50 px-3 py-2">
+              <li key={field} className="rounded-md bg-[var(--color-surface-muted)] px-3 py-2">
                 {field}
               </li>
             ))}
           </ul>
-        </article>
+        </Card>
 
-        <article className="rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="text-lg font-semibold text-slate-900">Fulfillment Placeholder</h2>
-          <p className="mt-3 text-sm text-slate-600">
-            In Phase 2+, this panel will support mapping to an existing secret or creating and leasing a new
-            one.
-          </p>
-        </article>
+        <Card title="Fulfillment Placeholder" description="Flow wiring starts in Phase 3 and Phase 4.">
+          <div className="flex flex-wrap gap-2">
+            <Badge tone="neutral">Existing Secret</Badge>
+            <Badge tone="success">Create + Lease</Badge>
+            <Badge tone="danger">Reject</Badge>
+          </div>
+        </Card>
       </div>
     </section>
   );
