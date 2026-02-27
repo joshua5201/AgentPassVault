@@ -7,6 +7,7 @@ import { RequestDetailPage } from "./pages/RequestDetailPage";
 import { RequestsPage } from "./pages/RequestsPage";
 import { SecretsPage } from "./pages/SecretsPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { UiLabPage } from "./pages/UiLabPage";
 import { useSessionStore } from "./state/session-store";
 
 function App() {
@@ -35,7 +36,9 @@ function App() {
   }));
 
   const currentPath =
-    match.route === "request-detail" ? "/requests" : ROUTES.find((route) => route.key === match.route)?.path ?? "/requests";
+    match.route === "request-detail"
+      ? "/requests"
+      : ROUTES.find((route) => route.key === match.route)?.path ?? "/requests";
 
   return (
     <AppShell
@@ -49,9 +52,12 @@ function App() {
       }}
     >
       {match.route === "requests" ? <RequestsPage onOpenRequest={(requestId) => navigate(`/requests/${requestId}`)} /> : null}
-      {match.route === "request-detail" ? <RequestDetailPage requestId={match.params.requestId ?? ""} onBack={() => navigate("/requests")} /> : null}
+      {match.route === "request-detail" ? (
+        <RequestDetailPage requestId={match.params.requestId ?? ""} onBack={() => navigate("/requests")} />
+      ) : null}
       {match.route === "secrets" ? <SecretsPage /> : null}
       {match.route === "settings" ? <SettingsPage /> : null}
+      {match.route === "ui-lab" ? <UiLabPage /> : null}
     </AppShell>
   );
 }

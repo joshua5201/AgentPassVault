@@ -1,4 +1,10 @@
-export type AppRoute = "login" | "requests" | "request-detail" | "secrets" | "settings";
+export type AppRoute =
+  | "login"
+  | "requests"
+  | "request-detail"
+  | "secrets"
+  | "settings"
+  | "ui-lab";
 
 export interface RouteMatch {
   route: AppRoute;
@@ -16,6 +22,7 @@ export const ROUTES: RouteDefinition[] = [
   { key: "requests", path: "/requests", label: "Requests" },
   { key: "secrets", path: "/secrets", label: "Secrets" },
   { key: "settings", path: "/settings", label: "Settings" },
+  { key: "ui-lab", path: "/ui-lab", label: "UI Lab" },
 ];
 
 export const DEFAULT_AUTH_ROUTE = "/requests";
@@ -42,6 +49,10 @@ export function parseRoute(hash: string): RouteMatch {
 
   if (segments[0] === "settings") {
     return { route: "settings", params: {} };
+  }
+
+  if (segments[0] === "ui-lab") {
+    return { route: "ui-lab", params: {} };
   }
 
   return { route: "login", params: {} };

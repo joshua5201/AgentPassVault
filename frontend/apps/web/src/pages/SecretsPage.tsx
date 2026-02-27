@@ -1,3 +1,4 @@
+import { Badge, Table } from "../components/ui";
 import { EmptyState } from "../components/states/EmptyState";
 
 const MOCK_SECRETS = [
@@ -19,32 +20,20 @@ export function SecretsPage() {
   return (
     <section className="space-y-4">
       <header>
-        <h1 className="text-2xl font-semibold text-slate-900">Secrets</h1>
-        <p className="mt-1 text-sm text-slate-600">Manage encrypted records available for lease workflows.</p>
+        <h1 className="text-2xl font-semibold text-[var(--color-text)]">Secrets</h1>
+        <p className="mt-1 text-sm text-[var(--color-text-muted)]">Manage encrypted records available for lease workflows.</p>
       </header>
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-        <table className="min-w-full divide-y divide-slate-200">
-          <thead className="bg-slate-50">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
-                Name
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
-                Updated
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200">
-            {MOCK_SECRETS.map((secret) => (
-              <tr key={secret.id}>
-                <td className="px-4 py-3 text-sm font-medium text-slate-900">{secret.name}</td>
-                <td className="px-4 py-3 text-sm text-slate-600">{secret.updatedAt}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Table
+        headers={["Name", "Updated", "Status"]}
+        rows={MOCK_SECRETS.map((secret) => [
+          secret.name,
+          secret.updatedAt,
+          <Badge key={`${secret.id}-active`} tone="success">
+            Active
+          </Badge>,
+        ])}
+      />
     </section>
   );
 }
