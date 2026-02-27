@@ -100,9 +100,24 @@ export async function searchSecrets(options: {
   }
 }
 
+type RequestSecretOptions = {
+  context?: string;
+  metadata?: string;
+  type?: string;
+  secretId?: string;
+};
+
+function normalizeRequestType(raw?: string): RequestType {
+  if (!raw) return RequestType.CREATE;
+  const normalized = raw.trim().toUpperCase();
+  if (normalized === 'LEASE') return RequestType.LEASE;
+  if (normalized === 'CREATE') return RequestType.CREATE;
+  throw new Error('Invalid request type. Use "create" or "lease".');
+}
+
 export async function requestSecret(
   name: string,
-  options: { context?: string; metadata?: string },
+  options: RequestSecretOptions,
 ) {
   try {
     const { client } = await getClient();
@@ -111,12 +126,21 @@ export async function requestSecret(
       ? JSON.parse(options.metadata)
       : {};
 
+    const requestType = normalizeRequestType(options.type);
+    const secretId = options.secretId;
+    if (requestType === RequestType.LEASE && !secretId) {
+      throw new Error(
+        'Request type "lease" requires --secret-id <id> (existing secret).',
+      );
+    }
+
     logMessage(`Creating secret request for "${name}"...`);
     const secretRequestResponse = await client.createRequest({
       name,
-      type: RequestType.CREATE,
+      type: requestType,
       context: options.context,
       requiredMetadata,
+      secretId,
     });
 
     printOutput({

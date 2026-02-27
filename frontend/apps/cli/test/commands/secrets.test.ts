@@ -2,15 +2,22 @@ import fs from "node:fs/promises";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const searchSecretsMock = vi.fn();
+const createRequestMock = vi.fn();
 const agentLoginMock = vi.fn().mockResolvedValue({ accessToken: "token" });
 const setAccessTokenMock = vi.fn();
 
+let RequestTypeMock: Record<string, string>;
+
 vi.mock("@agentpassvault/sdk", () => ({
+  get RequestType() {
+    return RequestTypeMock;
+  },
   VaultClient: class {
     constructor(_apiUrl: string) {}
     agentLogin = agentLoginMock;
     setAccessToken = setAccessTokenMock;
     searchSecrets = searchSecretsMock;
+    createRequest = createRequestMock;
   },
 }));
 
@@ -46,10 +53,82 @@ async function loadSearchSecrets() {
   return mod.searchSecrets;
 }
 
+async function loadRequestSecret() {
+  const mod = await import("../../src/commands/secrets.js");
+  return mod.requestSecret;
+}
+
+describe("requestSecret", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    searchSecretsMock.mockReset();
+    createRequestMock.mockReset();
+    agentLoginMock.mockClear();
+    setAccessTokenMock.mockClear();
+    handleErrorMock.mockClear();
+    loadConfigMock.mockClear();
+    RequestTypeMock = { CREATE: "CREATE", LEASE: "LEASE" };
+  });
+
+  it("sends create request by default", async () => {
+    const requestSecret = await loadRequestSecret();
+    createRequestMock.mockResolvedValue({
+      requestId: "req-1",
+      status: "pending",
+      fulfillmentUrl: "https://example/req-1",
+    });
+
+    await requestSecret("GitHub PAT", { metadata: "{\"env\":\"prod\"}" });
+
+    expect(createRequestMock).toHaveBeenCalledWith({
+      name: "GitHub PAT",
+      type: "CREATE",
+      context: undefined,
+      requiredMetadata: { env: "prod" },
+      secretId: undefined,
+    });
+  });
+
+  it("sends lease request when type=lease", async () => {
+    const requestSecret = await loadRequestSecret();
+    createRequestMock.mockResolvedValue({
+      requestId: "req-2",
+      status: "pending",
+      fulfillmentUrl: "https://example/req-2",
+    });
+
+    await requestSecret("GitHub PAT", {
+      context: "Need for helper",
+      type: "lease",
+      secretId: "secret-123",
+    });
+
+    expect(createRequestMock).toHaveBeenCalledWith({
+      name: "GitHub PAT",
+      type: "LEASE",
+      context: "Need for helper",
+      requiredMetadata: {},
+      secretId: "secret-123",
+    });
+  });
+
+  it("throws if lease missing secret-id", async () => {
+    const requestSecret = await loadRequestSecret();
+
+    await requestSecret("GitHub PAT", { type: "lease" });
+
+    expect(handleErrorMock).toHaveBeenCalledTimes(1);
+    const [errorArg] = handleErrorMock.mock.calls[0] as [Error];
+    expect(errorArg.message).toContain("requires --secret-id");
+  });
+});
+
+
 describe("searchSecrets", () => {
   beforeEach(() => {
     vi.resetModules();
     searchSecretsMock.mockReset();
+    createRequestMock.mockReset();
     agentLoginMock.mockClear();
     setAccessTokenMock.mockClear();
     handleErrorMock.mockClear();
