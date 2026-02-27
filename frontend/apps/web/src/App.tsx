@@ -22,6 +22,7 @@ function App() {
     loginHash,
     isLocked,
     setVaultSession,
+    lockVault,
     clearVaultSession,
     markActivity,
     lastActivityAt,
@@ -38,7 +39,7 @@ function App() {
     lastActivityAt,
     vaultUnlockedAt,
     markActivity,
-    lockVault: clearVaultSession,
+    lockVault,
   });
 
   useEffect(() => {
@@ -90,7 +91,7 @@ function App() {
       currentPath={currentPath}
       navItems={navItems}
       onNavigate={navigate}
-      onLockVault={clearVaultSession}
+      onLockVault={lockVault}
       onLogout={() => {
         clearVaultSession();
         logout();

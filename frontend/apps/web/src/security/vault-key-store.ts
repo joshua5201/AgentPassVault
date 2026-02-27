@@ -8,6 +8,7 @@ interface VaultKeyState {
   vaultUnlockedAt: number | null;
   isLocked: boolean;
   setVaultSession: (masterKeys: MasterKeys, loginHash: string) => void;
+  lockVault: () => void;
   clearVaultSession: () => void;
   markActivity: () => void;
 }
@@ -28,6 +29,14 @@ export const useVaultKeyStore = create<VaultKeyState>((set) => ({
       vaultUnlockedAt: now,
     });
   },
+  lockVault: () =>
+    set((state) => ({
+      masterKeys: null,
+      isLocked: true,
+      lastActivityAt: null,
+      vaultUnlockedAt: null,
+      loginHash: state.loginHash,
+    })),
   clearVaultSession: () =>
     set({
       masterKeys: null,

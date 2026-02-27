@@ -143,24 +143,24 @@ export function SecretsPage({ isVaultLocked, masterKeys }: SecretsPageProps) {
 
     setLocalSecrets((prev) => [localSecret, ...prev]);
 
-    if (env.apiMockingEnabled) {
-      setToastMessage("Secret encrypted locally and submitted in mock mode.");
-    } else {
-      setSubmitting(true);
-      const result = await appApiClient.createSecret({
-        name: encrypted.name,
-        encryptedValue: encrypted.encryptedValue,
-        metadata: toApiMetadata(encrypted.metadata),
-      });
-      setSubmitting(false);
+    setSubmitting(true);
+    const result = await appApiClient.createSecret({
+      name: encrypted.name,
+      encryptedValue: encrypted.encryptedValue,
+      metadata: toApiMetadata(encrypted.metadata),
+    });
+    setSubmitting(false);
 
-      if (!result.ok) {
-        setToastMessage(`Create secret failed (${result.error.status}): ${result.error.message}`);
-        return;
-      }
-
-      setToastMessage("Secret encrypted locally and submitted successfully.");
+    if (!result.ok) {
+      setToastMessage(`Create secret failed (${result.error.status}): ${result.error.message}`);
+      return;
     }
+
+    setToastMessage(
+      env.apiMockingEnabled
+        ? "Secret encrypted locally and submitted in mock mode."
+        : "Secret encrypted locally and submitted successfully.",
+    );
 
     setName("");
     setPlaintextValue("");
