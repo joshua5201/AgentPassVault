@@ -12,10 +12,14 @@ async function enableMocking() {
   }
 }
 
-void enableMocking().then(() => {
+void enableMocking()
+  .catch((error) => {
+    console.error("MSW bootstrap failed; continuing without mocks.", error);
+  })
+  .finally(() => {
   ReactDOM.createRoot(document.getElementById("root")!).render(
     <React.StrictMode>
       <App />
     </React.StrictMode>,
   );
-});
+  });
