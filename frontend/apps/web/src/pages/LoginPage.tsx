@@ -2,12 +2,14 @@ import { useState } from "react";
 import { Button, Card, Input } from "../components/ui";
 
 interface LoginPageProps {
-  onLogin: (username: string, password: string) => Promise<void> | void;
+  onLogin: (username: string, password: string, twoFactorCode?: string) => Promise<void> | void;
 }
 
 export function LoginPage({ onLogin }: LoginPageProps) {
   const [username, setUsername] = useState("admin@example.com");
   const [password, setPassword] = useState("");
+  const [useTwoFactor, setUseTwoFactor] = useState(false);
+  const [twoFactorCode, setTwoFactorCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -27,8 +29,9 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             setSubmitting(true);
             setErrorMessage(null);
             try {
-              await onLogin(username, password);
+              await onLogin(username, password, useTwoFactor ? twoFactorCode : undefined);
               setPassword("");
+              setTwoFactorCode("");
             } catch (error) {
               const message =
                 error instanceof Error ? error.message : "Unable to sign in with provided credentials.";
@@ -52,6 +55,25 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             onChange={(event) => setPassword(event.target.value)}
             autoComplete="current-password"
           />
+
+          <label className="flex items-center gap-2 text-sm text-[var(--color-text)]">
+            <input
+              type="checkbox"
+              checked={useTwoFactor}
+              onChange={(event) => setUseTwoFactor(event.target.checked)}
+            />
+            Use 2FA code
+          </label>
+
+          {useTwoFactor ? (
+            <Input
+              label="2FA Code"
+              value={twoFactorCode}
+              onChange={(event) => setTwoFactorCode(event.target.value)}
+              autoComplete="one-time-code"
+              placeholder="123456"
+            />
+          ) : null}
 
           <Button type="submit" className="w-full">
             {submitting ? "Signing In..." : "Sign In"}

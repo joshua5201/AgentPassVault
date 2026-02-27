@@ -3,8 +3,10 @@ import type {
   CreateLeaseRequest,
   CreateSecretRequest,
   RequestResponse,
+  SearchSecretRequest,
   UpdateRequestRequest,
   UserLoginRequest,
+  TwoFactorLoginRequest,
 } from "@agentpassvault/sdk";
 import { mockAgents, mockRequests, mockSecrets } from "./data";
 
@@ -35,6 +37,30 @@ export const handlers = [
     const body = (await request.json()) as UserLoginRequest;
     if (!body.username || !body.password) {
       return HttpResponse.json({ message: "username and password are required" }, { status: 422 });
+    }
+
+    return HttpResponse.json({
+      accessToken: "mock-access-token",
+      refreshToken: "mock-refresh-token",
+      tokenType: "Bearer",
+      expiresIn: 900,
+      refreshTokenExpiresIn: 86400,
+    });
+  }),
+
+  http.post("*/api/v1/auth/login/user/2fa", async ({ request }) => {
+    const forcedError = maybeErrorFrom(request);
+    if (forcedError) {
+      return forcedError;
+    }
+
+    const body = (await request.json()) as TwoFactorLoginRequest;
+    if (!body.username || !body.password || !body.code) {
+      return HttpResponse.json({ message: "username, password, and code are required" }, { status: 422 });
+    }
+
+    if (body.code !== "123456") {
+      return HttpResponse.json({ message: "Invalid 2FA code" }, { status: 401 });
     }
 
     return HttpResponse.json({
@@ -98,6 +124,21 @@ export const handlers = [
     }
 
     return HttpResponse.json(mockSecrets);
+  }),
+
+  http.post("*/api/v1/secrets/search", async ({ request }) => {
+    const forcedError = maybeErrorFrom(request);
+    if (forcedError) {
+      return forcedError;
+    }
+
+    const payload = (await request.json()) as SearchSecretRequest;
+    if (!payload.name) {
+      return HttpResponse.json(mockSecrets);
+    }
+
+    const lowered = payload.name.toLowerCase();
+    return HttpResponse.json(mockSecrets.filter((item) => (item.name ?? "").toLowerCase().includes(lowered)));
   }),
 
   http.post("*/api/v1/secrets", async ({ request }) => {
