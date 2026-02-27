@@ -58,6 +58,11 @@ async function loadRequestSecret() {
   return mod.requestSecret;
 }
 
+async function loadListSecrets() {
+  const mod = await import("../../src/commands/secrets.js");
+  return mod.listSecrets;
+}
+
 describe("requestSecret", () => {
   beforeEach(() => {
     vi.resetModules();
@@ -123,6 +128,28 @@ describe("requestSecret", () => {
   });
 });
 
+
+describe("listSecrets", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    searchSecretsMock.mockReset();
+    createRequestMock.mockReset();
+    agentLoginMock.mockClear();
+    setAccessTokenMock.mockClear();
+    handleErrorMock.mockClear();
+    loadConfigMock.mockClear();
+  });
+
+  it("lists secrets with empty metadata filter", async () => {
+    const listSecrets = await loadListSecrets();
+    searchSecretsMock.mockResolvedValue([]);
+
+    await listSecrets();
+
+    expect(searchSecretsMock).toHaveBeenCalledWith({ metadata: {} });
+    expect(handleErrorMock).not.toHaveBeenCalled();
+  });
+});
 
 describe("searchSecrets", () => {
   beforeEach(() => {

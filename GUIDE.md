@@ -36,29 +36,34 @@ agentpassvault identity init --api-url <URL> --tenant-id <TENANT_ID> --agent-id 
 
 2. **Create request (Ask a human):**
 ```bash
-agentpassvault request-secret "some-account" --metadata '{"account":"joshua5201"}'
+agentpassvault request create "some-account" --metadata '{"account":"joshua5201"}'
 ```
 → Share the `fulfillmentUrl` from the JSON response with a human approver.
 
 3. **Poll request:**
 ```bash
-agentpassvault get-request <requestId>
+agentpassvault request get <requestId>
 ```
 → Wait for `"status": "fulfilled"` in the JSON response and note the `mappedSecretId`.
 
 4. **Retrieve secret and decrypt locally:**
 ```bash
-agentpassvault get-secret <secretId>
+agentpassvault secret get <secretId>
 ```
 → The CLI securely fetches the encrypted payload and decrypts it locally using your private key, outputting the secret as JSON. Do not forward the plaintext.
 
-5. **(Optional) Search for secrets by metadata:**
+5. **(Optional) List available secrets:**
+```bash
+agentpassvault secret list
+```
+
+6. **(Optional) Search for secrets by metadata:**
 ```bash
 # Create a temporary file with your search query
 echo '{"service":"aws","region":"us-east-1"}' > /tmp/query.json
 
 # Search using the file
-agentpassvault search-secrets --from-file /tmp/query.json
+agentpassvault secret search --from-file /tmp/query.json
 
 # Clean up the temp file
 rm /tmp/query.json
@@ -72,4 +77,4 @@ rm /tmp/query.json
 
 ## Minimal test checklist
 
-- `init` → `request-secret` → fulfill in UI (or via admin CLI) → `get-request` → `get-secret` → clean up.
+- `init` → `request create` → fulfill in UI (or via admin CLI) → `request get` → `secret get` → clean up.
