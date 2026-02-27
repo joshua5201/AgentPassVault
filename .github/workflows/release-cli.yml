@@ -1,0 +1,44 @@
+name: release-cli
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  build-cli:
+    name: Build and upload CLI binary
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build CLI package
+        run: pnpm --filter @agentpassvault/cli run build
+
+      - name: Build standalone binary
+        working-directory: frontend/apps/cli
+        run: pnpm dlx pkg package.json --targets node20-linux-x64 --output dist/agentpassvault-linux
+
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: frontend/apps/cli/dist/agentpassvault-linux
+          asset_name: agentpassvault-linux-${{ github.ref_name }}
+          asset_content_type: application/octet-stream
