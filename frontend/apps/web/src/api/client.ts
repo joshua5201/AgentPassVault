@@ -4,8 +4,10 @@ import {
   type LoginResponse,
   type RequestResponse,
   type SecretMetadataResponse,
+  type TwoFactorLoginRequest,
   type UpdateRequestRequest,
   type UserLoginRequest,
+  type AgentResponse,
   VaultClient,
 } from "@agentpassvault/sdk";
 import { readAppEnv } from "../config/env";
@@ -89,6 +91,10 @@ export class AppApiClient {
     };
   }
 
+  async loginWith2fa(input: TwoFactorLoginRequest): Promise<ApiResult<LoginResponse>> {
+    return this.safeCall(() => this.client.userLoginWith2fa(input));
+  }
+
   async listRequests(): Promise<ApiResult<RequestResponse[]>> {
     return this.safeCall(() => this.client.listRequests());
   }
@@ -134,6 +140,14 @@ export class AppApiClient {
         updatedAt: new Date(),
       },
     };
+  }
+
+  async listSecrets(): Promise<ApiResult<SecretMetadataResponse[]>> {
+    return this.safeCall(() => this.client.searchSecrets({}));
+  }
+
+  async listAgents(): Promise<ApiResult<AgentResponse[]>> {
+    return this.safeCall(() => this.client.listAgents());
   }
 
   async createLease(

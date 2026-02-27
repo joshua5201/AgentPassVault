@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { appApiClient } from "./api/client";
 import { AppShell } from "./components/layout/AppShell";
+import { Toast } from "./components/ui";
 import { useHashRouter } from "./app/router";
 import { DEFAULT_AUTH_ROUTE, ROUTES } from "./app/routes";
 import { LoginPage } from "./pages/LoginPage";
@@ -16,6 +17,7 @@ import { useSessionStore } from "./state/session-store";
 
 function App() {
   const { match, navigate } = useHashRouter();
+  const [notice, setNotice] = useState<{ message: string; tone: "info" | "success" | "error" } | null>(null);
   const { isAuthenticated, adminName, setLoginSession, logout, accessToken } = useSessionStore();
   const {
     masterKeys,
@@ -56,13 +58,19 @@ function App() {
   if (!isAuthenticated || match.route === "login") {
     return (
       <LoginPage
-        onLogin={async (username, password) => {
+        onLogin={async (username, password, twoFactorCode) => {
           const derived = await AuthCryptoOrchestrator.deriveForLogin(username, password);
 
-          const result = await appApiClient.login({
-            username: derived.username,
-            password: derived.loginHash,
-          });
+          const result = twoFactorCode
+            ? await appApiClient.loginWith2fa({
+                username: derived.username,
+                password: derived.loginHash,
+                code: twoFactorCode,
+              })
+            : await appApiClient.login({
+                username: derived.username,
+                password: derived.loginHash,
+              });
           if (!result.ok) {
             throw new Error(result.error.message);
           }
@@ -98,6 +106,7 @@ function App() {
         navigate("/login");
       }}
     >
+      {notice ? <Toast tone={notice.tone} title="Notification">{notice.message}</Toast> : null}
       {isLocked ? (
         <VaultUnlockPage
           username={adminName}
@@ -117,7 +126,15 @@ function App() {
       ) : null}
       {match.route === "requests" ? <RequestsPage onOpenRequest={(requestId) => navigate(`/requests/${requestId}`)} /> : null}
       {match.route === "request-detail" ? (
-        <RequestDetailPage requestId={match.params.requestId ?? ""} onBack={() => navigate("/requests")} />
+        <RequestDetailPage
+          requestId={match.params.requestId ?? ""}
+          onBack={() => navigate("/requests")}
+          isVaultLocked={isLocked}
+          masterKeys={masterKeys}
+          onNotify={(message, tone = "info") => {
+            setNotice({ message, tone });
+          }}
+        />
       ) : null}
       {match.route === "secrets" ? <SecretsPage isVaultLocked={isLocked} masterKeys={masterKeys} /> : null}
       {match.route === "settings" ? <SettingsPage /> : null}
