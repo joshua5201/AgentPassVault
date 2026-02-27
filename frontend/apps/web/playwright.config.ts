@@ -1,5 +1,13 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const baseURL = process.env.PW_BASE_URL ?? "http://127.0.0.1:5173";
+const webServerCommand =
+  process.env.PW_WEBSERVER_COMMAND ??
+  "VITE_API_MOCKING=true VITE_API_URL=http://localhost:8080 pnpm dev -- --host 127.0.0.1 --port 5173 --strictPort";
+const skipWebServer = process.env.PW_SKIP_WEBSERVER === "true";
+const ignoreHTTPSErrors =
+  process.env.PW_IGNORE_HTTPS_ERRORS === "true" || baseURL.startsWith("https://");
+
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
@@ -8,18 +16,20 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: "list",
   use: {
-    baseURL: "http://127.0.0.1:5173",
+    baseURL,
+    ignoreHTTPSErrors,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
   },
-  webServer: {
-    command:
-      "VITE_API_MOCKING=true VITE_API_URL=http://localhost:8080 pnpm dev -- --host 127.0.0.1 --port 5173 --strictPort",
-    url: "http://127.0.0.1:5173",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000,
-  },
+  webServer: skipWebServer
+    ? undefined
+    : {
+        command: webServerCommand,
+        url: baseURL,
+        reuseExistingServer: !process.env.CI,
+        timeout: 120000,
+      },
   projects: [
     {
       name: "chromium",

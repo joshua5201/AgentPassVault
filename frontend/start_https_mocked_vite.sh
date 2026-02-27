@@ -40,6 +40,7 @@ if [[ "${NEEDS_CERT_GEN}" == "true" ]]; then
 fi
 
 export VITE_API_MOCKING="${VITE_API_MOCKING:-true}"
+export VITE_API_CLIENT_FALLBACK="${VITE_API_CLIENT_FALLBACK:-true}"
 export VITE_API_URL="${VITE_API_URL:-http://localhost:8080}"
 export VITE_DEV_HTTPS="true"
 export VITE_DEV_HTTPS_CERT="${ABS_CERT_FILE}"
