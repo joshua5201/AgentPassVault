@@ -18,3 +18,7 @@ pnpm-lock.yaml
 # Test/cache outputs
 coverage/
 .vite/
+
+# Playwright artifacts
+apps/web/test-results/
+apps/web/playwright-report/
