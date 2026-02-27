@@ -1,5 +1,7 @@
 import { useEffect } from "react";
+import { appApiClient } from "./api/client";
 import { AppShell } from "./components/layout/AppShell";
+import { readAppEnv } from "./config/env";
 import { useHashRouter } from "./app/router";
 import { DEFAULT_AUTH_ROUTE, ROUTES } from "./app/routes";
 import { LoginPage } from "./pages/LoginPage";
@@ -11,8 +13,13 @@ import { UiLabPage } from "./pages/UiLabPage";
 import { useSessionStore } from "./state/session-store";
 
 function App() {
+  const env = readAppEnv();
   const { match, navigate } = useHashRouter();
-  const { isAuthenticated, adminName, login, logout } = useSessionStore();
+  const { isAuthenticated, adminName, login, setLoginSession, logout, accessToken } = useSessionStore();
+
+  useEffect(() => {
+    appApiClient.setAccessToken(accessToken);
+  }, [accessToken]);
 
   useEffect(() => {
     if (!isAuthenticated && match.route !== "login") {
@@ -26,7 +33,23 @@ function App() {
   }, [isAuthenticated, match.route, navigate]);
 
   if (!isAuthenticated || match.route === "login") {
-    return <LoginPage onLogin={(username) => login(username)} />;
+    return (
+      <LoginPage
+        onLogin={async (username, password) => {
+          if (env.apiMockingEnabled) {
+            login(username);
+            return;
+          }
+
+          const result = await appApiClient.login({ username, password });
+          if (!result.ok) {
+            throw new Error(result.error.message);
+          }
+
+          setLoginSession(username, result.data);
+        }}
+      />
+    );
   }
 
   const navItems = ROUTES.filter((route) => route.key !== "login").map((route) => ({

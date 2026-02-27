@@ -2,12 +2,14 @@ import { useState } from "react";
 import { Button, Card, Input } from "../components/ui";
 
 interface LoginPageProps {
-  onLogin: (username: string) => void;
+  onLogin: (username: string, password: string) => Promise<void> | void;
 }
 
 export function LoginPage({ onLogin }: LoginPageProps) {
   const [username, setUsername] = useState("admin@example.com");
   const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[var(--color-app-bg)] px-4">
@@ -20,9 +22,19 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
         <form
           className="space-y-4"
-          onSubmit={(event) => {
+          onSubmit={async (event) => {
             event.preventDefault();
-            onLogin(username);
+            setSubmitting(true);
+            setErrorMessage(null);
+            try {
+              await onLogin(username, password);
+            } catch (error) {
+              const message =
+                error instanceof Error ? error.message : "Unable to sign in with provided credentials.";
+              setErrorMessage(message);
+            } finally {
+              setSubmitting(false);
+            }
           }}
         >
           <Input
@@ -41,8 +53,14 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           />
 
           <Button type="submit" className="w-full">
-            Sign In
+            {submitting ? "Signing In..." : "Sign In"}
           </Button>
+
+          {errorMessage ? (
+            <p className="text-sm text-[var(--color-danger)]" role="alert">
+              {errorMessage}
+            </p>
+          ) : null}
         </form>
       </Card>
     </div>
