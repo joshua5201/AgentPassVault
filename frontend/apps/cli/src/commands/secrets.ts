@@ -100,6 +100,16 @@ export async function searchSecrets(options: {
   }
 }
 
+export async function listSecrets() {
+  try {
+    const { client } = await getClient();
+    const results = await client.searchSecrets({ metadata: {} });
+    printOutput(results);
+  } catch (error: any) {
+    handleError(error);
+  }
+}
+
 type RequestSecretOptions = {
   context?: string;
   metadata?: string;

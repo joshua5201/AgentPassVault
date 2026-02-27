@@ -105,7 +105,8 @@ describe("AgentPassVault CLI E2E Scenarios", () => {
   it("Scenario 1: Full Missing Secret Flow (Create and Lease)", async () => {
     console.log("[Scenario 1] Requesting new secret...");
     const requestOut = runCli([
-      "request-secret",
+      "request",
+      "create",
       "S1-Secret",
       "--context",
       "Scenario 1 context",
@@ -125,12 +126,12 @@ describe("AgentPassVault CLI E2E Scenarios", () => {
       adminPassword,
     ]);
 
-    const statusOut = runCli(["get-request", requestId]);
+    const statusOut = runCli(["request", "get", requestId]);
     const statusJson = JSON.parse(statusOut);
     const secretId = statusJson.mappedSecretId;
 
     console.log("[Scenario 1] Verifying agent can retrieve secret...");
-    const finalSecretOut = runCli(["get-secret", secretId]);
+    const finalSecretOut = runCli(["secret", "get", secretId]);
     const finalSecretJson = JSON.parse(finalSecretOut);
     expect(finalSecretJson.value).toBe("s1-plain-value");
     expect(finalSecretJson.name).toBe("S1-Secret");
@@ -160,7 +161,7 @@ describe("AgentPassVault CLI E2E Scenarios", () => {
 
     // Manually lease it to agent
     console.log("[Scenario 2] Manually leasing to agent...");
-    const requestOut = runCli(["request-secret", "S2-Secret-Req"]);
+    const requestOut = runCli(["request", "create", "S2-Secret-Req"]);
     const requestJson = JSON.parse(requestOut);
     const requestId = requestJson.requestId;
     runCli([
@@ -178,7 +179,7 @@ describe("AgentPassVault CLI E2E Scenarios", () => {
 
     console.log("[Scenario 2] Verifying initial retrieval...");
 
-    const retrievalOut = runCli(["get-secret", secretId]);
+    const retrievalOut = runCli(["secret", "get", secretId]);
     const retrievalJson = JSON.parse(retrievalOut);
     const secretValue = JSON.parse(retrievalJson.value);
 
@@ -202,7 +203,7 @@ describe("AgentPassVault CLI E2E Scenarios", () => {
     console.log("[Scenario 2] Verifying retrieval fails after update...");
 
     try {
-      runCli(["get-secret", secretId]);
+      runCli(["secret", "get", secretId]);
 
       expect.fail(
         "Should have failed to retrieve secret after update because lease was invalidated",
@@ -237,7 +238,7 @@ describe("AgentPassVault CLI E2E Scenarios", () => {
 
     console.log("[Scenario 3] Agent requests a DIFFERENT secret...");
 
-    const requestOut = runCli(["request-secret", "S3-New-Request"]);
+    const requestOut = runCli(["request", "create", "S3-New-Request"]);
     const requestJson = JSON.parse(requestOut);
     const requestId = requestJson.requestId;
 
@@ -254,7 +255,7 @@ describe("AgentPassVault CLI E2E Scenarios", () => {
       "[Scenario 3] Verifying agent can retrieve the mapped secret...",
     );
 
-    const finalSecretOut = runCli(["get-secret", secretId]);
+    const finalSecretOut = runCli(["secret", "get", secretId]);
     const finalSecretJson = JSON.parse(finalSecretOut);
     const secretValue = JSON.parse(finalSecretJson.value);
 

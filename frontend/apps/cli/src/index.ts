@@ -10,6 +10,7 @@ import {
   searchSecrets,
   requestSecret,
   getRequestStatus,
+  listSecrets,
 } from "./commands/secrets.js";
 import {
   adminLogin,
@@ -75,14 +76,16 @@ identity
   .requiredOption("--app-token <token>", "Application Token")
   .action(init);
 
-// Secret Commands
-program
-  .command("get-secret <id>")
+// Agent Commands
+const secret = program.command("secret").description("Manage agent secrets");
+
+secret
+  .command("get <id>")
   .description("Retrieve and decrypt a secret")
   .action(getSecret);
 
-program
-  .command("search-secrets")
+secret
+  .command("search")
   .description("Search for secrets by name and/or metadata")
   .option("--name <name>", "Search by secret name (case-insensitive, partial match)")
   .option("--metadata-json <json>", "Metadata as a JSON string (exclusive with --from-file)")
@@ -93,8 +96,17 @@ program
   )
   .action(searchSecrets);
 
-program
-  .command("request-secret <name>")
+secret
+  .command("list")
+  .description("List available secrets for this agent")
+  .action(listSecrets);
+
+const request = program
+  .command("request")
+  .description("Manage secret requests");
+
+request
+  .command("create <name>")
   .description("Create a new secret request")
   .option("--context <text>", "Context for the request")
   .option("--metadata <json>", "Required metadata for the secret")
@@ -102,12 +114,54 @@ program
   .option("--secret-id <id>", "Existing secret ID (required when --type lease)")
   .action((name, options) => requestSecret(name, options));
 
+request
+  .command("get <id>")
+  .description("Check the status of a secret request")
+  .action(getRequestStatus);
+
+// Backward compatible aliases (deprecated)
+program
+  .command("get-secret <id>")
+  .description("[Deprecated] Use: secret get <id>")
+  .action((id) => {
+    console.error('Deprecated: use "secret get <id>" instead of "get-secret <id>".');
+    return getSecret(id);
+  });
+
+program
+  .command("search-secrets")
+  .description("[Deprecated] Use: secret search")
+  .option("--name <name>", "Search by secret name (case-insensitive, partial match)")
+  .option("--metadata-json <json>", "Metadata as a JSON string (exclusive with --from-file)")
+  .option("--from-file <path>", "Path to a file containing metadata as JSON (exclusive with --metadata-json)")
+  .addHelpText(
+    "after",
+    "\nDeprecated. Use `secret search` instead.",
+  )
+  .action((options) => {
+    console.error('Deprecated: use "secret search" instead of "search-secrets".');
+    return searchSecrets(options);
+  });
+
+program
+  .command("request-secret <name>")
+  .description("[Deprecated] Use: request create <name>")
+  .option("--context <text>", "Context for the request")
+  .option("--metadata <json>", "Required metadata for the secret")
+  .option("--type <create|lease>", "Request type (default: create)")
+  .option("--secret-id <id>", "Existing secret ID (required when --type lease)")
+  .action((name, options) => {
+    console.error('Deprecated: use "request create <name>" instead of "request-secret <name>".');
+    return requestSecret(name, options);
+  });
+
 program
   .command("get-request <id>")
-
-  .description("Check the status of a secret request")
-
-  .action(getRequestStatus);
+  .description("[Deprecated] Use: request get <id>")
+  .action((id) => {
+    console.error('Deprecated: use "request get <id>" instead of "get-request <id>".');
+    return getRequestStatus(id);
+  });
 
 // Admin Commands
 
