@@ -4,6 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 export VITE_API_MOCKING="true"
+export VITE_API_CLIENT_FALLBACK="true"
 export VITE_API_URL="${VITE_API_URL:-http://localhost:8080}"
 VITE_PORT="${VITE_PORT:-5173}"
 

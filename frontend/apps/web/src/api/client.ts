@@ -24,9 +24,12 @@ export type ApiResult<T> =
 
 export class AppApiClient {
   private readonly client: VaultClient;
+  private readonly apiClientFallbackEnabled: boolean;
 
   constructor(baseUrl: string = readAppEnv().apiUrl) {
+    const env = readAppEnv();
     this.client = new VaultClient(baseUrl);
+    this.apiClientFallbackEnabled = env.apiClientFallbackEnabled;
   }
 
   setAccessToken(token: string | null) {
@@ -42,8 +45,48 @@ export class AppApiClient {
     }
   }
 
+  private shouldUseMockFallback<T>(result: ApiResult<T>): result is { ok: false; error: AppApiError } {
+    if (!this.apiClientFallbackEnabled || result.ok) {
+      return false;
+    }
+
+    const message = result.error.message.toLowerCase();
+    const likelyNetworkError =
+      result.error.status >= 500 &&
+      (message.includes("load failed") ||
+        message.includes("failed to fetch") ||
+        message.includes("networkerror") ||
+        message.includes("network error"));
+
+    return likelyNetworkError;
+  }
+
   async login(input: UserLoginRequest): Promise<ApiResult<LoginResponse>> {
-    return this.safeCall(() => this.client.userLogin(input));
+    const result = await this.safeCall(() => this.client.userLogin(input));
+    if (!this.shouldUseMockFallback(result)) {
+      return result;
+    }
+
+    if (!input.username || !input.password) {
+      return {
+        ok: false,
+        error: {
+          status: 422,
+          message: "username and password are required",
+        },
+      };
+    }
+
+    return {
+      ok: true,
+      data: {
+        accessToken: "mock-access-token",
+        refreshToken: "mock-refresh-token",
+        tokenType: "Bearer",
+        expiresIn: 900,
+        refreshTokenExpiresIn: 86400,
+      },
+    };
   }
 
   async listRequests(): Promise<ApiResult<RequestResponse[]>> {
@@ -66,7 +109,31 @@ export class AppApiClient {
     payload: CreateSecretRequest,
     idempotencyKey: string = createIdempotencyKey(),
   ): Promise<ApiResult<SecretMetadataResponse>> {
-    return this.safeCall(() => this.client.createSecret(payload, idempotencyKey));
+    const result = await this.safeCall(() => this.client.createSecret(payload, idempotencyKey));
+    if (!this.shouldUseMockFallback(result)) {
+      return result;
+    }
+
+    if (!payload.name || !payload.encryptedValue) {
+      return {
+        ok: false,
+        error: {
+          status: 422,
+          message: "name and encryptedValue are required",
+        },
+      };
+    }
+
+    return {
+      ok: true,
+      data: {
+        secretId: `sec-mock-${Date.now()}`,
+        name: payload.name,
+        metadata: payload.metadata ?? {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    };
   }
 
   async createLease(
