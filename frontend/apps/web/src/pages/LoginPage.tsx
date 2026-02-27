@@ -28,6 +28,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             setErrorMessage(null);
             try {
               await onLogin(username, password);
+              setPassword("");
             } catch (error) {
               const message =
                 error instanceof Error ? error.message : "Unable to sign in with provided credentials.";

@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { appApiClient } from "./api/client";
 import { AppShell } from "./components/layout/AppShell";
-import { readAppEnv } from "./config/env";
 import { useHashRouter } from "./app/router";
 import { DEFAULT_AUTH_ROUTE, ROUTES } from "./app/routes";
 import { LoginPage } from "./pages/LoginPage";
@@ -10,16 +9,37 @@ import { RequestsPage } from "./pages/RequestsPage";
 import { SecretsPage } from "./pages/SecretsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { UiLabPage } from "./pages/UiLabPage";
+import { VaultUnlockPage } from "./pages/VaultUnlockPage";
+import { useVaultLockManager } from "./hooks/use-vault-lock-manager";
+import { AuthCryptoOrchestrator, useVaultKeyStore } from "./security";
 import { useSessionStore } from "./state/session-store";
 
 function App() {
-  const env = readAppEnv();
   const { match, navigate } = useHashRouter();
-  const { isAuthenticated, adminName, login, setLoginSession, logout, accessToken } = useSessionStore();
+  const { isAuthenticated, adminName, setLoginSession, logout, accessToken } = useSessionStore();
+  const {
+    masterKeys,
+    loginHash,
+    isLocked,
+    setVaultSession,
+    clearVaultSession,
+    markActivity,
+    lastActivityAt,
+    vaultUnlockedAt,
+  } = useVaultKeyStore();
 
   useEffect(() => {
     appApiClient.setAccessToken(accessToken);
   }, [accessToken]);
+
+  useVaultLockManager({
+    enabled: isAuthenticated,
+    isLocked,
+    lastActivityAt,
+    vaultUnlockedAt,
+    markActivity,
+    lockVault: clearVaultSession,
+  });
 
   useEffect(() => {
     if (!isAuthenticated && match.route !== "login") {
@@ -36,17 +56,18 @@ function App() {
     return (
       <LoginPage
         onLogin={async (username, password) => {
-          if (env.apiMockingEnabled) {
-            login(username);
-            return;
-          }
+          const derived = await AuthCryptoOrchestrator.deriveForLogin(username, password);
 
-          const result = await appApiClient.login({ username, password });
+          const result = await appApiClient.login({
+            username: derived.username,
+            password: derived.loginHash,
+          });
           if (!result.ok) {
             throw new Error(result.error.message);
           }
 
-          setLoginSession(username, result.data);
+          setLoginSession(derived.username, result.data);
+          setVaultSession(derived.masterKeys, derived.loginHash);
         }}
       />
     );
@@ -69,16 +90,35 @@ function App() {
       currentPath={currentPath}
       navItems={navItems}
       onNavigate={navigate}
+      onLockVault={clearVaultSession}
       onLogout={() => {
+        clearVaultSession();
         logout();
         navigate("/login");
       }}
     >
+      {isLocked ? (
+        <VaultUnlockPage
+          username={adminName}
+          onUnlock={async (password) => {
+            if (!loginHash) {
+              throw new Error("Login hash is unavailable; sign out and sign in again.");
+            }
+
+            const unlockResult = await AuthCryptoOrchestrator.validateUnlockPassword(adminName, password, loginHash);
+            if (!unlockResult.valid || !unlockResult.masterKeys) {
+              throw new Error("Invalid master password.");
+            }
+
+            setVaultSession(unlockResult.masterKeys, loginHash);
+          }}
+        />
+      ) : null}
       {match.route === "requests" ? <RequestsPage onOpenRequest={(requestId) => navigate(`/requests/${requestId}`)} /> : null}
       {match.route === "request-detail" ? (
         <RequestDetailPage requestId={match.params.requestId ?? ""} onBack={() => navigate("/requests")} />
       ) : null}
-      {match.route === "secrets" ? <SecretsPage /> : null}
+      {match.route === "secrets" ? <SecretsPage isVaultLocked={isLocked} masterKeys={masterKeys} /> : null}
       {match.route === "settings" ? <SettingsPage /> : null}
       {match.route === "ui-lab" ? <UiLabPage /> : null}
     </AppShell>
