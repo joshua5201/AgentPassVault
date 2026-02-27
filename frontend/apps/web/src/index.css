@@ -1,3 +1,14 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-100 text-slate-900 antialiased;
+    font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  }
+
+  * {
+    @apply border-slate-200;
+  }
+}
