@@ -98,6 +98,8 @@ program
   .description("Create a new secret request")
   .option("--context <text>", "Context for the request")
   .option("--metadata <json>", "Required metadata for the secret")
+  .option("--type <create|lease>", "Request type (default: create)")
+  .option("--secret-id <id>", "Existing secret ID (required when --type lease)")
   .action((name, options) => requestSecret(name, options));
 
 program
