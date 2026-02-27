@@ -10,7 +10,7 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
-    "test:unit": "echo 'No unit tests yet'"
+    "test:unit": "vitest run"
   },
   "dependencies": {
     "@agentpassvault/sdk": "workspace:*",
@@ -29,7 +29,8 @@
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.3.3",
-    "vite": "^5.1.4"
+    "vite": "^5.1.4",
+    "vitest": "^1.6.1"
   },
   "msw": {
     "workerDirectory": [

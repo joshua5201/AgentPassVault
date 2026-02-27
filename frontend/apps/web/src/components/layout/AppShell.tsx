@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { FlaskConical, KeyRound, LogOut, Settings, Shield, Vault } from "lucide-react";
+import { FlaskConical, KeyRound, Lock, LogOut, Settings, Shield, Vault } from "lucide-react";
 import { Button } from "../ui";
 
 interface NavItem {
@@ -14,6 +14,7 @@ interface AppShellProps {
   currentPath: string;
   navItems: NavItem[];
   onNavigate: (path: string) => void;
+  onLockVault: () => void;
   onLogout: () => void;
 }
 
@@ -43,6 +44,7 @@ export function AppShell({
   currentPath,
   navItems,
   onNavigate,
+  onLockVault,
   onLogout,
 }: AppShellProps) {
   return (
@@ -84,9 +86,14 @@ export function AppShell({
               <p className="text-sm font-medium text-[var(--color-text)]">{adminName}</p>
             </div>
 
-            <Button variant="secondary" startIcon={<LogOut className="h-4 w-4" />} onClick={onLogout}>
-              Logout
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="secondary" startIcon={<Lock className="h-4 w-4" />} onClick={onLockVault}>
+                Lock Vault
+              </Button>
+              <Button variant="secondary" startIcon={<LogOut className="h-4 w-4" />} onClick={onLogout}>
+                Logout
+              </Button>
+            </div>
           </header>
 
           <main className="flex-1 p-8">{children}</main>
