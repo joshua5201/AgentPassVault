@@ -3,12 +3,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const searchSecretsMock = vi.fn();
 const createRequestMock = vi.fn();
-const agentLoginMock = vi.fn().mockResolvedValue({ accessToken: 'token' });
+const agentLoginMock = vi.fn().mockResolvedValue({ accessToken: "token" });
 const setAccessTokenMock = vi.fn();
 
 let RequestTypeMock: Record<string, string>;
 
-vi.mock('@agentpassvault/sdk', () => ({
+vi.mock("@agentpassvault/sdk", () => ({
   get RequestType() {
     return RequestTypeMock;
   },
@@ -71,38 +71,6 @@ describe("requestSecret", () => {
   });
 
   it("sends create request by default", async () => {
-  it("sends lease request when type=lease", async () => {
-    const requestSecret = await loadRequestSecret();
-    createRequestMock.mockResolvedValue({
-      requestId: "req-2",
-      status: "pending",
-      fulfillmentUrl: "https://example/req-2",
-    });
-
-    await requestSecret("GitHub PAT", {
-      context: "Need for helper",
-      type: "lease",
-      secretId: "secret-123",
-    });
-
-    expect(createRequestMock).toHaveBeenCalledWith({
-      name: "GitHub PAT",
-      type: "LEASE",
-      context: "Need for helper",
-      requiredMetadata: {},
-      secretId: "secret-123",
-    });
-  });
-
-  it("throws if lease missing secret-id", async () => {
-    const requestSecret = await loadRequestSecret();
-
-    await expect(
-      requestSecret("GitHub PAT", { type: "lease" }),
-    ).rejects.toThrow("requires --secret-id");
-  });
-
-  it("sends create request by default", async () => {
     const requestSecret = await loadRequestSecret();
     createRequestMock.mockResolvedValue({
       requestId: "req-1",
@@ -147,9 +115,11 @@ describe("requestSecret", () => {
   it("throws if lease missing secret-id", async () => {
     const requestSecret = await loadRequestSecret();
 
-    await expect(
-      requestSecret("GitHub PAT", { type: "lease" }),
-    ).rejects.toThrow("requires --secret-id");
+    await requestSecret("GitHub PAT", { type: "lease" });
+
+    expect(handleErrorMock).toHaveBeenCalledTimes(1);
+    const [errorArg] = handleErrorMock.mock.calls[0] as [Error];
+    expect(errorArg.message).toContain("requires --secret-id");
   });
 });
 
