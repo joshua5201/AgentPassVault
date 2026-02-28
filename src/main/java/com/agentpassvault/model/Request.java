@@ -63,6 +63,10 @@ public class Request extends BaseEntity {
   @Column(name = "requested_secret_id")
   private Long secretId;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "requested_secret_id", insertable = false, updatable = false)
+  private Secret secret;
+
   @Column(name = "rejection_reason")
   private String rejectionReason;
 }

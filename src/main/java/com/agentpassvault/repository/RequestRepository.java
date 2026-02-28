@@ -8,13 +8,19 @@ package com.agentpassvault.repository;
 
 import com.agentpassvault.model.Request;
 import java.util.List;
+import java.util.Optional;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface RequestRepository extends JpaRepository<Request, Long> {
+  @EntityGraph(attributePaths = {"requester", "tenant", "secret"})
   List<Request> findAllByTenantId(Long tenantId);
+
+  @EntityGraph(attributePaths = {"requester", "tenant", "secret"})
+  Optional<Request> findByIdAndTenantId(Long id, Long tenantId);
 
   @Modifying
   void deleteAllByTenantId(Long tenantId);

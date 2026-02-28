@@ -117,8 +117,7 @@ public class RequestService {
 
   private Request findRequest(Long tenantId, Long requestId) {
     return requestRepository
-        .findById(requestId)
-        .filter(r -> r.getTenant().getId().equals(tenantId))
+        .findByIdAndTenantId(requestId, tenantId)
         .orElseThrow(() -> new ResourceNotFoundException("Request not found"));
   }
 
@@ -129,6 +128,8 @@ public class RequestService {
   }
 
   private RequestResponse mapToResponse(Request request) {
+    Secret requestedSecret = request.getSecret();
+
     return new RequestResponse(
         request.getId().toString(),
         request.getRequester().getId().toString(),
@@ -138,6 +139,9 @@ public class RequestService {
         request.getContext(),
         request.getRequiredMetadata(),
         request.getRequiredFieldsInSecretValue(),
+        request.getSecretId() != null ? request.getSecretId().toString() : null,
+        requestedSecret != null ? requestedSecret.getName() : null,
+        requestedSecret != null ? requestedSecret.getMetadata() : null,
         request.getMappedSecretId() != null ? request.getMappedSecretId().toString() : null,
         request.getRejectionReason(),
         fulfillmentUrlService.generate(request),

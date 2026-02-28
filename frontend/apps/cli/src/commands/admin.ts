@@ -467,12 +467,6 @@ export async function adminFulfillRequest(
   try {
     const { client, config } = await getAdminClient();
 
-    if (!options.secretId && !options.value) {
-      throw new Error(
-        "Either --secret-id or --value must be provided to fulfill a request.",
-      );
-    }
-
     logMessage("Fetching request details...");
     const secretRequestResponse = await client.getRequest(requestId);
 
@@ -491,8 +485,14 @@ export async function adminFulfillRequest(
       config.adminUsername!,
     );
 
-    let secretId = options.secretId;
+    let secretId = options.secretId || secretRequestResponse.secretId;
     let plaintext = options.value;
+
+    if (!secretId && !plaintext) {
+      throw new Error(
+        "No source secret found. Provide --secret-id, --value, or ensure request has secretId.",
+      );
+    }
 
     if (plaintext && !secretId) {
       // Create a new secret first
