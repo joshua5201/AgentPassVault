@@ -103,7 +103,7 @@ export async function searchSecrets(options: {
 export async function listSecrets() {
   try {
     const { client } = await getClient();
-    const results = await client.searchSecrets({ metadata: {} });
+    const results = await client.listSecrets();
     printOutput(results);
   } catch (error: any) {
     handleError(error);
