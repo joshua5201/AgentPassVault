@@ -206,7 +206,7 @@ export async function adminListSecrets() {
   try {
     const { client } = await getAdminClient();
     logMessage("Fetching secrets...");
-    const secrets = await client.searchSecrets({ metadata: {} });
+    const secrets = await client.listSecrets();
 
     printOutput(secrets);
   } catch (error: any) {

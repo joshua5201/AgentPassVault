@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const searchSecretsMock = vi.fn();
+const listSecretsMock = vi.fn();
 const createRequestMock = vi.fn();
 const agentLoginMock = vi.fn().mockResolvedValue({ accessToken: "token" });
 const setAccessTokenMock = vi.fn();
@@ -17,6 +18,7 @@ vi.mock("@agentpassvault/sdk", () => ({
     agentLogin = agentLoginMock;
     setAccessToken = setAccessTokenMock;
     searchSecrets = searchSecretsMock;
+    listSecrets = listSecretsMock;
     createRequest = createRequestMock;
   },
 }));
@@ -67,6 +69,7 @@ describe("requestSecret", () => {
   beforeEach(() => {
     vi.resetModules();
     searchSecretsMock.mockReset();
+    listSecretsMock.mockReset();
     createRequestMock.mockReset();
     agentLoginMock.mockClear();
     setAccessTokenMock.mockClear();
@@ -133,6 +136,7 @@ describe("listSecrets", () => {
   beforeEach(() => {
     vi.resetModules();
     searchSecretsMock.mockReset();
+    listSecretsMock.mockReset();
     createRequestMock.mockReset();
     agentLoginMock.mockClear();
     setAccessTokenMock.mockClear();
@@ -140,13 +144,13 @@ describe("listSecrets", () => {
     loadConfigMock.mockClear();
   });
 
-  it("lists secrets with empty metadata filter", async () => {
+  it("lists secrets with lease details", async () => {
     const listSecrets = await loadListSecrets();
-    searchSecretsMock.mockResolvedValue([]);
+    listSecretsMock.mockResolvedValue([]);
 
     await listSecrets();
 
-    expect(searchSecretsMock).toHaveBeenCalledWith({ metadata: {} });
+    expect(listSecretsMock).toHaveBeenCalledWith();
     expect(handleErrorMock).not.toHaveBeenCalled();
   });
 });
@@ -155,6 +159,7 @@ describe("searchSecrets", () => {
   beforeEach(() => {
     vi.resetModules();
     searchSecretsMock.mockReset();
+    listSecretsMock.mockReset();
     createRequestMock.mockReset();
     agentLoginMock.mockClear();
     setAccessTokenMock.mockClear();

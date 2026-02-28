@@ -17,6 +17,7 @@ import {
   RequestResponse,
   ResetPasswordRequest,
   SearchSecretRequest,
+  SecretDetailsResponse,
   SecretMetadataResponse,
   SecretResponse,
   TotpSetupResponse,
@@ -209,6 +210,10 @@ export class VaultClient {
       "POST",
       request,
     );
+  }
+
+  async listSecrets(): Promise<SecretDetailsResponse[]> {
+    return this.request<SecretDetailsResponse[]>("/api/v1/secrets");
   }
 
   // Agents
