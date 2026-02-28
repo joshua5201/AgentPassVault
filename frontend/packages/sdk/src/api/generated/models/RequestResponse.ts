@@ -72,6 +72,24 @@ export interface RequestResponse {
      * @type {string}
      * @memberof RequestResponse
      */
+    secretId?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof RequestResponse
+     */
+    secretName?: string;
+    /**
+     * 
+     * @type {{ [key: string]: object; }}
+     * @memberof RequestResponse
+     */
+    secretMetadata?: { [key: string]: object; };
+    /**
+     * 
+     * @type {string}
+     * @memberof RequestResponse
+     */
     mappedSecretId?: string;
     /**
      * 
@@ -146,6 +164,9 @@ export function RequestResponseFromJSONTyped(json: any, ignoreDiscriminator: boo
         'context': json['context'] == null ? undefined : json['context'],
         'requiredMetadata': json['requiredMetadata'] == null ? undefined : json['requiredMetadata'],
         'requiredFieldsInSecretValue': json['requiredFieldsInSecretValue'] == null ? undefined : json['requiredFieldsInSecretValue'],
+        'secretId': json['secretId'] == null ? undefined : json['secretId'],
+        'secretName': json['secretName'] == null ? undefined : json['secretName'],
+        'secretMetadata': json['secretMetadata'] == null ? undefined : json['secretMetadata'],
         'mappedSecretId': json['mappedSecretId'] == null ? undefined : json['mappedSecretId'],
         'rejectionReason': json['rejectionReason'] == null ? undefined : json['rejectionReason'],
         'fulfillmentUrl': json['fulfillmentUrl'] == null ? undefined : json['fulfillmentUrl'],
@@ -173,6 +194,9 @@ export function RequestResponseToJSONTyped(value?: RequestResponse | null, ignor
         'context': value['context'],
         'requiredMetadata': value['requiredMetadata'],
         'requiredFieldsInSecretValue': value['requiredFieldsInSecretValue'],
+        'secretId': value['secretId'],
+        'secretName': value['secretName'],
+        'secretMetadata': value['secretMetadata'],
         'mappedSecretId': value['mappedSecretId'],
         'rejectionReason': value['rejectionReason'],
         'fulfillmentUrl': value['fulfillmentUrl'],

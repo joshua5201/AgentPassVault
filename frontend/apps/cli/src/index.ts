@@ -289,7 +289,7 @@ adminRequest
   .option("--password <pass>", "Master Password")
   .addHelpText(
     "after",
-    "\nRequires either `--secret-id` or `--value` to provide encrypted data for the agent.",
+    "\nIf omitted, `--secret-id` is auto-resolved from lease request target (request.secretId) when available.",
   )
   .action(adminFulfillRequest);
 
