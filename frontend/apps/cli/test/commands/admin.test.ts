@@ -5,6 +5,7 @@ const getAgentMock = vi.fn();
 const getSecretMock = vi.fn();
 const createLeaseMock = vi.fn();
 const updateRequestMock = vi.fn();
+const createAgentMock = vi.fn();
 const setAccessTokenMock = vi.fn();
 
 const deriveMasterKeysMock = vi.fn();
@@ -21,6 +22,7 @@ vi.mock("@agentpassvault/sdk", () => ({
     getSecret = getSecretMock;
     createLease = createLeaseMock;
     updateRequest = updateRequestMock;
+    createAgent = createAgentMock;
   },
   MasterKeyService: {
     deriveMasterKeys: deriveMasterKeysMock,
@@ -52,8 +54,10 @@ vi.mock("../../src/utils/error-handler.js", () => ({
   handleError: handleErrorMock,
 }));
 
+const printOutputMock = vi.fn();
+
 vi.mock("../../src/utils/output.js", () => ({
-  printOutput: vi.fn(),
+  printOutput: printOutputMock,
   logMessage: vi.fn(),
 }));
 
@@ -62,28 +66,35 @@ async function loadAdminFulfillRequest() {
   return mod.adminFulfillRequest;
 }
 
+async function loadAdminCreateAgent() {
+  const mod = await import("../../src/commands/admin.js");
+  return mod.adminCreateAgent;
+}
+
+beforeEach(() => {
+  vi.resetModules();
+  getRequestMock.mockReset();
+  getAgentMock.mockReset();
+  getSecretMock.mockReset();
+  createLeaseMock.mockReset();
+  updateRequestMock.mockReset();
+  createAgentMock.mockReset();
+  setAccessTokenMock.mockReset();
+  deriveMasterKeysMock.mockReset();
+  decryptSecretMock.mockReset();
+  importPublicKeyMock.mockReset();
+  encryptAsymmetricMock.mockReset();
+  loadConfigMock.mockClear();
+  handleErrorMock.mockReset();
+  printOutputMock.mockReset();
+
+  deriveMasterKeysMock.mockResolvedValue({ encKey: "enc", macKey: "mac" });
+  getAgentMock.mockResolvedValue({ agentId: "agent-1", publicKey: "pub-key" });
+  importPublicKeyMock.mockResolvedValue("imported-pub");
+  encryptAsymmetricMock.mockResolvedValue("encrypted-for-agent");
+});
+
 describe("adminFulfillRequest", () => {
-  beforeEach(() => {
-    vi.resetModules();
-    getRequestMock.mockReset();
-    getAgentMock.mockReset();
-    getSecretMock.mockReset();
-    createLeaseMock.mockReset();
-    updateRequestMock.mockReset();
-    setAccessTokenMock.mockReset();
-    deriveMasterKeysMock.mockReset();
-    decryptSecretMock.mockReset();
-    importPublicKeyMock.mockReset();
-    encryptAsymmetricMock.mockReset();
-    loadConfigMock.mockClear();
-    handleErrorMock.mockReset();
-
-    deriveMasterKeysMock.mockResolvedValue({ encKey: "enc", macKey: "mac" });
-    getAgentMock.mockResolvedValue({ agentId: "agent-1", publicKey: "pub-key" });
-    importPublicKeyMock.mockResolvedValue("imported-pub");
-    encryptAsymmetricMock.mockResolvedValue("encrypted-for-agent");
-  });
-
   it("uses request.secretId when --secret-id is omitted", async () => {
     const adminFulfillRequest = await loadAdminFulfillRequest();
 
@@ -127,5 +138,31 @@ describe("adminFulfillRequest", () => {
     expect(handleErrorMock).toHaveBeenCalledTimes(1);
     const [errorArg] = handleErrorMock.mock.calls[0] as [Error];
     expect(errorArg.message).toContain("No source secret found");
+  });
+});
+
+describe("adminCreateAgent", () => {
+  it("returns reusable agent config json payload", async () => {
+    const adminCreateAgent = await loadAdminCreateAgent();
+    createAgentMock.mockResolvedValue({
+      agentId: "agent-123",
+      appToken: "app-token-xyz",
+    });
+
+    await adminCreateAgent("worker-bot");
+
+    expect(createAgentMock).toHaveBeenCalledWith({ name: "worker-bot" });
+    expect(printOutputMock).toHaveBeenCalledTimes(1);
+
+    const output = printOutputMock.mock.calls[0][0] as Record<string, any>;
+    expect(output.agentConfig).toEqual({
+      apiUrl: "http://localhost:8080",
+      tenantId: undefined,
+      agentId: "agent-123",
+      appToken: "app-token-xyz",
+    });
+    expect(typeof output.agentConfigJson).toBe("string");
+    expect(output.agentConfigJson).toContain('"agentId": "agent-123"');
+    expect(output.agentConfigJson).toContain('"appToken": "app-token-xyz"');
   });
 });

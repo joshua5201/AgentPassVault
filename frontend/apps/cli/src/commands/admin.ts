@@ -389,13 +389,22 @@ export async function adminCreateAgent(name: string) {
     const { client, config } = await getAdminClient();
     logMessage(`Creating agent "${name}"...`);
     const resp = await client.createAgent({ name });
-    
+
+    const agentConfig = {
+      apiUrl: config.apiUrl,
+      tenantId: config.tenantId,
+      agentId: resp.agentId,
+      appToken: resp.appToken,
+    };
+
     printOutput({
       message: "Agent created successfully.",
       tenantId: config.tenantId,
       agentId: resp.agentId,
       appToken: resp.appToken,
       warning: "IMPORTANT: Store the App Token safely. It will not be shown again.",
+      agentConfig,
+      agentConfigJson: JSON.stringify(agentConfig, null, 2),
     });
   } catch (error: any) {
     handleError(error);
