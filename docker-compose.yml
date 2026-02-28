@@ -1,9 +1,8 @@
 services:
   mysql:
     image: mysql:8.4
-    container_name: agentpassvault-mysql
     ports:
-      - "${MYSQL_PORT_3306:-53306}:3306"
+      - "127.0.0.1:${MYSQL_PORT_3306:-53306}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./docker/init_scripts/mysql:/docker-entrypoint-initdb.d
@@ -20,12 +19,11 @@ services:
 
   integration_test:
     image: agentpassvault-backend
-    container_name: agentpassvault-integration-test
     environment:
       SPRING_PROFILES_ACTIVE: integration_test
       SPRING_FLYWAY_ENABLED: "true"
     ports:
-      - "127.0.0.1:58080:8080"
+      - "58080:8080"
     depends_on:
       mysql:
         condition: service_healthy
