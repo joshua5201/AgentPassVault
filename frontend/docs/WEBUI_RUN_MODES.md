@@ -30,6 +30,7 @@ Defaults:
 - `VITE_API_MOCKING=false`
 - `VITE_API_CLIENT_FALLBACK=false`
 - `VITE_API_URL=http://localhost:58080`
+- `VITE_API_PROXY=true` (same-origin `/api` via Vite proxy)
 - web: `http://localhost:5174`
 
 Dev LAN behavior:
@@ -49,6 +50,7 @@ Defaults:
 - `VITE_API_MOCKING=false`
 - `VITE_API_CLIENT_FALLBACK=false`
 - `VITE_API_URL=https://api-staging.agentpassvault.com`
+- `VITE_API_PROXY=true` (same-origin `/api` via Vite proxy)
 - web: `http://localhost:5175`
 
 ## 4) HTTPS Mock Mode (iPad / WebCrypto)

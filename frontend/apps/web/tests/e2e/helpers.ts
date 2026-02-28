@@ -1,7 +1,12 @@
 import { expect, type Page } from "@playwright/test";
 
-export const TEST_USERNAME = "vault-admin+mock@agentpassvault.local";
-export const TEST_PASSWORD = "MockMasterPass!2026#LocalOnly";
+const integrationMode = process.env.PW_API_MOCKING === "false";
+export const TEST_USERNAME =
+  process.env.PW_TEST_USERNAME ??
+  (integrationMode ? "web-e2e-integration@agentpassvault.local" : "vault-admin+mock@agentpassvault.local");
+export const TEST_PASSWORD =
+  process.env.PW_TEST_PASSWORD ??
+  (integrationMode ? "WebE2EIntegrationPass#2026" : "MockMasterPass!2026#LocalOnly");
 
 export async function setupRequestCapture(page: Page) {
   await page.addInitScript(() => {
@@ -49,7 +54,12 @@ export async function login(page: Page, username = TEST_USERNAME, password = TES
   await page.getByLabel("Username").fill(username);
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign In" }).click();
-  await expect(page.getByRole("heading", { name: "Pending Requests" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Requests" })).toBeVisible();
+  await expect(
+    page
+      .getByRole("heading", { name: "Pending Requests" })
+      .or(page.getByRole("heading", { name: "No matching requests" })),
+  ).toBeVisible();
 }
 
 export async function openRequestByName(page: Page, requestName: string) {

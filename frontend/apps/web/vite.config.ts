@@ -19,9 +19,29 @@ function readHttpsConfig() {
   };
 }
 
+function readProxyConfig() {
+  if (process.env.VITE_API_PROXY !== "true") {
+    return undefined;
+  }
+
+  const target = process.env.VITE_API_URL;
+  if (!target) {
+    throw new Error("VITE_API_PROXY is true but VITE_API_URL is missing.");
+  }
+
+  return {
+    "/api": {
+      target,
+      changeOrigin: true,
+      secure: false,
+    },
+  };
+}
+
 export default defineConfig({
   plugins: [react()],
   server: {
     https: readHttpsConfig(),
+    proxy: readProxyConfig(),
   },
 });

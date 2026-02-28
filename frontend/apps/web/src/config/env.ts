@@ -2,6 +2,7 @@ interface AppEnv {
   apiUrl: string;
   apiMockingEnabled: boolean;
   apiClientFallbackEnabled: boolean;
+  apiProxyEnabled: boolean;
 }
 
 function parseBoolean(value: string | undefined): boolean {
@@ -33,6 +34,7 @@ function resolveDevApiUrl(configuredApiUrl: string): string {
 
 export function readAppEnv(): AppEnv {
   const apiMockingEnabled = parseBoolean(import.meta.env.VITE_API_MOCKING);
+  const apiProxyEnabled = import.meta.env.DEV && parseBoolean(import.meta.env.VITE_API_PROXY);
   const apiClientFallbackEnabled =
     import.meta.env.DEV && apiMockingEnabled && parseBoolean(import.meta.env.VITE_API_CLIENT_FALLBACK);
   const configuredApiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
@@ -40,8 +42,9 @@ export function readAppEnv(): AppEnv {
   const resolvedApiUrl = resolveDevApiUrl(configuredApiUrl);
 
   return {
-    apiUrl: apiMockingEnabled ? sameOriginUrl : resolvedApiUrl,
+    apiUrl: apiMockingEnabled || apiProxyEnabled ? sameOriginUrl : resolvedApiUrl,
     apiMockingEnabled,
     apiClientFallbackEnabled,
+    apiProxyEnabled,
   };
 }

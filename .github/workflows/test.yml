@@ -86,4 +86,11 @@ jobs:
 
       - name: Run E2E test
         working-directory: ./frontend
+        env:
+          PW_API_MOCKING: "false"
+          PW_API_CLIENT_FALLBACK: "false"
+          PW_API_URL: "http://localhost:58080"
+          PW_BASE_URL: "http://localhost:5173"
+          PW_TEST_USERNAME: "web-e2e-integration@agentpassvault.local"
+          PW_TEST_PASSWORD: "WebE2EIntegrationPass#2026"
         run: pnpm test:integration
