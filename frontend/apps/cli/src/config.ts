@@ -19,17 +19,36 @@ export type Config = z.infer<typeof ConfigSchema>;
 
 const homeDir = (os.platform() !== "win32" && process.env.HOME) || os.homedir();
 const DEFAULT_CONFIG_DIR = path.join(homeDir, ".config", "agentpassvault");
-const CONFIG_FILE = path.join(DEFAULT_CONFIG_DIR, "config.json");
-export const KEYS_DIR = path.join(DEFAULT_CONFIG_DIR, "keys");
+
+function resolveConfigDir(): string {
+  const customPath = process.env.AGENTPASSVAULT_CONFIG_PATH?.trim();
+  if (!customPath) return DEFAULT_CONFIG_DIR;
+
+  // Support both absolute and relative paths.
+  return path.isAbsolute(customPath)
+    ? customPath
+    : path.resolve(process.cwd(), customPath);
+}
+
+function getConfigFilePath(): string {
+  return path.join(resolveConfigDir(), "config.json");
+}
+
+export function getKeysDirPath(): string {
+  return path.join(resolveConfigDir(), "keys");
+}
 
 export async function ensureConfigDir() {
-  await fs.mkdir(DEFAULT_CONFIG_DIR, { recursive: true });
-  await fs.mkdir(KEYS_DIR, { recursive: true });
+  const configDir = resolveConfigDir();
+  const keysDir = getKeysDirPath();
+
+  await fs.mkdir(configDir, { recursive: true });
+  await fs.mkdir(keysDir, { recursive: true });
 
   // Check/Set permissions for keys directory (600 in octal is 0o600)
   // Note: on Windows chmod might behave differently, but for linux it's essential
   if (os.platform() !== "win32") {
-    await fs.chmod(KEYS_DIR, 0o700); // Directory needs execute permission to be traversable
+    await fs.chmod(keysDir, 0o700); // Directory needs execute permission to be traversable
   }
 }
 
@@ -38,7 +57,7 @@ export async function loadConfig(): Promise<Config | null> {
 
   // 1. Load from config file first
   try {
-    const content = await fs.readFile(CONFIG_FILE, "utf-8");
+    const content = await fs.readFile(getConfigFilePath(), "utf-8");
     config = JSON.parse(content);
   } catch (error) {
     // Ignore error if file doesn't exist
@@ -69,16 +88,17 @@ export async function loadConfig(): Promise<Config | null> {
 
 export async function saveConfig(config: Config) {
   await ensureConfigDir();
-  await fs.writeFile(CONFIG_FILE, JSON.stringify(config, null, 2), "utf-8");
+  const configFilePath = getConfigFilePath();
+  await fs.writeFile(configFilePath, JSON.stringify(config, null, 2), "utf-8");
   if (os.platform() !== "win32") {
-    await fs.chmod(CONFIG_FILE, 0o600);
+    await fs.chmod(configFilePath, 0o600);
   }
 }
 
 export async function getPrivateKeyPath(): Promise<string> {
-  return path.join(KEYS_DIR, "agent.priv");
+  return path.join(getKeysDirPath(), "agent.priv");
 }
 
 export async function getPublicKeyPath(): Promise<string> {
-  return path.join(KEYS_DIR, "agent.pub");
+  return path.join(getKeysDirPath(), "agent.pub");
 }

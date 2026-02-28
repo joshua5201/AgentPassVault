@@ -8,7 +8,7 @@ import {
   saveConfig,
   loadConfig,
   Config,
-  KEYS_DIR,
+  getKeysDirPath,
 } from "../config.js";
 import { handleError } from "../utils/error-handler.js";
 import { printOutput, logMessage } from "../utils/output.js";
@@ -36,7 +36,7 @@ export async function generateKey(silent: boolean = false) {
 
   // Check permissions for keys directory (should be 700 or 600)
   if (process.platform !== "win32") {
-    const stats = await fs.stat(KEYS_DIR);
+    const stats = await fs.stat(getKeysDirPath());
     const mode = stats.mode & 0o777;
     if (mode !== 0o700 && mode !== 0o600) {
       logMessage(
