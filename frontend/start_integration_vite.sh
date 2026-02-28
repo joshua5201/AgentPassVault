@@ -6,6 +6,7 @@ cd "$(dirname "$0")"
 export VITE_API_MOCKING="${VITE_API_MOCKING:-false}"
 export VITE_API_CLIENT_FALLBACK="${VITE_API_CLIENT_FALLBACK:-false}"
 export VITE_API_URL="${VITE_API_URL:-http://localhost:58080}"
+export VITE_API_PROXY="${VITE_API_PROXY:-true}"
 VITE_HOST="${VITE_HOST:-0.0.0.0}"
 VITE_PORT="${VITE_PORT:-5174}"
 
