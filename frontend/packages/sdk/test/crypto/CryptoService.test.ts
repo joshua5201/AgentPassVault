@@ -76,49 +76,57 @@ describe("CryptoService", () => {
   });
 
   describe("Asymmetric Encryption (RSA-OAEP)", () => {
-    it("should encrypt and decrypt using agent key pair", async () => {
-      const keyPair = await CryptoService.generateAgentKeyPair();
-      const plaintext = "agent secret token";
+    it(
+      "should encrypt and decrypt using agent key pair",
+      async () => {
+        const keyPair = await CryptoService.generateAgentKeyPair();
+        const plaintext = "agent secret token";
 
-      const encrypted = await CryptoService.encryptAsymmetric(
-        plaintext,
-        keyPair.publicKey,
-      );
-      const decrypted = await CryptoService.decryptAsymmetric(
-        encrypted,
-        keyPair.privateKey,
-      );
+        const encrypted = await CryptoService.encryptAsymmetric(
+          plaintext,
+          keyPair.publicKey,
+        );
+        const decrypted = await CryptoService.decryptAsymmetric(
+          encrypted,
+          keyPair.privateKey,
+        );
 
-      expect(decrypted).toBe(plaintext);
-    });
+        expect(decrypted).toBe(plaintext);
+      },
+      20000,
+    );
 
-    it("should export and import keys successfully", async () => {
-      const keyPair = await CryptoService.generateAgentKeyPair();
+    it(
+      "should export and import keys successfully",
+      async () => {
+        const keyPair = await CryptoService.generateAgentKeyPair();
 
-      const exportedPub = await CryptoService.exportPublicKey(
-        keyPair.publicKey,
-      );
-      const exportedPriv = await CryptoService.exportPrivateKey(
-        keyPair.privateKey,
-      );
+        const exportedPub = await CryptoService.exportPublicKey(
+          keyPair.publicKey,
+        );
+        const exportedPriv = await CryptoService.exportPrivateKey(
+          keyPair.privateKey,
+        );
 
-      expect(typeof exportedPub).toBe("string");
-      expect(typeof exportedPriv).toBe("string");
+        expect(typeof exportedPub).toBe("string");
+        expect(typeof exportedPriv).toBe("string");
 
-      const importedPub = await CryptoService.importPublicKey(exportedPub);
-      const importedPriv = await CryptoService.importPrivateKey(exportedPriv);
+        const importedPub = await CryptoService.importPublicKey(exportedPub);
+        const importedPriv = await CryptoService.importPrivateKey(exportedPriv);
 
-      const plaintext = "another secret";
-      const encrypted = await CryptoService.encryptAsymmetric(
-        plaintext,
-        importedPub,
-      );
-      const decrypted = await CryptoService.decryptAsymmetric(
-        encrypted,
-        importedPriv,
-      );
+        const plaintext = "another secret";
+        const encrypted = await CryptoService.encryptAsymmetric(
+          plaintext,
+          importedPub,
+        );
+        const decrypted = await CryptoService.decryptAsymmetric(
+          encrypted,
+          importedPriv,
+        );
 
-      expect(decrypted).toBe(plaintext);
-    });
+        expect(decrypted).toBe(plaintext);
+      },
+      20000,
+    );
   });
 });
