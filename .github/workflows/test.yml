@@ -33,7 +33,7 @@ jobs:
 
       - name: Create databases
         run: |
-          docker exec agentpassvault-mysql mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS agentpassvault_dev; CREATE DATABASE IF NOT EXISTS agentpassvault_test; GRANT ALL PRIVILEGES ON agentpassvault_dev.* TO 'user'@'%'; GRANT ALL PRIVILEGES ON agentpassvault_test.* TO 'user'@'%'; FLUSH PRIVILEGES;"
+          docker exec agentpassvault-mysql-1 mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS agentpassvault_dev; CREATE DATABASE IF NOT EXISTS agentpassvault_test; GRANT ALL PRIVILEGES ON agentpassvault_dev.* TO 'user'@'%'; GRANT ALL PRIVILEGES ON agentpassvault_test.* TO 'user'@'%'; FLUSH PRIVILEGES;"
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -58,9 +58,9 @@ jobs:
         if: failure()
         run: |
           docker ps -a
-          docker logs agentpassvault-mysql
-          docker logs agentpassvault-flyway
-          docker logs agentpassvault-integration-test || true
+          docker logs agentpassvault-mysql-1
+          docker logs agentpassvault-flyway-1
+          docker logs agentpassvault-integration-test-1 || true
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4.2.0
