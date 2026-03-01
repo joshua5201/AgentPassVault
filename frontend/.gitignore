@@ -7,4 +7,18 @@ dist/
 package-lock.json
 pnpm-lock.yaml
 .env
+.env.local
+.env.*.local
 .DS_Store
+
+# Local package manager/cache artifacts
+.pnpm-store/
+**/.pnpm-store/
+
+# Test/cache outputs
+coverage/
+.vite/
+
+# Playwright artifacts
+apps/web/test-results/
+apps/web/playwright-report/

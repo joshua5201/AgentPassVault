@@ -42,3 +42,12 @@ gha-creds-*.json
 .env.sh
 plans/
 reports/
+
+# Local package manager/cache artifacts
+.pnpm-store/
+**/.pnpm-store/
+
+# Common local/dev environment files
+.env.local
+.env.*.local
+*.local

@@ -29,11 +29,11 @@ jobs:
       - name: Wait for MySQL
         shell: bash
         run: |
-          timeout 60s bash -c "until [ \"\$(docker inspect -f '{{.State.Health.Status}}' agentpassvault-mysql)\" == 'healthy' ]; do echo 'Waiting for MySQL...'; sleep 2; done"
+          timeout 60s bash -c "until [ \"\$(docker inspect -f '{{.State.Health.Status}}' agentpassvault-mysql-1)\" == 'healthy' ]; do echo 'Waiting for MySQL...'; sleep 2; done"
 
       - name: Create databases
         run: |
-          docker exec agentpassvault-mysql mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS agentpassvault_dev; CREATE DATABASE IF NOT EXISTS agentpassvault_test; GRANT ALL PRIVILEGES ON agentpassvault_dev.* TO 'user'@'%'; GRANT ALL PRIVILEGES ON agentpassvault_test.* TO 'user'@'%'; FLUSH PRIVILEGES;"
+          docker exec agentpassvault-mysql-1 mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS agentpassvault_dev; CREATE DATABASE IF NOT EXISTS agentpassvault_test; GRANT ALL PRIVILEGES ON agentpassvault_dev.* TO 'user'@'%'; GRANT ALL PRIVILEGES ON agentpassvault_test.* TO 'user'@'%'; FLUSH PRIVILEGES;"
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -58,9 +58,9 @@ jobs:
         if: failure()
         run: |
           docker ps -a
-          docker logs agentpassvault-mysql
-          docker logs agentpassvault-flyway
-          docker logs agentpassvault-integration-test || true
+          docker logs agentpassvault-mysql-1
+          docker logs agentpassvault-flyway-1
+          docker logs agentpassvault-integration-test-1 || true
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4.2.0
@@ -84,6 +84,17 @@ jobs:
         run: |
           timeout 120s bash -c "until curl -s http://localhost:58080/actuator/health | grep -q '\"status\":\"UP\"'; do echo 'Waiting for integration test...'; sleep 5; done"
 
+      - name: Install Playwright Chromium
+        working-directory: ./frontend
+        run: pnpm --filter @agentpassvault/web exec playwright install --with-deps chromium
+
       - name: Run E2E test
         working-directory: ./frontend
+        env:
+          PW_API_MOCKING: "false"
+          PW_API_CLIENT_FALLBACK: "false"
+          PW_API_URL: "http://localhost:58080"
+          PW_BASE_URL: "http://localhost:5173"
+          PW_TEST_USERNAME: "web-e2e-integration@agentpassvault.local"
+          PW_TEST_PASSWORD: "WebE2EIntegrationPass#2026"
         run: pnpm test:integration

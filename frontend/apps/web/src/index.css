@@ -1,3 +1,42 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --color-app-bg: #eef2f7;
+    --color-surface: #ffffff;
+    --color-surface-muted: #f8fafc;
+    --color-border: #d6dee8;
+    --color-border-strong: #9aa8b9;
+
+    --color-text: #0f172a;
+    --color-text-muted: #475569;
+
+    --color-primary: #1e3a8a;
+    --color-primary-strong: #172d69;
+    --color-focus: rgba(30, 58, 138, 0.18);
+
+    --color-danger: #be123c;
+    --color-danger-strong: #9f1239;
+
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+  }
+
+  body {
+    @apply antialiased;
+    background-color: var(--color-app-bg);
+    color: var(--color-text);
+    font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  }
+
+  * {
+    border-color: var(--color-border);
+  }
+}
