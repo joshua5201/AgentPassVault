@@ -34,9 +34,9 @@ jobs:
           package_json_file: ./frontend/package.json
           run_install: true
 
-      - name: Build CLI package
+      - name: Build frontend packages (respect workspace dependency order)
         working-directory: frontend
-        run: pnpm --filter @agentpassvault/cli run build
+        run: pnpm build
 
       - name: Build standalone binary
         working-directory: frontend/apps/cli
