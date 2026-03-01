@@ -30,3 +30,7 @@ jobs:
         working-directory: ./frontend
         run: pnpm test:unit
 
+      - name: Build standalone CLI binary
+        working-directory: ./frontend/apps/cli
+        run: pnpm dlx pkg package.json --targets node18-linux-x64 --output dist/agentpassvault-linux
+

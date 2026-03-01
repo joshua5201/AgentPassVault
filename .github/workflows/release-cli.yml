@@ -4,18 +4,6 @@ on:
   release:
     types:
       - published
-  pull_request:
-    branches:
-      - master
-    paths:
-      - "frontend/**"
-      - ".github/workflows/release-cli.yml"
-  push:
-    branches:
-      - fix/release-cli-pnpm-setup
-    paths:
-      - "frontend/**"
-      - ".github/workflows/release-cli.yml"
   workflow_dispatch:
 
 jobs:
@@ -39,7 +27,7 @@ jobs:
           package_json_file: ./frontend/package.json
           run_install: true
 
-      - name: Build frontend packages (respect workspace dependency order)
+      - name: Build frontend packages
         working-directory: frontend
         run: pnpm build
 
