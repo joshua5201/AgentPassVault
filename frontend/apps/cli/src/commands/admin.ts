@@ -405,7 +405,7 @@ export async function adminCreateAgent(name: string) {
       warning: "IMPORTANT: Store the App Token safely. It will not be shown again.",
       agentConfig,
       hint:
-        "You can copy agentConfig to your persistent config file, e.g. /home/node/.openclaw/workspace/.config/agentpassvault/config.json, and set AGENTPASSVAULT_CONFIG_PATH to that directory.",
+        "You can copy agentConfig to your persistent config file, e.g. [OpenClaw's home directory]/.openclaw/workspace/.config/agentpassvault/config.json, and set AGENTPASSVAULT_CONFIG_PATH to that directory.",
     });
   } catch (error: any) {
     handleError(error);

@@ -163,7 +163,7 @@ describe("adminCreateAgent", () => {
     });
     expect(output.agentConfigJson).toBeUndefined();
     expect(typeof output.hint).toBe("string");
-    expect(output.hint).toContain("/home/node/.openclaw/workspace/.config/agentpassvault/config.json");
+    expect(output.hint).toContain("[OpenClaw's home directory]/.openclaw/workspace/.config/agentpassvault/config.json");
     expect(output.hint).toContain("AGENTPASSVAULT_CONFIG_PATH");
   });
 });
