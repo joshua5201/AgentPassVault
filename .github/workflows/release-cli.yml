@@ -31,19 +31,8 @@ jobs:
         uses: pnpm/action-setup@v4.2.0
         with:
           version: 8.15.1
-          run_install: false
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Install dependencies
-        working-directory: frontend
-        run: pnpm install --frozen-lockfile
+          package_json_file: ./frontend/package.json
+          run_install: true
 
       - name: Build CLI package
         working-directory: frontend
