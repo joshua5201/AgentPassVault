@@ -27,6 +27,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v4.2.0
         with:
@@ -40,7 +45,7 @@ jobs:
 
       - name: Build standalone binary
         working-directory: frontend/apps/cli
-        run: pnpm dlx pkg package.json --targets node20-linux-x64 --output dist/agentpassvault-linux
+        run: pnpm dlx pkg package.json --targets node18-linux-x64 --output dist/agentpassvault-linux
 
       - name: Upload release asset
         if: github.event_name == 'release'
