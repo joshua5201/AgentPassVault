@@ -404,7 +404,8 @@ export async function adminCreateAgent(name: string) {
       appToken: resp.appToken,
       warning: "IMPORTANT: Store the App Token safely. It will not be shown again.",
       agentConfig,
-      agentConfigJson: JSON.stringify(agentConfig, null, 2),
+      hint:
+        "You can copy agentConfig to your persistent config file, e.g. /home/node/.openclaw/workspace/.config/agentpassvault/config.json, and set AGENTPASSVAULT_CONFIG_PATH to that directory.",
     });
   } catch (error: any) {
     handleError(error);

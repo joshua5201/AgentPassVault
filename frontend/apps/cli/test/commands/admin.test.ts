@@ -142,7 +142,7 @@ describe("adminFulfillRequest", () => {
 });
 
 describe("adminCreateAgent", () => {
-  it("returns reusable agent config json payload", async () => {
+  it("returns reusable agent config with persistence hint", async () => {
     const adminCreateAgent = await loadAdminCreateAgent();
     createAgentMock.mockResolvedValue({
       agentId: "agent-123",
@@ -161,8 +161,9 @@ describe("adminCreateAgent", () => {
       agentId: "agent-123",
       appToken: "app-token-xyz",
     });
-    expect(typeof output.agentConfigJson).toBe("string");
-    expect(output.agentConfigJson).toContain('"agentId": "agent-123"');
-    expect(output.agentConfigJson).toContain('"appToken": "app-token-xyz"');
+    expect(output.agentConfigJson).toBeUndefined();
+    expect(typeof output.hint).toBe("string");
+    expect(output.hint).toContain("/home/node/.openclaw/workspace/.config/agentpassvault/config.json");
+    expect(output.hint).toContain("AGENTPASSVAULT_CONFIG_PATH");
   });
 });
