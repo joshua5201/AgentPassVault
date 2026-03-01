@@ -84,6 +84,10 @@ jobs:
         run: |
           timeout 120s bash -c "until curl -s http://localhost:58080/actuator/health | grep -q '\"status\":\"UP\"'; do echo 'Waiting for integration test...'; sleep 5; done"
 
+      - name: Install Playwright Chromium
+        working-directory: ./frontend
+        run: pnpm --filter @agentpassvault/web exec playwright install --with-deps chromium
+
       - name: Run E2E test
         working-directory: ./frontend
         env:
