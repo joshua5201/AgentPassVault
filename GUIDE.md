@@ -16,21 +16,12 @@ For most users/agents, use the prebuilt release binary instead of building from 
 
 - Latest release page: `https://github.com/joshua5201/AgentPassVault/releases/latest`
 
-Example (specific version):
+Example (latest at time of writing, v0.3.4):
 ```bash
 curl -fL -o agentpassvault-linux \
-  https://github.com/joshua5201/AgentPassVault/releases/download/v0.3.3/agentpassvault-linux-v0.3.3
+  https://github.com/joshua5201/AgentPassVault/releases/download/v0.3.4/agentpassvault-linux-v0.3.4
 chmod +x agentpassvault-linux
 ./agentpassvault-linux --help
-```
-
-Auto-resolve latest Linux binary URL:
-```bash
-LATEST_ASSET_URL=$(curl -fsSL https://api.github.com/repos/joshua5201/AgentPassVault/releases/latest \
-  | python3 -c "import sys, json; d=json.load(sys.stdin); print(next(a['browser_download_url'] for a in d['assets'] if a['name'].startswith('agentpassvault-linux-v')))" )
-
-curl -fL -o agentpassvault-linux "$LATEST_ASSET_URL"
-chmod +x agentpassvault-linux
 ```
 
 ### Option B: build binary yourself
