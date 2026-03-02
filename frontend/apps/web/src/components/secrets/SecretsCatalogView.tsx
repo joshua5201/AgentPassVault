@@ -14,9 +14,10 @@ interface SecretsCatalogViewProps {
   rows: SecretCatalogRow[];
   revealedValues: Record<string, string>;
   onToggleReveal: (row: SecretCatalogRow) => void;
+  onView: (row: SecretCatalogRow) => void;
 }
 
-export function SecretsCatalogView({ loading, rows, revealedValues, onToggleReveal }: SecretsCatalogViewProps) {
+export function SecretsCatalogView({ loading, rows, revealedValues, onToggleReveal, onView }: SecretsCatalogViewProps) {
   if (rows.length === 0) {
     return (
       <EmptyState
@@ -29,10 +30,11 @@ export function SecretsCatalogView({ loading, rows, revealedValues, onToggleReve
 
   return (
     <Table
-      headers={["Name", "Updated", "Value", "Status"]}
+      headers={["Name", "Updated", "Value", "Status", "Actions"]}
       rows={rows.map((secret) => {
         const value = revealedValues[secret.id];
         const canReveal = Boolean(secret.encryptedValue);
+        const canView = !secret.id.startsWith("local-");
 
         return [
           secret.name,
@@ -55,6 +57,15 @@ export function SecretsCatalogView({ loading, rows, revealedValues, onToggleReve
           <Badge key={`${secret.id}-active`} tone="success">
             Active
           </Badge>,
+          canView ? (
+            <Button key={`${secret.id}-view`} size="sm" variant="secondary" onClick={() => onView(secret)}>
+              View
+            </Button>
+          ) : (
+            <span key={`${secret.id}-view-disabled`} className="text-xs text-[var(--color-text-muted)]">
+              Not saved yet
+            </span>
+          ),
         ];
       })}
     />

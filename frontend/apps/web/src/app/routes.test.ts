@@ -15,4 +15,18 @@ describe("parseRoute", () => {
       params: { requestId: "req-xyz" },
     });
   });
+
+  it("parses hash secret detail route", () => {
+    expect(parseRoute("#/secrets/sec-123", "/")).toEqual({
+      route: "secret-detail",
+      params: { secretId: "sec-123" },
+    });
+  });
+
+  it("parses pathname secret detail route when hash is empty", () => {
+    expect(parseRoute("", "/secrets/sec-abc")).toEqual({
+      route: "secret-detail",
+      params: { secretId: "sec-abc" },
+    });
+  });
 });

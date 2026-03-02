@@ -382,7 +382,11 @@ export function FulfillmentPage({
           </div>
         </header>
 
-        {notice ? <Toast tone={notice.tone} title="Fulfillment">{notice.message}</Toast> : null}
+        {notice ? (
+          <Toast tone={notice.tone} title="Fulfillment" onDismiss={() => setNotice(null)}>
+            {notice.message}
+          </Toast>
+        ) : null}
 
         {loading ? <Toast title="Fulfillment">Loading request...</Toast> : null}
 

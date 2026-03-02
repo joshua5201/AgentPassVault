@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import userEvent from "@testing-library/user-event";
 import { SecretsPage } from "./SecretsPage";
 
 function deferred<T>() {
@@ -33,7 +34,7 @@ describe("SecretsPage component", () => {
     const pending = deferred<{ ok: true; data: Array<{ secretId: string; name: string; createdAt: string }> }>();
     appApiClientMock.listSecrets.mockReturnValueOnce(pending.promise);
 
-    render(<SecretsPage isVaultLocked={true} masterKeys={null} />);
+    render(<SecretsPage isVaultLocked={true} masterKeys={null} onOpenSecret={vi.fn()} />);
 
     expect(screen.getByText("Loading secrets...")).toBeInTheDocument();
 
@@ -69,10 +70,29 @@ describe("SecretsPage component", () => {
       data: [invalidSecret],
     });
 
-    render(<SecretsPage isVaultLocked={true} masterKeys={null} />);
+    render(<SecretsPage isVaultLocked={true} masterKeys={null} onOpenSecret={vi.fn()} />);
 
     await waitFor(() => {
       expect(screen.getByText("Load secrets failed: boom")).toBeInTheDocument();
     });
+  });
+
+  it("opens secret detail when clicking view action", async () => {
+    const openSecret = vi.fn();
+    appApiClientMock.listSecrets.mockResolvedValueOnce({
+      ok: true,
+      data: [
+        {
+          secretId: "sec-1",
+          name: "Production DB Credentials",
+          createdAt: "2026-03-02T11:12:13.000Z",
+        },
+      ],
+    });
+
+    render(<SecretsPage isVaultLocked={true} masterKeys={null} onOpenSecret={openSecret} />);
+    await screen.findByText("Production DB Credentials");
+    await userEvent.click(screen.getByRole("button", { name: "View" }));
+    expect(openSecret).toHaveBeenCalledWith("sec-1");
   });
 });

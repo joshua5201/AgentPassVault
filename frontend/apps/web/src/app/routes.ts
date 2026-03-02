@@ -4,6 +4,7 @@ export type AppRoute =
   | "requests"
   | "request-detail"
   | "secrets"
+  | "secret-detail"
   | "settings"
   | "ui-lab";
 
@@ -13,7 +14,7 @@ export interface RouteMatch {
 }
 
 interface RouteDefinition {
-  key: Exclude<AppRoute, "request-detail">;
+  key: Exclude<AppRoute, "request-detail" | "secret-detail">;
   path: string;
   label: string;
 }
@@ -57,6 +58,10 @@ function parseHashRoute(hash: string): RouteMatch | null {
   }
 
   if (segments[0] === "secrets") {
+    if (segments.length === 2) {
+      return { route: "secret-detail", params: { secretId: segments[1] } };
+    }
+
     return { route: "secrets", params: {} };
   }
 
@@ -76,6 +81,10 @@ function parsePathnameRoute(pathname: string): RouteMatch | null {
   const segments = normalized.split("/").filter(Boolean);
   if (segments[0] === "fulfill" && segments.length === 2) {
     return { route: "fulfillment", params: { requestId: segments[1] } };
+  }
+
+  if (segments[0] === "secrets" && segments.length === 2) {
+    return { route: "secret-detail", params: { secretId: segments[1] } };
   }
 
   return null;

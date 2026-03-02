@@ -18,6 +18,7 @@ interface FormErrors {
 interface SecretsPageProps {
   isVaultLocked: boolean;
   masterKeys: MasterKeys | null;
+  onOpenSecret: (secretId: string) => void;
 }
 
 function parseMetadataJson(raw: string): { parsed?: Record<string, string>; error?: string } {
@@ -55,12 +56,13 @@ function toApiMetadata(metadata: Record<string, string>): { [key: string]: objec
   return output;
 }
 
-export function SecretsPage({ isVaultLocked, masterKeys }: SecretsPageProps) {
+export function SecretsPage({ isVaultLocked, masterKeys, onOpenSecret }: SecretsPageProps) {
   const [name, setName] = useState("");
   const [plaintextValue, setPlaintextValue] = useState("");
   const [metadataJson, setMetadataJson] = useState('{\n  "service": "aws"\n}');
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [dismissedCatalogError, setDismissedCatalogError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [localSecrets, setLocalSecrets] = useState<SecretCatalogRow[]>([]);
   const [revealedSecret, setRevealedSecret] = useState<Record<string, string>>({});
@@ -191,8 +193,22 @@ export function SecretsPage({ isVaultLocked, masterKeys }: SecretsPageProps) {
         </p>
       </header>
 
-      {toastMessage ? <Toast title="Secret Create">{toastMessage}</Toast> : null}
-      {secretsCatalog.error ? <Toast tone="error" title="Secrets">{secretsCatalog.error}</Toast> : null}
+      {toastMessage ? (
+        <Toast title="Secret Create" onDismiss={() => setToastMessage(null)}>
+          {toastMessage}
+        </Toast>
+      ) : null}
+      {secretsCatalog.error && secretsCatalog.error !== dismissedCatalogError ? (
+        <Toast
+          tone="error"
+          title="Secrets"
+          onDismiss={() => {
+            setDismissedCatalogError(secretsCatalog.error ?? null);
+          }}
+        >
+          {secretsCatalog.error}
+        </Toast>
+      ) : null}
 
       <Card title="Create Secret" description="MVP accepts plaintext string and encrypts before send.">
         <div className="grid gap-4 lg:grid-cols-2">
@@ -238,6 +254,9 @@ export function SecretsPage({ isVaultLocked, masterKeys }: SecretsPageProps) {
         revealedValues={revealedSecret}
         onToggleReveal={(secret) => {
           void handleToggleReveal(secret);
+        }}
+        onView={(secret) => {
+          onOpenSecret(secret.id);
         }}
       />
     </section>

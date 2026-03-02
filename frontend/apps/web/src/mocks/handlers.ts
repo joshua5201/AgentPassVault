@@ -126,6 +126,23 @@ export const handlers = [
     return HttpResponse.json(mockSecrets);
   }),
 
+  http.get("*/api/v1/secrets/:id", ({ params, request }) => {
+    const forcedError = maybeErrorFrom(request);
+    if (forcedError) {
+      return forcedError;
+    }
+
+    const item = mockSecrets.find((entry) => entry.secretId === params.id);
+    if (!item) {
+      return HttpResponse.json({ message: "Secret not found" }, { status: 404 });
+    }
+
+    return HttpResponse.json({
+      ...item,
+      encryptedValue: item.secretId ? `mock-encrypted-${item.secretId}` : undefined,
+    });
+  }),
+
   http.post("*/api/v1/secrets/search", async ({ request }) => {
     const forcedError = maybeErrorFrom(request);
     if (forcedError) {

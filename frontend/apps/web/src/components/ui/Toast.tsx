@@ -7,6 +7,7 @@ interface ToastProps {
   tone?: ToastTone;
   title: string;
   children?: ReactNode;
+  onDismiss?: () => void;
 }
 
 const toneClass: Record<ToastTone, string> = {
@@ -15,10 +16,22 @@ const toneClass: Record<ToastTone, string> = {
   error: "border-rose-200 bg-rose-50 text-rose-900",
 };
 
-export function Toast({ tone = "info", title, children }: ToastProps) {
+export function Toast({ tone = "info", title, children, onDismiss }: ToastProps) {
   return (
     <div className={cn("rounded-lg border px-4 py-3", toneClass[tone])}>
-      <p className="text-sm font-semibold">{title}</p>
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-sm font-semibold">{title}</p>
+        {onDismiss ? (
+          <button
+            type="button"
+            onClick={onDismiss}
+            aria-label="Dismiss"
+            className="text-sm opacity-80 transition hover:opacity-100"
+          >
+            x
+          </button>
+        ) : null}
+      </div>
       {children ? <div className="mt-1 text-sm opacity-90">{children}</div> : null}
     </div>
   );

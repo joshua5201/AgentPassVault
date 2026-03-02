@@ -3,6 +3,7 @@ import {
   type CreateSecretRequest,
   type LoginResponse,
   type RequestResponse,
+  type SecretResponse,
   type SecretDetailsResponse,
   type SecretMetadataResponse,
   type TwoFactorLoginRequest,
@@ -156,6 +157,10 @@ export class AppApiClient {
       ok: true,
       data: normalizeSecretsPayload(result.data),
     };
+  }
+
+  async getSecret(secretId: string): Promise<ApiResult<SecretResponse>> {
+    return this.safeCall(() => this.client.getSecret(secretId));
   }
 
   async listAgents(): Promise<ApiResult<AgentResponse[]>> {
