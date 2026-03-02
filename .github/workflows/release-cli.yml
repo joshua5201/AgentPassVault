@@ -10,6 +10,8 @@ jobs:
   build-cli:
     name: Build and upload CLI binary
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repository
