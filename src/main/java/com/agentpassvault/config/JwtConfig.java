@@ -39,7 +39,6 @@ public class JwtConfig {
   @Value("${agentpassvault.jwt.refresh-expiration-minutes}")
   private long refreshExpirationMinutes;
 
-
   private SecretKey secretKey;
 
   @PostConstruct
@@ -79,7 +78,6 @@ public class JwtConfig {
   public long getRefreshExpirationMinutes() {
     return refreshExpirationMinutes;
   }
-
 
   @Bean
   public JwtDecoder jwtDecoder() {
