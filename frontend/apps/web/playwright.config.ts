@@ -4,7 +4,7 @@ const apiMocking = process.env.PW_API_MOCKING ?? "true";
 const apiClientFallback =
   process.env.PW_API_CLIENT_FALLBACK ?? (apiMocking === "true" ? "true" : "false");
 const apiUrl = process.env.PW_API_URL ?? "http://localhost:8080";
-const baseURL = process.env.PW_BASE_URL ?? "http://127.0.0.1:5173";
+const baseURL = process.env.PW_BASE_URL ?? "http://127.0.0.1:4173";
 const parsedBaseUrl = new URL(baseURL);
 const webServerHost = process.env.PW_WEB_HOST ?? parsedBaseUrl.hostname;
 const webServerPort =

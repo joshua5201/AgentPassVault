@@ -94,7 +94,7 @@ jobs:
           PW_API_MOCKING: "false"
           PW_API_CLIENT_FALLBACK: "false"
           PW_API_URL: "http://localhost:58080"
-          PW_BASE_URL: "http://localhost:5173"
+          PW_BASE_URL: "http://127.0.0.1:4173"
           PW_TEST_USERNAME: "web-e2e-integration@agentpassvault.local"
           PW_TEST_PASSWORD: "WebE2EIntegrationPass#2026"
-        run: pnpm test:integration
+        run: pnpm test:integration:web
