@@ -3,9 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "license": "GPL-3.0",
-  "type": "module",
-  "bin": {
-    "agentpassvault": "./dist/index.js"
+  "type": "commonjs",
+  "bin": "./dist/index.js",
+  "pkg": {
+    "scripts": [
+      "dist/**/*.js"
+    ],
+    "assets": [
+      "dist/**/*.d.ts"
+    ]
   },
   "scripts": {
     "build": "tsc",
