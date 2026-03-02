@@ -103,15 +103,35 @@ cd frontend/apps/cli
 npm link
 ```
 
-#### Compiling to a Single Executable
-If you want to distribute the AgentPassVault CLI as a single, standalone binary (so agents do not need Node.js installed), you can compile it using `pkg`:
+#### Download Prebuilt CLI Binary (Recommended)
+For users/agents, the easiest path is downloading from the latest release:
+
+- Releases page: `https://github.com/joshua5201/AgentPassVault/releases/latest`
+- Linux binary asset naming: `agentpassvault-linux-v<version>`
+
+Example (v0.3.3):
+```bash
+curl -fL -o agentpassvault-linux \
+  https://github.com/joshua5201/AgentPassVault/releases/download/v0.3.3/agentpassvault-linux-v0.3.3
+chmod +x agentpassvault-linux
+./agentpassvault-linux --help
+```
+
+To auto-download the latest Linux asset without hardcoding version:
+```bash
+LATEST_ASSET_URL=$(curl -fsSL https://api.github.com/repos/joshua5201/AgentPassVault/releases/latest \
+  | python3 -c "import sys, json; d=json.load(sys.stdin); print(next(a['browser_download_url'] for a in d['assets'] if a['name'].startswith('agentpassvault-linux-v')))" )
+
+curl -fL -o agentpassvault-linux "$LATEST_ASSET_URL"
+chmod +x agentpassvault-linux
+./agentpassvault-linux --help
+```
+
+#### Compiling to a Single Executable (Developer)
+If you want to build the AgentPassVault CLI binary yourself:
 ```bash
 cd frontend/apps/cli
-
-# Install pkg globally if you haven't already
 npm install -g pkg
-
-# Compile into an executable for Linux, macOS, and Windows
 pkg package.json
 ```
 The compiled binaries will be generated in the `frontend/apps/cli` folder.

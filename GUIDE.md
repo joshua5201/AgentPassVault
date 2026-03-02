@@ -10,12 +10,37 @@ A short reference for automated agents to request and retrieve secrets securely 
 
 ## CLI Setup and Execution
 
-If you need a standalone executable (so you don't need Node.js at runtime), you can compile the CLI. Run this in the `frontend/apps/cli` directory of the repository:
+For most users/agents, use the prebuilt release binary instead of building from source.
+
+### Option A (recommended): download prebuilt binary
+
+- Latest release page: `https://github.com/joshua5201/AgentPassVault/releases/latest`
+
+Example (specific version):
+```bash
+curl -fL -o agentpassvault-linux \
+  https://github.com/joshua5201/AgentPassVault/releases/download/v0.3.3/agentpassvault-linux-v0.3.3
+chmod +x agentpassvault-linux
+./agentpassvault-linux --help
+```
+
+Auto-resolve latest Linux binary URL:
+```bash
+LATEST_ASSET_URL=$(curl -fsSL https://api.github.com/repos/joshua5201/AgentPassVault/releases/latest \
+  | python3 -c "import sys, json; d=json.load(sys.stdin); print(next(a['browser_download_url'] for a in d['assets'] if a['name'].startswith('agentpassvault-linux-v')))" )
+
+curl -fL -o agentpassvault-linux "$LATEST_ASSET_URL"
+chmod +x agentpassvault-linux
+```
+
+### Option B: build binary yourself
+
+Run this in `frontend/apps/cli`:
 ```bash
 npm install -g pkg
 pkg package.json
 ```
-This produces single binaries (e.g. `agentpassvault-linux`) you can use directly.
+This produces a standalone executable you can run directly.
 
 **JSON Output:** By default, all CLI commands output clean, machine-readable JSON to standard output (`stdout`). If you need human-readable progress logs, pass the `-v` or `--verbose` flag (which prints to `stderr`). Errors are also output as JSON to `stderr`.
 
