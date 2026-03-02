@@ -104,15 +104,6 @@ export function RequestsPage({ onOpenRequest }: RequestsPageProps) {
     );
   }
 
-  if (filteredRequests.length === 0) {
-    return (
-      <EmptyState
-        title="No matching requests"
-        message="Try another filter or search query."
-      />
-    );
-  }
-
   return (
     <section className="space-y-4">
       <header>
@@ -132,34 +123,41 @@ export function RequestsPage({ onOpenRequest }: RequestsPageProps) {
         />
       </div>
 
-      <Table
-        headers={["Name", "Context", "Status", "Actions"]}
-        rows={filteredRequests.map((request) => [
-          request.name ?? "Unnamed request",
-          request.context ?? "-",
-          <Badge key={`${request.requestId}-status`} tone={toneForStatus(request.status)}>
-            {request.status ?? "pending"}
-          </Badge>,
-          <div key={`${request.requestId}-action`} className="flex items-center justify-end gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => onOpenRequest(request.requestId ?? "")}
-              disabled={!request.requestId}
-            >
-              View
-            </Button>
-            {request.requestId && request.status === "pending" ? (
-              <a
-                href={`#/fulfill/${request.requestId}`}
-                className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-1.5 text-sm text-[var(--color-text)]"
+      {filteredRequests.length === 0 ? (
+        <EmptyState
+          title="No matching requests"
+          message="Try another filter or search query."
+        />
+      ) : (
+        <Table
+          headers={["Name", "Context", "Status", "Actions"]}
+          rows={filteredRequests.map((request) => [
+            request.name ?? "Unnamed request",
+            request.context ?? "-",
+            <Badge key={`${request.requestId}-status`} tone={toneForStatus(request.status)}>
+              {request.status ?? "pending"}
+            </Badge>,
+            <div key={`${request.requestId}-action`} className="flex items-center justify-end gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => onOpenRequest(request.requestId ?? "")}
+                disabled={!request.requestId}
               >
-                Fulfill
-              </a>
-            ) : null}
-          </div>,
-        ])}
-      />
+                View
+              </Button>
+              {request.requestId && request.status === "pending" ? (
+                <a
+                  href={`#/fulfill/${request.requestId}`}
+                  className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-1.5 text-sm text-[var(--color-text)]"
+                >
+                  Fulfill
+                </a>
+              ) : null}
+            </div>,
+          ])}
+        />
+      )}
     </section>
   );
 }
