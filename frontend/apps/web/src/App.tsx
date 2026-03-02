@@ -66,19 +66,13 @@ function App() {
   if (!isAuthenticated || match.route === "login") {
     return (
       <LoginPage
-        onLogin={async (username, password, twoFactorCode) => {
+        onLogin={async (username, password) => {
           const derived = await AuthCryptoOrchestrator.deriveForLogin(username, password);
 
-          const result = twoFactorCode
-            ? await appApiClient.loginWith2fa({
-                username: derived.username,
-                password: derived.loginHash,
-                code: twoFactorCode,
-              })
-            : await appApiClient.login({
-                username: derived.username,
-                password: derived.loginHash,
-              });
+          const result = await appApiClient.login({
+            username: derived.username,
+            password: derived.loginHash,
+          });
           if (!result.ok) {
             throw new Error(result.error.message);
           }

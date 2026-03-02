@@ -1,4 +1,4 @@
-import { Card, Select } from "../components/ui";
+import { Card, Input } from "../components/ui";
 
 export function SettingsPage() {
   return (
@@ -8,12 +8,12 @@ export function SettingsPage() {
         <p className="mt-1 text-sm text-[var(--color-text-muted)]">Workspace and profile controls will be added in later phases.</p>
       </header>
 
-      <Card title="Default Environment" description="Placeholder configuration for upcoming staging and production toggles.">
-        <div className="max-w-sm">
-          <Select label="Environment" defaultValue="staging">
-            <option value="local">Local</option>
-            <option value="staging">Staging</option>
-          </Select>
+      <Card title="Numeric Placeholders" description="Temporary numeric settings for MVP scaffolding.">
+        <div className="grid max-w-xl gap-4 sm:grid-cols-2">
+          <Input label="Session Timeout (minutes)" type="number" min={1} defaultValue={30} />
+          <Input label="Default Page Size" type="number" min={5} max={200} defaultValue={20} />
+          <Input label="Auto-lock Warning (seconds)" type="number" min={0} defaultValue={60} />
+          <Input label="Refresh Interval (seconds)" type="number" min={0} defaultValue={15} />
         </div>
       </Card>
     </section>
