@@ -14,6 +14,9 @@ Name | Type
 `context` | string
 `requiredMetadata` | { [key: string]: object; }
 `requiredFieldsInSecretValue` | Array&lt;string&gt;
+`secretId` | string
+`secretName` | string
+`secretMetadata` | { [key: string]: object; }
 `mappedSecretId` | string
 `rejectionReason` | string
 `fulfillmentUrl` | string
@@ -35,6 +38,9 @@ const example = {
   "context": null,
   "requiredMetadata": null,
   "requiredFieldsInSecretValue": null,
+  "secretId": null,
+  "secretName": null,
+  "secretMetadata": null,
   "mappedSecretId": null,
   "rejectionReason": null,
   "fulfillmentUrl": null,

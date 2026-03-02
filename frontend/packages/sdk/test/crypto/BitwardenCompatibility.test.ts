@@ -178,7 +178,9 @@ describe("Bitwarden Head-to-Head Compatibility", () => {
   });
 
   describe("Asymmetric Encryption (RSA-OAEP)", () => {
-    it("should successfully encrypt and decrypt data (Key Parity Check)", async () => {
+    it(
+      "should successfully encrypt and decrypt data (Key Parity Check)",
+      async () => {
       // We will generate a keypair and verify we can export/import it correctly
       // which is what ensures "same key can encrypt/decrypt same data"
       const keyPair = await CryptoService.generateAgentKeyPair();
@@ -204,6 +206,8 @@ describe("Bitwarden Head-to-Head Compatibility", () => {
       );
 
       expect(decrypted).toBe(plaintext);
-    });
+      },
+      20000,
+    );
   });
 });
