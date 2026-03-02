@@ -43,9 +43,14 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         >
           <Input
             label="Username"
+            type="email"
             value={username}
             onChange={(event) => setUsername(event.target.value)}
             autoComplete="username"
+            inputMode="email"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
           />
 
           <Input
