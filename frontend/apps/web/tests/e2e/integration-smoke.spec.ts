@@ -12,5 +12,5 @@ test("integration backend smoke: login and load core pages", async ({ page }) =>
   ).toBeVisible();
 
   await page.getByRole("button", { name: "Secrets" }).click();
-  await expect(page.getByRole("heading", { name: "Secrets" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Secrets" })).toBeVisible();
 });
