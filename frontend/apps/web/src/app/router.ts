@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { parseRoute, type RouteMatch, toHashPath } from "./routes";
 
 function getCurrentRoute(): RouteMatch {
-  return parseRoute(window.location.hash);
+  return parseRoute(window.location.hash, window.location.pathname);
 }
 
 export function useHashRouter() {

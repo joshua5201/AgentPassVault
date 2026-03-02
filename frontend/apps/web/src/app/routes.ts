@@ -1,5 +1,6 @@
 export type AppRoute =
   | "login"
+  | "fulfillment"
   | "requests"
   | "request-detail"
   | "secrets"
@@ -27,12 +28,24 @@ export const ROUTES: RouteDefinition[] = [
 
 export const DEFAULT_AUTH_ROUTE = "/requests";
 
-export function parseRoute(hash: string): RouteMatch {
-  const normalized = hash.replace(/^#/, "") || "/login";
+function parseHashRoute(hash: string): RouteMatch | null {
+  const normalized = hash.replace(/^#/, "");
+  if (!normalized) {
+    return null;
+  }
+
   const segments = normalized.split("/").filter(Boolean);
 
-  if (segments.length === 0 || segments[0] === "login") {
+  if (segments.length === 0) {
     return { route: "login", params: {} };
+  }
+
+  if (segments[0] === "login") {
+    return { route: "login", params: {} };
+  }
+
+  if (segments[0] === "fulfill" && segments.length === 2) {
+    return { route: "fulfillment", params: { requestId: segments[1] } };
   }
 
   if (segments[0] === "requests" && segments.length === 2) {
@@ -53,6 +66,30 @@ export function parseRoute(hash: string): RouteMatch {
 
   if (segments[0] === "ui-lab") {
     return { route: "ui-lab", params: {} };
+  }
+
+  return { route: "login", params: {} };
+}
+
+function parsePathnameRoute(pathname: string): RouteMatch | null {
+  const normalized = pathname || "/";
+  const segments = normalized.split("/").filter(Boolean);
+  if (segments[0] === "fulfill" && segments.length === 2) {
+    return { route: "fulfillment", params: { requestId: segments[1] } };
+  }
+
+  return null;
+}
+
+export function parseRoute(hash: string, pathname: string = "/"): RouteMatch {
+  const hashMatch = parseHashRoute(hash);
+  if (hashMatch) {
+    return hashMatch;
+  }
+
+  const pathMatch = parsePathnameRoute(pathname);
+  if (pathMatch) {
+    return pathMatch;
   }
 
   return { route: "login", params: {} };

@@ -4,6 +4,7 @@ export { Card } from "./Card";
 export { Input } from "./Input";
 export { Modal } from "./Modal";
 export { Select } from "./Select";
+export { SearchableSelect, type SearchableSelectOption } from "./SearchableSelect";
 export { Table } from "./Table";
 export { Tabs, type TabItem } from "./Tabs";
 export { Textarea } from "./Textarea";

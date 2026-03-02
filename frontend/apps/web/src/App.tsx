@@ -11,6 +11,7 @@ import { SecretsPage } from "./pages/SecretsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { UiLabPage } from "./pages/UiLabPage";
 import { VaultUnlockPage } from "./pages/VaultUnlockPage";
+import { FulfillmentPage } from "./pages/FulfillmentPage";
 import { useVaultLockManager } from "./hooks/use-vault-lock-manager";
 import { AuthCryptoOrchestrator, useVaultKeyStore } from "./security";
 import { useSessionStore } from "./state/session-store";
@@ -47,7 +48,7 @@ function App() {
   });
 
   useEffect(() => {
-    if (!isAuthenticated && match.route !== "login") {
+    if (!isAuthenticated && match.route !== "login" && match.route !== "fulfillment") {
       navigate("/login");
       return;
     }
@@ -63,23 +64,68 @@ function App() {
     }
   }, [env.apiMockingEnabled, match.route, navigate]);
 
+  const handleLogin = async (username: string, password: string) => {
+    const derived = await AuthCryptoOrchestrator.deriveForLogin(username, password);
+
+    const result = await appApiClient.login({
+      username: derived.username,
+      password: derived.loginHash,
+    });
+    if (!result.ok) {
+      throw new Error(result.error.message);
+    }
+
+    setLoginSession(derived.username, result.data);
+    setVaultSession(derived.masterKeys, derived.loginHash);
+  };
+
+  const handleUnlock = async (password: string) => {
+    if (!loginHash) {
+      const derived = await AuthCryptoOrchestrator.deriveForLogin(adminName, password);
+      const reloginResult = await appApiClient.login({
+        username: derived.username,
+        password: derived.loginHash,
+      });
+
+      if (!reloginResult.ok) {
+        throw new Error("Invalid master password.");
+      }
+
+      setLoginSession(derived.username, reloginResult.data);
+      setVaultSession(derived.masterKeys, derived.loginHash);
+      return;
+    }
+
+    const unlockResult = await AuthCryptoOrchestrator.validateUnlockPassword(adminName, password, loginHash);
+    if (!unlockResult.valid || !unlockResult.masterKeys) {
+      throw new Error("Invalid master password.");
+    }
+
+    setVaultSession(unlockResult.masterKeys, loginHash);
+  };
+
+  if (match.route === "fulfillment") {
+    return (
+      <FulfillmentPage
+        requestId={match.params.requestId ?? ""}
+        isAuthenticated={isAuthenticated}
+        adminName={adminName}
+        isVaultLocked={isLocked}
+        masterKeys={masterKeys}
+        onLogin={handleLogin}
+        onUnlock={handleUnlock}
+        onLogout={() => {
+          clearVaultSession();
+          logout();
+        }}
+      />
+    );
+  }
+
   if (!isAuthenticated || match.route === "login") {
     return (
       <LoginPage
-        onLogin={async (username, password) => {
-          const derived = await AuthCryptoOrchestrator.deriveForLogin(username, password);
-
-          const result = await appApiClient.login({
-            username: derived.username,
-            password: derived.loginHash,
-          });
-          if (!result.ok) {
-            throw new Error(result.error.message);
-          }
-
-          setLoginSession(derived.username, result.data);
-          setVaultSession(derived.masterKeys, derived.loginHash);
-        }}
+        onLogin={handleLogin}
       />
     );
   }
@@ -122,18 +168,7 @@ function App() {
       {isLocked ? (
         <VaultUnlockPage
           username={adminName}
-          onUnlock={async (password) => {
-            if (!loginHash) {
-              throw new Error("Login hash is unavailable; sign out and sign in again.");
-            }
-
-            const unlockResult = await AuthCryptoOrchestrator.validateUnlockPassword(adminName, password, loginHash);
-            if (!unlockResult.valid || !unlockResult.masterKeys) {
-              throw new Error("Invalid master password.");
-            }
-
-            setVaultSession(unlockResult.masterKeys, loginHash);
-          }}
+          onUnlock={handleUnlock}
         />
       ) : null}
       {match.route === "requests" ? <RequestsPage onOpenRequest={(requestId) => navigate(`/requests/${requestId}`)} /> : null}
