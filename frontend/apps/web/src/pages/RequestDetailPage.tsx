@@ -4,6 +4,8 @@ import { appApiClient } from "../api/client";
 import { ErrorState } from "../components/states/ErrorState";
 import { Badge, Button, Card, Input, Select, Textarea, Toast } from "../components/ui";
 import { SecretCryptoAdapter } from "../security";
+import { useSessionStore } from "../state/session-store";
+import { readAppEnv } from "../config/env";
 
 interface RequestDetailPageProps {
   requestId: string;
@@ -53,6 +55,8 @@ function toApiMetadata(metadata: Record<string, string>): { [key: string]: objec
 }
 
 export function RequestDetailPage({ requestId, onBack, isVaultLocked, masterKeys, onNotify }: RequestDetailPageProps) {
+  const env = readAppEnv();
+  const { accessToken } = useSessionStore();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [request, setRequest] = useState<RequestResponse | null>(null);
@@ -63,11 +67,17 @@ export function RequestDetailPage({ requestId, onBack, isVaultLocked, masterKeys
   const [newSecretMetadata, setNewSecretMetadata] = useState("{}");
   const [rejectionReason, setRejectionReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const canFetch = import.meta.env.MODE === "test" || env.apiMockingEnabled || Boolean(accessToken);
 
   useEffect(() => {
     let active = true;
 
     const load = async () => {
+      if (!canFetch) {
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       setError(null);
 
@@ -101,7 +111,7 @@ export function RequestDetailPage({ requestId, onBack, isVaultLocked, masterKeys
     return () => {
       active = false;
     };
-  }, [onNotify, requestId]);
+  }, [canFetch, onNotify, requestId]);
 
   const selectedSecret = useMemo(
     () => secrets.find((secret) => secret.secretId === selectedSecretId),

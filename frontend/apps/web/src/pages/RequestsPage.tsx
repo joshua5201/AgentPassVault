@@ -4,6 +4,8 @@ import { appApiClient } from "../api/client";
 import { Badge, Button, Input, Table, Tabs, type TabItem, Toast } from "../components/ui";
 import { ErrorState } from "../components/states/ErrorState";
 import { EmptyState } from "../components/states/EmptyState";
+import { useSessionStore } from "../state/session-store";
+import { readAppEnv } from "../config/env";
 
 interface RequestsPageProps {
   onOpenRequest: (requestId: string) => void;
@@ -30,16 +32,24 @@ function toneForStatus(status: RequestResponseStatusEnum | undefined) {
 }
 
 export function RequestsPage({ onOpenRequest }: RequestsPageProps) {
+  const env = readAppEnv();
+  const { accessToken } = useSessionStore();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [requests, setRequests] = useState<RequestResponse[]>([]);
   const [filter, setFilter] = useState<RequestFilter>("pending");
   const [query, setQuery] = useState("");
+  const canFetch = import.meta.env.MODE === "test" || env.apiMockingEnabled || Boolean(accessToken);
 
   useEffect(() => {
     let active = true;
 
     const load = async () => {
+      if (!canFetch) {
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       setError(null);
       const result = await appApiClient.listRequests();
@@ -60,7 +70,7 @@ export function RequestsPage({ onOpenRequest }: RequestsPageProps) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [canFetch]);
 
   const filteredRequests = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();

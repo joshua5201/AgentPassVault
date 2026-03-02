@@ -1,27 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
 import type { MasterKeys } from "@agentpassvault/sdk";
 import { CryptoService } from "@agentpassvault/sdk";
 import { appApiClient } from "../api/client";
-import { readAppEnv } from "../config/env";
 import { metadataByteLength, validateEncryptedValueSize } from "../domain/size-utils";
-import { Badge, Button, Card, Input, Table, Textarea, Toast } from "../components/ui";
-import { EmptyState } from "../components/states/EmptyState";
+import { Button, Card, Input, Textarea, Toast } from "../components/ui";
 import { SecretCryptoAdapter } from "../security";
 import { createSecretSchema } from "../validation";
 import { useSecretsCatalog } from "../hooks/use-secrets-catalog";
+import { SecretsCatalogView, type SecretCatalogRow } from "../components/secrets/SecretsCatalogView";
 
 interface FormErrors {
   name?: string;
   plaintextValue?: string;
   metadata?: string;
-}
-
-interface LocalVaultSecret {
-  id: string;
-  name: string;
-  encryptedValue: string;
-  updatedAt: string;
 }
 
 interface SecretsPageProps {
@@ -71,11 +62,9 @@ export function SecretsPage({ isVaultLocked, masterKeys }: SecretsPageProps) {
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [localSecrets, setLocalSecrets] = useState<LocalVaultSecret[]>([]);
+  const [localSecrets, setLocalSecrets] = useState<SecretCatalogRow[]>([]);
   const [revealedSecret, setRevealedSecret] = useState<Record<string, string>>({});
   const secretsCatalog = useSecretsCatalog();
-
-  const env = readAppEnv();
 
   useEffect(() => {
     if (isVaultLocked) {
@@ -131,7 +120,7 @@ export function SecretsPage({ isVaultLocked, masterKeys }: SecretsPageProps) {
 
     setFormErrors({});
 
-    const localSecret: LocalVaultSecret = {
+    const localSecret: SecretCatalogRow = {
       id: `local-${Date.now()}`,
       name: encrypted.name,
       encryptedValue: encrypted.encryptedValue,
@@ -155,17 +144,13 @@ export function SecretsPage({ isVaultLocked, masterKeys }: SecretsPageProps) {
 
     secretsCatalog.prependCreatedSecret(result.data);
 
-    setToastMessage(
-      env.apiMockingEnabled
-        ? "Secret encrypted locally and submitted in mock mode."
-        : "Secret encrypted locally and submitted successfully.",
-    );
+    setToastMessage("Secret encrypted locally and submitted successfully.");
 
     setName("");
     setPlaintextValue("");
   };
 
-  const handleToggleReveal = async (secret: LocalVaultSecret) => {
+  const handleToggleReveal = async (secret: SecretCatalogRow) => {
     if (isVaultLocked || !masterKeys) {
       setToastMessage("Vault is locked. Unlock before revealing values.");
       return;
@@ -220,8 +205,6 @@ export function SecretsPage({ isVaultLocked, masterKeys }: SecretsPageProps) {
           />
           <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-3 py-2 text-xs text-[var(--color-text-muted)]">
             <p>Metadata bytes (estimated): {metadataPreviewBytes}</p>
-            <p>Mocking mode: {env.apiMockingEnabled ? "enabled" : "disabled"}</p>
-            <p>Vault status: {isVaultLocked ? "locked" : "unlocked"}</p>
           </div>
         </div>
 
@@ -249,46 +232,14 @@ export function SecretsPage({ isVaultLocked, masterKeys }: SecretsPageProps) {
         </div>
       </Card>
 
-      {tableRows.length === 0 ? (
-        <EmptyState
-          title="No secrets yet"
-          message={secretsCatalog.loading ? "Loading secrets..." : "Create your first encrypted secret to support request fulfillment."}
-          actionLabel="Create secret"
-        />
-      ) : (
-        <Table
-          headers={["Name", "Updated", "Value", "Status"]}
-          rows={tableRows.map((secret) => {
-            const value = revealedSecret[secret.id];
-            const canReveal = Boolean(secret.encryptedValue);
-
-            return [
-              secret.name,
-              secret.updatedAt,
-              <div key={`${secret.id}-value`} className="flex items-center gap-2">
-                <code className="rounded bg-[var(--color-surface-muted)] px-2 py-1 text-xs">
-                  {value ? value : "••••••••••••"}
-                </code>
-                {canReveal ? (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      void handleToggleReveal(secret);
-                    }}
-                    startIcon={value ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  >
-                    {value ? "Hide" : "Show"}
-                  </Button>
-                ) : null}
-              </div>,
-              <Badge key={`${secret.id}-active`} tone="success">
-                Active
-              </Badge>,
-            ];
-          })}
-        />
-      )}
+      <SecretsCatalogView
+        loading={secretsCatalog.loading}
+        rows={tableRows}
+        revealedValues={revealedSecret}
+        onToggleReveal={(secret) => {
+          void handleToggleReveal(secret);
+        }}
+      />
     </section>
   );
 }

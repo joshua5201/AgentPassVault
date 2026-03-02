@@ -14,6 +14,7 @@ import {
 import { readAppEnv } from "../config/env";
 import { createIdempotencyKey } from "./idempotency";
 import { normalizeApiError, type AppApiError } from "./errors";
+import { normalizeSecretsPayload } from "../domain/secrets-payload";
 
 export type ApiResult<T> =
   | {
@@ -144,7 +145,17 @@ export class AppApiClient {
   }
 
   async listSecrets(): Promise<ApiResult<SecretDetailsResponse[]>> {
-    return this.safeCall(() => this.client.listSecrets());
+    const result = await this.safeCall(() =>
+      (this.client.listSecrets() as Promise<unknown>),
+    );
+    if (!result.ok) {
+      return result;
+    }
+
+    return {
+      ok: true,
+      data: normalizeSecretsPayload(result.data),
+    };
   }
 
   async listAgents(): Promise<ApiResult<AgentResponse[]>> {
