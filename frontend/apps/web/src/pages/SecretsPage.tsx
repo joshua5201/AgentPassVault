@@ -9,11 +9,7 @@ import { Badge, Button, Card, Input, Table, Textarea, Toast } from "../component
 import { EmptyState } from "../components/states/EmptyState";
 import { SecretCryptoAdapter } from "../security";
 import { createSecretSchema } from "../validation";
-
-const MOCK_SECRETS = [
-  { id: "sec-001", name: "AWS Deploy Key", updatedAt: "2026-02-22" },
-  { id: "sec-002", name: "GCP Billing Token", updatedAt: "2026-02-20" },
-];
+import { useSecretsCatalog } from "../hooks/use-secrets-catalog";
 
 interface FormErrors {
   name?: string;
@@ -77,6 +73,7 @@ export function SecretsPage({ isVaultLocked, masterKeys }: SecretsPageProps) {
   const [submitting, setSubmitting] = useState(false);
   const [localSecrets, setLocalSecrets] = useState<LocalVaultSecret[]>([]);
   const [revealedSecret, setRevealedSecret] = useState<Record<string, string>>({});
+  const secretsCatalog = useSecretsCatalog();
 
   const env = readAppEnv();
 
@@ -156,6 +153,8 @@ export function SecretsPage({ isVaultLocked, masterKeys }: SecretsPageProps) {
       return;
     }
 
+    secretsCatalog.prependCreatedSecret(result.data);
+
     setToastMessage(
       env.apiMockingEnabled
         ? "Secret encrypted locally and submitted in mock mode."
@@ -191,7 +190,12 @@ export function SecretsPage({ isVaultLocked, masterKeys }: SecretsPageProps) {
     setRevealedSecret((prev) => ({ ...prev, [secret.id]: decrypted }));
   };
 
-  const tableRows = [...localSecrets, ...MOCK_SECRETS.map((item) => ({ ...item, encryptedValue: "" }))];
+  const tableRows = [
+    ...localSecrets,
+    ...secretsCatalog.items
+      .filter((persisted) => !localSecrets.some((local) => local.id === persisted.id))
+      .map((item) => ({ ...item, encryptedValue: "" })),
+  ];
 
   return (
     <section className="space-y-4">
@@ -203,6 +207,7 @@ export function SecretsPage({ isVaultLocked, masterKeys }: SecretsPageProps) {
       </header>
 
       {toastMessage ? <Toast title="Secret Create">{toastMessage}</Toast> : null}
+      {secretsCatalog.error ? <Toast tone="error" title="Secrets">{secretsCatalog.error}</Toast> : null}
 
       <Card title="Create Secret" description="MVP accepts plaintext string and encrypts before send.">
         <div className="grid gap-4 lg:grid-cols-2">
@@ -247,7 +252,7 @@ export function SecretsPage({ isVaultLocked, masterKeys }: SecretsPageProps) {
       {tableRows.length === 0 ? (
         <EmptyState
           title="No secrets yet"
-          message="Create your first encrypted secret to support request fulfillment."
+          message={secretsCatalog.loading ? "Loading secrets..." : "Create your first encrypted secret to support request fulfillment."}
           actionLabel="Create secret"
         />
       ) : (

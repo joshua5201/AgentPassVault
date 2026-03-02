@@ -3,6 +3,7 @@ import {
   type CreateSecretRequest,
   type LoginResponse,
   type RequestResponse,
+  type SecretDetailsResponse,
   type SecretMetadataResponse,
   type TwoFactorLoginRequest,
   type UpdateRequestRequest,
@@ -142,8 +143,8 @@ export class AppApiClient {
     };
   }
 
-  async listSecrets(): Promise<ApiResult<SecretMetadataResponse[]>> {
-    return this.safeCall(() => this.client.searchSecrets({}));
+  async listSecrets(): Promise<ApiResult<SecretDetailsResponse[]>> {
+    return this.safeCall(() => this.client.listSecrets());
   }
 
   async listAgents(): Promise<ApiResult<AgentResponse[]>> {

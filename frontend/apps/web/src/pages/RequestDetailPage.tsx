@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { MasterKeys, RequestResponse, SecretMetadataResponse } from "@agentpassvault/sdk";
+import type { MasterKeys, RequestResponse, SecretDetailsResponse } from "@agentpassvault/sdk";
 import { appApiClient } from "../api/client";
 import { ErrorState } from "../components/states/ErrorState";
 import { Badge, Button, Card, Input, Select, Textarea, Toast } from "../components/ui";
@@ -56,7 +56,7 @@ export function RequestDetailPage({ requestId, onBack, isVaultLocked, masterKeys
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [request, setRequest] = useState<RequestResponse | null>(null);
-  const [secrets, setSecrets] = useState<SecretMetadataResponse[]>([]);
+  const [secrets, setSecrets] = useState<SecretDetailsResponse[]>([]);
   const [selectedSecretId, setSelectedSecretId] = useState("");
   const [newSecretName, setNewSecretName] = useState("");
   const [newSecretPlaintext, setNewSecretPlaintext] = useState("");

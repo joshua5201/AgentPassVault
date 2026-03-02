@@ -14,9 +14,11 @@ import { VaultUnlockPage } from "./pages/VaultUnlockPage";
 import { useVaultLockManager } from "./hooks/use-vault-lock-manager";
 import { AuthCryptoOrchestrator, useVaultKeyStore } from "./security";
 import { useSessionStore } from "./state/session-store";
+import { readAppEnv } from "./config/env";
 
 function App() {
   const { match, navigate } = useHashRouter();
+  const env = readAppEnv();
   const [notice, setNotice] = useState<{ message: string; tone: "info" | "success" | "error" } | null>(null);
   const { isAuthenticated, adminName, setLoginSession, logout, accessToken } = useSessionStore();
   const {
@@ -55,6 +57,12 @@ function App() {
     }
   }, [isAuthenticated, match.route, navigate]);
 
+  useEffect(() => {
+    if (!env.apiMockingEnabled && match.route === "ui-lab") {
+      navigate(DEFAULT_AUTH_ROUTE);
+    }
+  }, [env.apiMockingEnabled, match.route, navigate]);
+
   if (!isAuthenticated || match.route === "login") {
     return (
       <LoginPage
@@ -82,7 +90,17 @@ function App() {
     );
   }
 
-  const navItems = ROUTES.filter((route) => route.key !== "login").map((route) => ({
+  const navItems = ROUTES.filter((route) => {
+    if (route.key === "login") {
+      return false;
+    }
+
+    if (!env.apiMockingEnabled && route.key === "ui-lab") {
+      return false;
+    }
+
+    return true;
+  }).map((route) => ({
     key: route.key,
     path: route.path,
     label: route.label,
@@ -138,7 +156,7 @@ function App() {
       ) : null}
       {match.route === "secrets" ? <SecretsPage isVaultLocked={isLocked} masterKeys={masterKeys} /> : null}
       {match.route === "settings" ? <SettingsPage /> : null}
-      {match.route === "ui-lab" ? <UiLabPage /> : null}
+      {match.route === "ui-lab" && env.apiMockingEnabled ? <UiLabPage /> : null}
     </AppShell>
   );
 }
