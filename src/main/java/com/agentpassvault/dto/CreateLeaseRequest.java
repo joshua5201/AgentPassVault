@@ -17,4 +17,4 @@ public record CreateLeaseRequest(
         String agentId,
     @NotBlank(message = "Public key is required") String publicKey,
     @NotBlank(message = "Encrypted data cannot be blank") String encryptedData,
-    Instant expiry) {}
+    @NotNull(message = "Expiry is required") Instant expiry) {}

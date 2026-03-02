@@ -153,7 +153,7 @@ example().catch(console.error);
 
 ## getSecret
 
-> SecretResponse getSecret(id, leaseToken)
+> SecretResponse getSecret(id)
 
 
 
@@ -178,7 +178,6 @@ async function example() {
     // number
     id: 789,
     // string (optional)
-    leaseToken: leaseToken_example,
   } satisfies GetSecretRequest;
 
   try {
@@ -199,7 +198,6 @@ example().catch(console.error);
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **id** | `number` |  | [Defaults to `undefined`] |
-| **leaseToken** | `string` |  | [Optional] [Defaults to `undefined`] |
 
 ### Return type
 

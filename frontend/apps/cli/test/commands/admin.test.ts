@@ -31,6 +31,7 @@ vi.mock("@agentpassvault/sdk", () => ({
     decryptSecret: decryptSecretMock,
   },
   LeaseService: {},
+  DEFAULT_LEASE_EXPIRY_MINUTES: 60,
   CryptoService: {
     importPublicKey: importPublicKeyMock,
     encryptAsymmetric: encryptAsymmetricMock,
@@ -115,6 +116,7 @@ describe("adminFulfillRequest", () => {
       agentId: "agent-1",
       publicKey: "pub-key",
       encryptedData: "encrypted-for-agent",
+      expiry: expect.any(Date),
     });
     expect(updateRequestMock).toHaveBeenCalledWith("req-1", {
       status: "fulfilled",

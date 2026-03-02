@@ -2,6 +2,8 @@ import { CryptoService } from "../crypto/CryptoService";
 import { MasterKeys } from "../crypto/MasterKeyService";
 import { Secret, LeasedSecret } from "../models";
 
+export const DEFAULT_LEASE_EXPIRY_MINUTES = 60;
+
 export class LeaseService {
   /**
    * Creates a LeasedSecret by decrypting the original secret and re-encrypting it with the agent's public key.
@@ -12,7 +14,7 @@ export class LeaseService {
     masterKeys: MasterKeys,
     agentPublicKeyB64: string,
     agentId: string,
-    expiresAt: string | null = null,
+    expiresAt: string | null = new Date(Date.now() + DEFAULT_LEASE_EXPIRY_MINUTES * 60_000).toISOString(),
   ): Promise<Partial<LeasedSecret>> {
     // 1. Decrypt the secret using Master Key
     const plaintext = await CryptoService.decryptSymmetric(

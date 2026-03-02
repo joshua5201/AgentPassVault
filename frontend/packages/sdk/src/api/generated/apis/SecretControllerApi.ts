@@ -47,7 +47,6 @@ export interface DeleteSecretRequest {
 
 export interface GetSecretRequest {
     id: number;
-    leaseToken?: string;
 }
 
 export interface SearchSecretsRequest {
@@ -163,9 +162,6 @@ export class SecretControllerApi extends runtime.BaseAPI {
 
         const queryParameters: any = {};
 
-        if (requestParameters['leaseToken'] != null) {
-            queryParameters['leaseToken'] = requestParameters['leaseToken'];
-        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
