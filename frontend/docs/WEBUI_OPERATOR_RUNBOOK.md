@@ -12,9 +12,9 @@ pnpm install
 ## Daily Workflow
 
 1. Start one mode:
-   - pure mock: `./start_pure_ui_mock_vite.sh`
-   - integration local: `./start_integration_vite.sh`
-   - staging: `./start_staging_vite.sh`
+   - pure mock: `./start_vite.sh mocked`
+   - real backend (default staging): `./start_vite.sh real`
+   - real backend (local integration): `AGENTPASSVAULT_API_URL=http://localhost:58080 ./start_vite.sh real`
 2. Open the announced URL in browser.
 3. Login with test credentials in mock mode:
    - username: `vault-admin+mock@agentpassvault.local`
