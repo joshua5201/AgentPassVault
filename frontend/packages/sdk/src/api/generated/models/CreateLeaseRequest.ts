@@ -42,7 +42,7 @@ export interface CreateLeaseRequest {
      * @type {Date}
      * @memberof CreateLeaseRequest
      */
-    expiry?: Date;
+    expiry: Date;
 }
 
 /**
@@ -52,6 +52,7 @@ export function instanceOfCreateLeaseRequest(value: object): value is CreateLeas
     if (!('agentId' in value) || value['agentId'] === undefined) return false;
     if (!('publicKey' in value) || value['publicKey'] === undefined) return false;
     if (!('encryptedData' in value) || value['encryptedData'] === undefined) return false;
+    if (!('expiry' in value) || value['expiry'] === undefined) return false;
     return true;
 }
 
@@ -68,7 +69,7 @@ export function CreateLeaseRequestFromJSONTyped(json: any, ignoreDiscriminator: 
         'agentId': json['agentId'],
         'publicKey': json['publicKey'],
         'encryptedData': json['encryptedData'],
-        'expiry': json['expiry'] == null ? undefined : (new Date(json['expiry'])),
+        'expiry': new Date(json['expiry']),
     };
 }
 

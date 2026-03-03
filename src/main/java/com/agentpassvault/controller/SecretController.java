@@ -41,12 +41,7 @@ public class SecretController {
   @GetMapping("/{id}")
   @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
   public SecretResponse getSecret(
-      AgentPassVaultAuthentication authentication,
-      @PathVariable Long id,
-      @RequestParam(required = false) String leaseToken) {
-    if (leaseToken != null) {
-      return secretService.getSecretWithLease(authentication.getTenantId(), id, leaseToken);
-    }
+      AgentPassVaultAuthentication authentication, @PathVariable Long id) {
     return secretService.getSecret(authentication, id);
   }
 

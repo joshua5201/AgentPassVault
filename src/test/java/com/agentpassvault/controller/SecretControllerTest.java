@@ -312,7 +312,8 @@ class SecretControllerTest extends BaseIntegrationTest {
 
     // 5. Admin creates the lease
     CreateLeaseRequest leaseReq =
-        new CreateLeaseRequest(agentId, publicKey, "agent_encrypted_val", null);
+        new CreateLeaseRequest(
+            agentId, publicKey, "agent_encrypted_val", java.time.Instant.now().plusSeconds(3600));
     mockMvc
         .perform(
             post("/api/v1/secrets/" + secretId + "/leases")
@@ -375,7 +376,9 @@ class SecretControllerTest extends BaseIntegrationTest {
     String agentId = agentResp.agentId();
 
     // Create Lease
-    CreateLeaseRequest leaseReq = new CreateLeaseRequest(agentId, "pubkey", "encdata", null);
+    CreateLeaseRequest leaseReq =
+        new CreateLeaseRequest(
+            agentId, "pubkey", "encdata", java.time.Instant.now().plusSeconds(3600));
     mockMvc
         .perform(
             post("/api/v1/secrets/" + secretId + "/leases")
@@ -421,7 +424,9 @@ class SecretControllerTest extends BaseIntegrationTest {
     String agentId = agentResp.agentId();
 
     // Create Lease
-    CreateLeaseRequest leaseReq = new CreateLeaseRequest(agentId, "pubkey", "encdata", null);
+    CreateLeaseRequest leaseReq =
+        new CreateLeaseRequest(
+            agentId, "pubkey", "encdata", java.time.Instant.now().plusSeconds(3600));
     mockMvc
         .perform(
             post("/api/v1/secrets/" + secretId + "/leases")

@@ -129,7 +129,8 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
 
     // 5b. Create Lease
     CreateLeaseRequest createLeaseReq =
-        new CreateLeaseRequest(agentId, publicKey, "agent-enc-pass", null);
+        new CreateLeaseRequest(
+            agentId, publicKey, "agent-enc-pass", java.time.Instant.now().plusSeconds(3600));
     mockMvc
         .perform(
             post("/api/v1/secrets/" + secretId + "/leases")

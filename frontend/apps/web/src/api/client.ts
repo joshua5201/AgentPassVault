@@ -10,6 +10,7 @@ import {
   type UpdateRequestRequest,
   type UserLoginRequest,
   type AgentResponse,
+  DEFAULT_LEASE_EXPIRY_MINUTES,
   VaultClient,
 } from "@agentpassvault/sdk";
 import { readAppEnv } from "../config/env";
@@ -26,6 +27,10 @@ export type ApiResult<T> =
       ok: false;
       error: AppApiError;
     };
+
+type CreateLeasePayloadInput = Omit<CreateLeaseRequest, "expiry"> & {
+  expiry?: Date;
+};
 
 export class AppApiClient {
   private readonly client: VaultClient;
@@ -169,10 +174,16 @@ export class AppApiClient {
 
   async createLease(
     secretId: string,
-    payload: CreateLeaseRequest,
+    payload: CreateLeasePayloadInput,
     idempotencyKey: string = createIdempotencyKey(),
   ): Promise<ApiResult<void>> {
-    return this.safeCall(() => this.client.createLease(secretId, payload, idempotencyKey));
+    const resolvedExpiry = payload.expiry ?? new Date(Date.now() + DEFAULT_LEASE_EXPIRY_MINUTES * 60_000);
+    const requestPayload: CreateLeaseRequest = {
+      ...payload,
+      expiry: resolvedExpiry,
+    };
+
+    return this.safeCall(() => this.client.createLease(secretId, requestPayload, idempotencyKey));
   }
 }
 

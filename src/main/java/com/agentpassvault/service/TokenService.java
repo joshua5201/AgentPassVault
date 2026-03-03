@@ -22,13 +22,11 @@ public class TokenService {
   private final SecretKey secretKey;
   private final long expirationMinutes;
   private final long refreshExpirationMinutes;
-  private final long leaseExpirationMinutes;
 
   public TokenService(JwtConfig jwtConfig) {
     this.secretKey = jwtConfig.getSecretKey();
     this.expirationMinutes = jwtConfig.getExpirationMinutes();
     this.refreshExpirationMinutes = jwtConfig.getRefreshExpirationMinutes();
-    this.leaseExpirationMinutes = jwtConfig.getLeaseExpirationMinutes();
   }
 
   public String generateToken(User user) {
@@ -65,35 +63,6 @@ public class TokenService {
     }
 
     return Long.parseLong(claims.getSubject());
-  }
-
-  public String generateLeaseToken(
-      Long tenantId,
-      String agentUserId,
-      String approvedByUserId,
-      String secretId,
-      String requestId) {
-    Instant now = Instant.now();
-    return Jwts.builder()
-        .subject(agentUserId)
-        .claim("tenant_id", tenantId.toString())
-        .claim("approvedBy", approvedByUserId)
-        .claim("secretId", secretId)
-        .claim("requestId", requestId)
-        .issuedAt(Date.from(now))
-        .expiration(Date.from(now.plus(leaseExpirationMinutes, ChronoUnit.MINUTES)))
-        .signWith(secretKey)
-        .compact();
-  }
-
-  public void validateLeaseToken(String token, String secretId) {
-    Claims claims =
-        Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload();
-
-    String tokenSecretId = claims.get("secretId", String.class);
-    if (!secretId.equals(tokenSecretId)) {
-      throw new IllegalArgumentException("Invalid lease token for the requested secret");
-    }
   }
 
   public long getExpirationMinutes() {

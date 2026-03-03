@@ -37,7 +37,6 @@ public class SecretService {
   private final TenantRepository tenantRepository;
   private final LeaseRepository leaseRepository;
   private final UserRepository userRepository;
-  private final TokenService tokenService;
   private final ObjectMapper objectMapper;
 
   @Transactional
@@ -216,20 +215,6 @@ public class SecretService {
             () ->
                 new AccessDeniedException(
                     "No valid lease found for this secret and current public key"));
-  }
-
-  // Deprecated flow but keeping for now if tests use it
-  public SecretResponse getSecretWithLease(Long tenantId, Long secretId, String leaseToken) {
-    tokenService.validateLeaseToken(leaseToken, secretId.toString());
-
-    Secret secret =
-        secretRepository
-            .findById(secretId)
-            .filter(s -> s.getTenant().getId().equals(tenantId))
-            .orElseThrow(() -> new ResourceNotFoundException("Secret not found"));
-
-    return mapToResponse(
-        secret, secret.getEncryptedData()); // This is wrong in ZK but keeping for compilation
   }
 
   @Transactional

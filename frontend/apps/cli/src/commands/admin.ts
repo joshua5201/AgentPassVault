@@ -4,6 +4,7 @@ import {
   MasterKeyService,
   SecretService,
   LeaseService,
+  DEFAULT_LEASE_EXPIRY_MINUTES,
   CryptoService,
   AgentResponse,
 } from "@agentpassvault/sdk";
@@ -538,6 +539,7 @@ export async function adminFulfillRequest(
       agentId: agent.agentId!,
       publicKey: agent.publicKey,
       encryptedData: encryptedForAgent,
+      expiry: new Date(Date.now() + DEFAULT_LEASE_EXPIRY_MINUTES * 60_000),
     });
 
     // Update Request Status

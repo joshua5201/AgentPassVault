@@ -177,12 +177,8 @@ export class VaultClient {
     );
   }
 
-  async getSecret(id: string, leaseToken?: string): Promise<SecretResponse> {
-    let path = `/api/v1/secrets/${id}`;
-    if (leaseToken) {
-      path += `?leaseToken=${encodeURIComponent(leaseToken)}`;
-    }
-    return this.request<SecretResponse>(path);
+  async getSecret(id: string): Promise<SecretResponse> {
+    return this.request<SecretResponse>(`/api/v1/secrets/${id}`);
   }
 
   async updateSecret(

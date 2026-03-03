@@ -381,11 +381,6 @@ paths:
         schema:
           type: integer
           format: int64
-      - name: leaseToken
-        in: query
-        required: false
-        schema:
-          type: string
       responses:
         "200":
           description: OK
