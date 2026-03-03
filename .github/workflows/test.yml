@@ -73,6 +73,15 @@ jobs:
         working-directory: ./frontend
         run: pnpm build
 
+      - name: Verify DTOs are in sync
+        run: |
+          ./scripts/management/sync-dtos.sh
+          if ! git diff --quiet -- frontend/packages/api-client/src/generated src/main/resources/static/openapi.yaml; then
+            echo "❌ DTOs are not in sync. Please run scripts/management/sync-dtos.sh and commit the generated changes."
+            git --no-pager diff -- frontend/packages/api-client/src/generated src/main/resources/static/openapi.yaml
+            exit 1
+          fi
+
       - name: Build and publish the docker image locally with Gradle Wrapper
         run: ./gradlew jibDockerBuild
 
