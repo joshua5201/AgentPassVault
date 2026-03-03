@@ -82,7 +82,8 @@ const secret = program.command("secret").description("Manage agent secrets");
 secret
   .command("get <id>")
   .description("Retrieve and decrypt a secret")
-  .action(getSecret);
+  .option("--field <path>", "Extract a field from decrypted JSON value (e.g. password or extra.token)")
+  .action((id, options) => getSecret(id, options));
 
 secret
   .command("search")
@@ -212,8 +213,12 @@ adminSecret
   .command("create")
   .description("Create a new secret")
   .option("--name <name>", "Secret Name")
-  .option("--username <username>", "Username/Email for the secret")
-  .option("--secret-password <password>", "Password for the secret")
+  .option("--template <id>", "Secret template: login|credit-card|single-value|secret-notes (default: login)")
+  .option("--username <username>", "Username/Email for login template")
+  .option("--secret-password <password>", "Password/token for login template")
+  .option("--value <value>", "Single value payload for single-value template")
+  .option("--note <text>", "Secret note payload for secret-notes template")
+  .option("--extra <json>", "Extra JSON object to attach as value.extra")
   .option("--password <pass>", "Master Password")
   .action((options) => {
     // Commander converts --secret-password to secretPassword in the options object

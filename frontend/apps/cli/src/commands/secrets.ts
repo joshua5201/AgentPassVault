@@ -19,7 +19,32 @@ async function getClient() {
   return { client, config };
 }
 
-export async function getSecret(id: string) {
+type SecretGetOptions = {
+  field?: string;
+};
+
+function tryParseJson(value: string): unknown {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+}
+
+function getByPath(value: unknown, path?: string): unknown {
+  if (!path) return value;
+  const segments = path.split(".").filter(Boolean);
+  let current: any = value;
+  for (const segment of segments) {
+    if (current == null || typeof current !== "object") {
+      return undefined;
+    }
+    current = current[segment];
+  }
+  return current;
+}
+
+export async function getSecret(id: string, options: SecretGetOptions = {}) {
   try {
     const { client } = await getClient();
 
@@ -38,10 +63,16 @@ export async function getSecret(id: string) {
       privateKey,
     );
 
+    const parsedValue = tryParseJson(decrypted);
+    const extracted = getByPath(parsedValue, options.field);
+
     printOutput({
       name: secret.name,
-      value: decrypted,
+      schema: (secret as any).schema,
       metadata: secret.metadata,
+      value: parsedValue,
+      selectedField: options.field,
+      selectedValue: options.field ? extracted : undefined,
     });
   } catch (error: any) {
     handleError(error);
@@ -61,7 +92,6 @@ export async function searchSecrets(options: {
     const metadataFile = options.fromFile;
     const hasMetadataJson = !!metadataJson;
     const hasMetadataFile = !!metadataFile;
-    const hasMetadata = hasMetadataJson || hasMetadataFile;
 
     if (hasMetadataJson && hasMetadataFile) {
       handleError(
@@ -80,13 +110,13 @@ export async function searchSecrets(options: {
       metadata = JSON.parse(metadataJson);
     }
 
-    if (!options.name && !metadata) {
+    if (!hasName && !metadata) {
       handleError(
         new Error(
           "Either --name, --metadata-json, or --from-file must be provided.",
         ),
       );
-      return; // Ensure the function exits after handling the error
+      return;
     }
 
     const results = await client.searchSecrets({
@@ -120,8 +150,8 @@ type RequestSecretOptions = {
 function normalizeRequestType(raw?: string): RequestType {
   if (!raw) return RequestType.CREATE;
   const normalized = raw.trim().toUpperCase();
-  if (normalized === 'LEASE') return RequestType.LEASE;
-  if (normalized === 'CREATE') return RequestType.CREATE;
+  if (normalized === "LEASE") return RequestType.LEASE;
+  if (normalized === "CREATE") return RequestType.CREATE;
   throw new Error('Invalid request type. Use "create" or "lease".');
 }
 
@@ -141,6 +171,12 @@ export async function requestSecret(
     if (requestType === RequestType.LEASE && !secretId) {
       throw new Error(
         'Request type "lease" requires --secret-id <id> (existing secret).',
+      );
+    }
+
+    if (options.metadata) {
+      logMessage(
+        "Warning: --metadata maps to deprecated request.requiredMetadata; prefer using --context + secret schema/template.",
       );
     }
 
