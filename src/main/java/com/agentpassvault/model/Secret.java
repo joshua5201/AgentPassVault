@@ -39,6 +39,6 @@ public class Secret extends BaseEntity {
   private Map<String, Object> metadata;
 
   @Type(JsonType.class)
-  @Column(name = "schema", columnDefinition = "json")
+  @Column(name = "secret_schema", columnDefinition = "json")
   private Map<String, Object> schema;
 }
