@@ -143,6 +143,7 @@ export async function listSecrets() {
 type RequestSecretOptions = {
   context?: string;
   metadata?: string;
+  schema?: string;
   type?: string;
   secretId?: string;
 };
@@ -180,11 +181,26 @@ export async function requestSecret(
       );
     }
 
+    let context = options.context;
+    if (options.schema) {
+      let schemaHint = options.schema;
+      try {
+        // Canonicalize JSON schema input if provided as JSON string
+        const parsed = JSON.parse(options.schema);
+        schemaHint = JSON.stringify(parsed);
+      } catch {
+        // non-JSON schema hint (e.g. template id) is accepted as-is
+      }
+
+      const hintLine = `schema-hint: ${schemaHint}`;
+      context = context ? `${context}\n${hintLine}` : hintLine;
+    }
+
     logMessage(`Creating secret request for "${name}"...`);
     const secretRequestResponse = await client.createRequest({
       name,
       type: requestType,
-      context: options.context,
+      context,
       requiredMetadata,
       secretId,
     });
