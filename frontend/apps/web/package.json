@@ -10,7 +10,7 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
-    "test:unit": "vitest run",
+    "test:unit": "NODE_ENV=test vitest run",
     "test:e2e": "playwright test",
     "test:integration": "PW_API_MOCKING=false PW_API_CLIENT_FALLBACK=false PW_API_URL=${PW_API_URL:-http://localhost:58080} PW_BASE_URL=${PW_BASE_URL:-http://127.0.0.1:4173} playwright test"
   },
