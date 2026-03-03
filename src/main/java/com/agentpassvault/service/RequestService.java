@@ -15,12 +15,16 @@ import com.agentpassvault.repository.*;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class RequestService {
+
+  private static final Logger log = LoggerFactory.getLogger(RequestService.class);
 
   private final RequestRepository requestRepository;
   private final SecretRepository secretRepository;
@@ -50,6 +54,15 @@ public class RequestService {
     request.setTenant(tenant);
     request.setRequester(requester);
     request.setStatus(RequestStatus.pending);
+
+    if ((dto.requiredMetadata() != null && !dto.requiredMetadata().isEmpty())
+        || (dto.requiredFieldsInSecretValue() != null
+            && !dto.requiredFieldsInSecretValue().isEmpty())) {
+      log.warn(
+          "Deprecated request fields used for tenantId={}, requesterId={}: requiredMetadata/requiredFieldsInSecretValue",
+          tenantId,
+          requesterId);
+    }
     request.setName(dto.name());
     request.setContext(dto.context());
     request.setRequiredMetadata(dto.requiredMetadata());

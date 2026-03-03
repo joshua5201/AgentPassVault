@@ -37,4 +37,8 @@ public class Secret extends BaseEntity {
   @Type(JsonType.class)
   @Column(name = "metadata", columnDefinition = "json")
   private Map<String, Object> metadata;
+
+  @Type(JsonType.class)
+  @Column(name = "schema", columnDefinition = "json")
+  private Map<String, Object> schema;
 }

@@ -13,5 +13,6 @@ public record SecretMetadataResponse(
     String secretId,
     String name,
     Map<String, Object> metadata,
+    Map<String, Object> schema,
     Instant createdAt,
     Instant updatedAt) {}

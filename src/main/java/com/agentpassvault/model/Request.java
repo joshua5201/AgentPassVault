@@ -49,10 +49,12 @@ public class Request extends BaseEntity {
   @Column(name = "context", columnDefinition = "TEXT")
   private String context;
 
+  @Deprecated
   @Type(JsonType.class)
   @Column(name = "required_metadata", columnDefinition = "json")
   private Map<String, Object> requiredMetadata;
 
+  @Deprecated
   @Type(JsonType.class)
   @Column(name = "required_fields", columnDefinition = "json")
   private List<String> requiredFieldsInSecretValue;

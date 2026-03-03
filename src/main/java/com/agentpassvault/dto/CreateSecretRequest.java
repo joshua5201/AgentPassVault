@@ -15,4 +15,10 @@ public record CreateSecretRequest(
     @NotBlank(message = "Encrypted secret value cannot be blank")
         @Size(max = 87381, message = "Encrypted value must not exceed 64 KB")
         String encryptedValue,
-    Map<String, Object> metadata) {}
+    Map<String, Object> metadata,
+    Map<String, Object> schema) {
+
+  public CreateSecretRequest(String name, String encryptedValue, Map<String, Object> metadata) {
+    this(name, encryptedValue, metadata, null);
+  }
+}

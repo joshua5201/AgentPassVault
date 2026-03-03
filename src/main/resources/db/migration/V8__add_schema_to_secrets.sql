@@ -1,0 +1,2 @@
+ALTER TABLE secrets
+    ADD COLUMN schema JSON NULL;

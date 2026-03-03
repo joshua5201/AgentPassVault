@@ -14,5 +14,6 @@ public record SecretResponse(
     String name,
     String encryptedValue, // Encrypted Base64 value
     Map<String, Object> metadata,
+    Map<String, Object> schema,
     Instant createdAt,
     Instant updatedAt) {}
