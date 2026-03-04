@@ -1,8 +1,14 @@
 #!/bin/bash
+set -euo pipefail
+
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+# shellcheck source=../lib/docker_compose.sh
+source "${SCRIPT_DIR}/../lib/docker_compose.sh"
 
 # Extract Tenant ID and Username for "Dev Tenant" from MySQL
 # Using -N to remove headers and -s for silent mode
-RESULT=$(docker exec agentpassvault-mysql mysql -uroot -proot -s -N -e "
+MYSQL_CONTAINER_ID="$(get_service_container_id mysql)"
+RESULT=$(docker exec "${MYSQL_CONTAINER_ID}" mysql -uroot -proot -s -N -e "
   USE agentpassvault_dev;
   SELECT t.id, u.username 
   FROM tenants t 
