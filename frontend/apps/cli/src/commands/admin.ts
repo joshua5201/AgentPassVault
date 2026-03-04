@@ -14,6 +14,23 @@ import { printOutput, logMessage } from "../utils/output.js";
 
 import { Writable } from "node:stream";
 
+const TEMPLATE_VERSIONS: Record<string, number> = {
+  login: 1,
+  "credit-card": 1,
+  "single-value": 1,
+  "secret-notes": 1,
+};
+
+function resolveTemplateVersion(template: string): number {
+  const version = TEMPLATE_VERSIONS[template];
+  if (!version) {
+    throw new Error(
+      'Unsupported --template. Use one of: login, credit-card, single-value, secret-notes.',
+    );
+  }
+  return version;
+}
+
 async function prompt(
   question: string,
   silent: boolean = false,
@@ -274,6 +291,7 @@ export async function adminCreateSecret(options: {
     const name =
       options.name || (await prompt("Secret Name (e.g. AWS Prod): "));
     const template = (options.template || "login").trim();
+    const templateVersion = resolveTemplateVersion(template);
 
     const password =
       options.password || (await prompt("Confirm Master Password: ", true));
@@ -325,7 +343,7 @@ export async function adminCreateSecret(options: {
       secretValueObj.extra = extraObj;
     }
 
-    const schema = { template, version: 1 };
+    const schema = { template, version: templateVersion };
     const value = JSON.stringify(secretValueObj);
     const metadata = { name };
 
