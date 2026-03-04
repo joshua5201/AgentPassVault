@@ -42,6 +42,8 @@ AgentPassVault uses a **Zero-Knowledge Architecture**:
 docker compose up -d
 ```
 
+For parallel local stacks, set a unique `APV_CONTAINER_PREFIX` in `.env` (for example `alice-apv-`) to avoid container name conflicts.
+
 ### 2. Setup Database
 
 ```bash
