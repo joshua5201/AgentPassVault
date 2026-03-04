@@ -24,9 +24,9 @@ function readProxyConfig() {
     return undefined;
   }
 
-  const target = process.env.VITE_API_URL;
+  const target = process.env.AGENTPASSVAULT_API_URL ?? process.env.VITE_API_URL;
   if (!target) {
-    throw new Error("VITE_API_PROXY is true but VITE_API_URL is missing.");
+    throw new Error("VITE_API_PROXY is true but AGENTPASSVAULT_API_URL / VITE_API_URL is missing.");
   }
 
   return {
@@ -39,6 +39,7 @@ function readProxyConfig() {
 }
 
 export default defineConfig({
+  envPrefix: ["VITE_", "AGENTPASSVAULT_"],
   plugins: [react()],
   server: {
     https: readHttpsConfig(),

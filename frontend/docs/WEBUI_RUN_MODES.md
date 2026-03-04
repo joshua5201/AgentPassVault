@@ -18,8 +18,8 @@ cd frontend
 - Disable HTTPS if needed: `VITE_DEV_HTTPS=false ./start_vite.sh <mode>`
 
 Backend host configuration for `real` mode:
-- `VITE_API_URL` (highest priority)
-- `AGENTPASSVAULT_API_URL` (CLI-style override)
+- `AGENTPASSVAULT_API_URL` (highest priority / canonical)
+- `VITE_API_URL` (backward-compatible fallback)
 - default: `https://api-staging.agentpassvault.com`
 
 ## 2) Mocked Mode

@@ -11,14 +11,16 @@ case "${MODE}" in
     export VITE_API_MOCKING="${VITE_API_MOCKING:-true}"
     export VITE_API_CLIENT_FALLBACK="${VITE_API_CLIENT_FALLBACK:-true}"
     export VITE_API_PROXY="${VITE_API_PROXY:-false}"
-    export VITE_API_URL="${VITE_API_URL:-http://localhost:8080}"
+    export AGENTPASSVAULT_API_URL="${AGENTPASSVAULT_API_URL:-${VITE_API_URL:-http://localhost:8080}}"
+    export VITE_API_URL="${VITE_API_URL:-${AGENTPASSVAULT_API_URL}}"
     VITE_PORT="${VITE_PORT:-5173}"
     ;;
   real)
     export VITE_API_MOCKING="${VITE_API_MOCKING:-false}"
     export VITE_API_CLIENT_FALLBACK="${VITE_API_CLIENT_FALLBACK:-false}"
     export VITE_API_PROXY="${VITE_API_PROXY:-true}"
-    export VITE_API_URL="${VITE_API_URL:-${AGENTPASSVAULT_API_URL:-https://api-staging.agentpassvault.com}}"
+    export AGENTPASSVAULT_API_URL="${AGENTPASSVAULT_API_URL:-${VITE_API_URL:-https://api-staging.agentpassvault.com}}"
+    export VITE_API_URL="${VITE_API_URL:-${AGENTPASSVAULT_API_URL}}"
     VITE_PORT="${VITE_PORT:-5173}"
     ;;
   *)
@@ -95,6 +97,7 @@ if [[ -n "${LAN_IP}" ]]; then
   echo "  LAN URL:   ${SCHEME}://${LAN_IP}:${VITE_PORT}"
 fi
 echo "  API URL:   ${VITE_API_URL}"
+echo "  APV URL:   ${AGENTPASSVAULT_API_URL}"
 echo "  Mocking:   ${VITE_API_MOCKING}"
 echo "  API Proxy: ${VITE_API_PROXY}"
 echo "  HTTPS:     ${VITE_DEV_HTTPS}"
