@@ -111,7 +111,7 @@ request
   .description("Create a new secret request")
   .option("--context <text>", "Context for the request")
   .option("--schema <value>", "Optional schema hint (template id or JSON string); appended into context")
-  .option("--metadata <json>", "Required metadata for the secret")
+  .option("--metadata <json>", "[Deprecated] Required metadata for the secret; prefer --context + --schema")
   .option("--type <create|lease>", "Request type (default: create)")
   .option("--secret-id <id>", "Existing secret ID (required when --type lease)")
   .action((name, options) => requestSecret(name, options));
@@ -150,7 +150,7 @@ program
   .description("[Deprecated] Use: request create <name>")
   .option("--context <text>", "Context for the request")
   .option("--schema <value>", "Optional schema hint (template id or JSON string); appended into context")
-  .option("--metadata <json>", "Required metadata for the secret")
+  .option("--metadata <json>", "[Deprecated] Required metadata for the secret; prefer --context + --schema")
   .option("--type <create|lease>", "Request type (default: create)")
   .option("--secret-id <id>", "Existing secret ID (required when --type lease)")
   .action((name, options) => {

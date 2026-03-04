@@ -44,6 +44,13 @@ This produces a standalone executable you can run directly.
 
 ## Quick agent flow
 
+0. **Prefer reuse before requesting new secrets:**
+```bash
+agentpassvault secret list
+agentpassvault secret search --name "GitHub PAT"
+```
+If a suitable secret already exists, reuse it with `secret get` instead of creating a new request.
+
 1. **Initialize Agent (One-shot Setup, Key Gen, & Registration):**
 ```bash
 agentpassvault identity init --api-url <URL> --tenant-id <TENANT_ID> --agent-id <AGENT_ID> --app-token <TOKEN>
@@ -52,9 +59,15 @@ agentpassvault identity init --api-url <URL> --tenant-id <TENANT_ID> --agent-id 
 
 2. **Create request (Ask a human):**
 ```bash
-agentpassvault request create "some-account" --metadata '{"account":"joshua5201"}'
+agentpassvault request create "some-account" --context "Need CI token for release workflow"
 ```
-→ Share the `fulfillmentUrl` from the JSON response with a human approver.
+You can also provide a schema hint (template id or JSON string):
+```bash
+agentpassvault request create "GitHub PAT" --schema "login"
+```
+→ The schema hint is appended into request context for human/admin guidance.
+
+> `--metadata` is still accepted but maps to deprecated `requiredMetadata`. Prefer `--context` + `--schema`.
 
 3. **Poll request:**
 ```bash
@@ -84,6 +97,15 @@ agentpassvault secret search --from-file /tmp/query.json
 # Clean up the temp file
 rm /tmp/query.json
 ```
+
+## Deprecated command migration
+
+Use the new command groups instead of legacy aliases:
+
+- `request-secret <name>` → `request create <name>`
+- `get-request <id>` → `request get <id>`
+- `get-secret <id>` → `secret get <id>`
+- `search-secrets` → `secret search`
 
 ## Using secrets safely
 
