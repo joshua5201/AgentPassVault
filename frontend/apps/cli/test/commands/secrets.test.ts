@@ -129,6 +129,49 @@ describe("requestSecret", () => {
     const [errorArg] = handleErrorMock.mock.calls[0] as [Error];
     expect(errorArg.message).toContain("requires --secret-id");
   });
+
+  it("appends canonical schema-hint JSON to context", async () => {
+    const requestSecret = await loadRequestSecret();
+    createRequestMock.mockResolvedValue({
+      requestId: "req-3",
+      status: "pending",
+      fulfillmentUrl: "https://example/req-3",
+    });
+
+    await requestSecret("GitHub PAT", {
+      context: "Need for CI",
+      schema: '{"template":"login","version":1}',
+    });
+
+    expect(createRequestMock).toHaveBeenCalledWith({
+      name: "GitHub PAT",
+      type: "CREATE",
+      context: 'Need for CI\nschema-hint: {"template":"login","version":1}',
+      requiredMetadata: {},
+      secretId: undefined,
+    });
+  });
+
+  it("normalizes plain schema value as template hint", async () => {
+    const requestSecret = await loadRequestSecret();
+    createRequestMock.mockResolvedValue({
+      requestId: "req-4",
+      status: "pending",
+      fulfillmentUrl: "https://example/req-4",
+    });
+
+    await requestSecret("GitHub PAT", {
+      schema: "login",
+    });
+
+    expect(createRequestMock).toHaveBeenCalledWith({
+      name: "GitHub PAT",
+      type: "CREATE",
+      context: 'schema-hint: {"template":"login"}',
+      requiredMetadata: {},
+      secretId: undefined,
+    });
+  });
 });
 
 

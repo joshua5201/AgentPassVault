@@ -44,6 +44,11 @@ function getByPath(value: unknown, path?: string): unknown {
   return current;
 }
 
+function topLevelKeys(value: unknown): string[] {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return [];
+  return Object.keys(value as Record<string, unknown>);
+}
+
 export async function getSecret(id: string, options: SecretGetOptions = {}) {
   try {
     const { client } = await getClient();
@@ -65,6 +70,14 @@ export async function getSecret(id: string, options: SecretGetOptions = {}) {
 
     const parsedValue = tryParseJson(decrypted);
     const extracted = getByPath(parsedValue, options.field);
+
+    if (options.field && extracted === undefined) {
+      const keys = topLevelKeys(parsedValue);
+      const keysHint = keys.length ? ` Top-level keys: ${keys.join(", ")}` : "";
+      throw new Error(
+        `Field path not found: "${options.field}".${keysHint}`,
+      );
+    }
 
     printOutput({
       name: secret.name,
@@ -183,16 +196,20 @@ export async function requestSecret(
 
     let context = options.context;
     if (options.schema) {
-      let schemaHint = options.schema;
+      let schemaHint: Record<string, unknown>;
       try {
         // Canonicalize JSON schema input if provided as JSON string
         const parsed = JSON.parse(options.schema);
-        schemaHint = JSON.stringify(parsed);
+        schemaHint =
+          parsed && typeof parsed === "object"
+            ? (parsed as Record<string, unknown>)
+            : { value: parsed };
       } catch {
-        // non-JSON schema hint (e.g. template id) is accepted as-is
+        // non-JSON schema hint (e.g. template id) is normalized as template id
+        schemaHint = { template: options.schema.trim() };
       }
 
-      const hintLine = `schema-hint: ${schemaHint}`;
+      const hintLine = `schema-hint: ${JSON.stringify(schemaHint)}`;
       context = context ? `${context}\n${hintLine}` : hintLine;
     }
 
