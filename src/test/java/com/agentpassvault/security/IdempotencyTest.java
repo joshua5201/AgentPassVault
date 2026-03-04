@@ -14,6 +14,7 @@ import com.agentpassvault.BaseIntegrationTest;
 import com.agentpassvault.dto.CreateSecretRequest;
 import com.agentpassvault.dto.UserLoginRequest;
 import com.agentpassvault.service.UserService;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +45,9 @@ class IdempotencyTest extends BaseIntegrationTest {
     String token = objectMapper.readTree(loginResponse).get("accessToken").asText();
 
     String idempotencyKey = UUID.randomUUID().toString();
-    CreateSecretRequest request = new CreateSecretRequest("Idempotent Secret", "val", null);
+    CreateSecretRequest request =
+        new CreateSecretRequest(
+            "Idempotent Secret", "val", null, Map.of("template", "legacy", "version", 1));
 
     // First request
     String firstResponse =

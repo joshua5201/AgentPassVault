@@ -7,6 +7,7 @@
 package com.agentpassvault.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.Map;
 
@@ -16,9 +17,4 @@ public record CreateSecretRequest(
         @Size(max = 87381, message = "Encrypted value must not exceed 64 KB")
         String encryptedValue,
     Map<String, Object> metadata,
-    Map<String, Object> schema) {
-
-  public CreateSecretRequest(String name, String encryptedValue, Map<String, Object> metadata) {
-    this(name, encryptedValue, metadata, null);
-  }
-}
+    @NotNull(message = "Schema is required") Map<String, Object> schema) {}
