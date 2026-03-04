@@ -570,6 +570,81 @@ class SecretControllerTest extends BaseIntegrationTest {
             content().string(not(containsString("\"name\":\"Secret 2\",\"activeLeases\":[{\""))));
   }
 
+  @Test
+  void createAndGetSecret_WithSchema_RoundTripSuccess() throws Exception {
+    Long tenantId = createTenant();
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
+    String token = getAuthToken("admin@example.com", "password");
+
+    Map<String, Object> schema =
+        Map.of(
+            "template",
+            "login",
+            "version",
+            1,
+            "fields",
+            Map.of("username", "string", "password", "string"));
+
+    CreateSecretRequest createReq =
+        new CreateSecretRequest(
+            "Schema Secret", "encrypted-schema-value", Map.of("env", "prod"), schema);
+
+    String createResponse =
+        mockMvc
+            .perform(
+                post("/api/v1/secrets")
+                    .header("Authorization", "Bearer " + token)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(createReq)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.schema.template").value("login"))
+            .andExpect(jsonPath("$.schema.version").value(1))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    String secretId = objectMapper.readTree(createResponse).get("secretId").asText();
+
+    mockMvc
+        .perform(get("/api/v1/secrets/" + secretId).header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.schema.template").value("login"))
+        .andExpect(jsonPath("$.schema.version").value(1))
+        .andExpect(jsonPath("$.schema.fields.username").value("string"))
+        .andExpect(jsonPath("$.schema.fields.password").value("string"));
+  }
+
+  @Test
+  void updateSecret_WithSchema_RoundTripSuccess() throws Exception {
+    Long tenantId = createTenant();
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
+    String token = getAuthToken("admin@example.com", "password");
+
+    String secretId = createSecret(token, "Schema Updatable Secret");
+
+    Map<String, Object> updatedSchema =
+        Map.of("template", "api-key", "version", 2, "fields", Map.of("token", "string"));
+
+    UpdateSecretRequest updateReq = new UpdateSecretRequest(null, null, null, updatedSchema, null);
+
+    mockMvc
+        .perform(
+            patch("/api/v1/secrets/" + secretId)
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateReq)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.schema.template").value("api-key"))
+        .andExpect(jsonPath("$.schema.version").value(2))
+        .andExpect(jsonPath("$.schema.fields.token").value("string"));
+
+    mockMvc
+        .perform(get("/api/v1/secrets/" + secretId).header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.schema.template").value("api-key"))
+        .andExpect(jsonPath("$.schema.version").value(2));
+  }
+
   // Helper methods
   private String createSecret(String token, String name) throws Exception {
     CreateSecretRequest createReq = new CreateSecretRequest(name, "secret_value", null);

@@ -14,6 +14,7 @@ public record SecretDetailsResponse(
     String secretId,
     String name,
     Map<String, Object> metadata,
+    Map<String, Object> schema,
     List<LeaseInfo> activeLeases,
     Instant createdAt,
     Instant updatedAt) {}

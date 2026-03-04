@@ -89,6 +89,22 @@ cd frontend/apps/cli
 node dist/index.js --help
 ```
 
+#### Common Agent CLI Commands
+```bash
+# Prefer reuse before requesting a new secret
+agentpassvault secret list
+agentpassvault secret search --name "GitHub PAT"
+
+# Create request with context/schema hint
+agentpassvault request create "GitHub PAT" --context "CI release" --schema "login"
+
+# Check request and fetch secret
+agentpassvault request get <requestId>
+agentpassvault secret get <secretId>
+```
+
+Legacy aliases are still supported for backward compatibility, but are deprecated (`request-secret`, `get-request`, `get-secret`, `search-secrets`).
+
 #### Running Tests
 The CLI has two types of tests:
 *   **Unit Tests**: Logic tests that don't require a server.

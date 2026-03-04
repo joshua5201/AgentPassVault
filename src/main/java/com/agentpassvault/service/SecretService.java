@@ -47,12 +47,14 @@ public class SecretService {
             .orElseThrow(() -> new IllegalArgumentException("Tenant not found"));
 
     validateMetadataSize(request.metadata());
+    validateSchema(request.schema());
 
     Secret secret = new Secret();
     secret.setTenant(tenant);
     secret.setName(request.name());
     secret.setEncryptedData(request.encryptedValue());
     secret.setMetadata(request.metadata());
+    secret.setSchema(request.schema());
 
     Secret saved = secretRepository.save(secret);
 
@@ -80,6 +82,10 @@ public class SecretService {
     if (request.metadata() != null) {
       validateMetadataSize(request.metadata());
       secret.setMetadata(request.metadata());
+    }
+    if (request.schema() != null) {
+      validateSchema(request.schema());
+      secret.setSchema(request.schema());
     }
 
     if (request.updatedLeases() != null) {
@@ -324,6 +330,17 @@ public class SecretService {
     }
   }
 
+  private void validateSchema(Map<String, Object> schema) {
+    if (schema == null || schema.isEmpty()) {
+      return;
+    }
+    try {
+      objectMapper.writeValueAsString(schema);
+    } catch (JacksonException e) {
+      throw new IllegalArgumentException("Invalid schema format", e);
+    }
+  }
+
   private String serializeMetadata(Map<String, Object> metadata) {
     try {
       return objectMapper.writeValueAsString(metadata);
@@ -338,6 +355,7 @@ public class SecretService {
         secret.getName(),
         encryptedData,
         secret.getMetadata(),
+        secret.getSchema(),
         secret.getCreatedAt(),
         secret.getUpdatedAt());
   }
@@ -347,6 +365,7 @@ public class SecretService {
         secret.getId().toString(),
         secret.getName(),
         secret.getMetadata(),
+        secret.getSchema(),
         secret.getCreatedAt(),
         secret.getUpdatedAt());
   }
@@ -368,6 +387,7 @@ public class SecretService {
         secret.getId().toString(),
         secret.getName(),
         secret.getMetadata(),
+        secret.getSchema(),
         leaseInfos,
         secret.getCreatedAt(),
         secret.getUpdatedAt());

@@ -1,6 +1,8 @@
 export type Metadata = Record<string, string>;
 
 export interface Secret {
+  schema?: Record<string, unknown>;
+
   id: string;
   tenantId: string;
   name: string;

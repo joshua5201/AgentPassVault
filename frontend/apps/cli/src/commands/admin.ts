@@ -14,6 +14,23 @@ import { printOutput, logMessage } from "../utils/output.js";
 
 import { Writable } from "node:stream";
 
+const TEMPLATE_VERSIONS: Record<string, number> = {
+  login: 1,
+  "credit-card": 1,
+  "single-value": 1,
+  "secret-notes": 1,
+};
+
+function resolveTemplateVersion(template: string): number {
+  const version = TEMPLATE_VERSIONS[template];
+  if (!version) {
+    throw new Error(
+      'Unsupported --template. Use one of: login, credit-card, single-value, secret-notes.',
+    );
+  }
+  return version;
+}
+
 async function prompt(
   question: string,
   silent: boolean = false,
@@ -240,9 +257,17 @@ export async function adminViewSecret(
       masterKeys,
     );
 
+    let parsed: unknown = decrypted;
+    try {
+      parsed = JSON.parse(decrypted);
+    } catch {
+      // keep plaintext string
+    }
+
     printOutput({
       name: secret.name,
-      value: decrypted,
+      schema: (secret as any).schema,
+      value: parsed,
       metadata: secret.metadata,
     });
   } catch (error: any) {
@@ -252,8 +277,12 @@ export async function adminViewSecret(
 
 export async function adminCreateSecret(options: {
   name?: string;
+  template?: string;
   username?: string;
   secretPassword?: string;
+  value?: string;
+  note?: string;
+  extra?: string;
   password?: string;
 }) {
   try {
@@ -261,17 +290,60 @@ export async function adminCreateSecret(options: {
 
     const name =
       options.name || (await prompt("Secret Name (e.g. AWS Prod): "));
-    const username = options.username || (await prompt("Username (Email): "));
-    const valuePassword =
-      options.secretPassword || (await prompt("Password: ", true));
+    const template = (options.template || "login").trim();
+    const templateVersion = resolveTemplateVersion(template);
 
     const password =
       options.password || (await prompt("Confirm Master Password: ", true));
 
-    const secretValueObj = {
-      username,
-      password: valuePassword,
-    };
+    let extraObj: Record<string, unknown> | undefined;
+    if (options.extra) {
+      const parsed = JSON.parse(options.extra);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        throw new Error("--extra must be a JSON object.");
+      }
+      extraObj = parsed as Record<string, unknown>;
+    }
+
+    let secretValueObj: Record<string, unknown>;
+    switch (template) {
+      case "login": {
+        const username = options.username || (await prompt("Username (Email): "));
+        const valuePassword =
+          options.secretPassword || (await prompt("Password/Token: ", true));
+        secretValueObj = { username, password: valuePassword };
+        break;
+      }
+      case "single-value": {
+        const singleValue =
+          options.value || (await prompt("Secret Value: ", true));
+        secretValueObj = { value: singleValue };
+        break;
+      }
+      case "secret-notes": {
+        const note = options.note || (await prompt("Secret Note: ", true));
+        secretValueObj = { note };
+        break;
+      }
+      case "credit-card": {
+        const cardNumber = await prompt("Card Number: ", true);
+        const cardHolder = await prompt("Card Holder: ");
+        const expiry = await prompt("Expiry (MM/YY): ");
+        const cvv = await prompt("CVV: ", true);
+        secretValueObj = { cardNumber, cardHolder, expiry, cvv };
+        break;
+      }
+      default:
+        throw new Error(
+          'Unsupported --template. Use one of: login, credit-card, single-value, secret-notes.',
+        );
+    }
+
+    if (extraObj) {
+      secretValueObj.extra = extraObj;
+    }
+
+    const schema = { template, version: templateVersion };
     const value = JSON.stringify(secretValueObj);
     const metadata = { name };
 
@@ -287,6 +359,7 @@ export async function adminCreateSecret(options: {
       value,
       metadata,
       masterKeys,
+      schema,
     );
 
     logMessage("Uploading...");

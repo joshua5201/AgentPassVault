@@ -17,8 +17,8 @@ import java.util.Map;
 public record CreateRequestRequest(
     @NotBlank(message = "Request name cannot be blank") String name,
     @Size(max = 2048, message = "Context must not exceed 2 KB") String context,
-    Map<String, Object> requiredMetadata,
-    List<String> requiredFieldsInSecretValue,
+    @Deprecated Map<String, Object> requiredMetadata,
+    @Deprecated List<String> requiredFieldsInSecretValue,
     @NotNull RequestType type,
     @Pattern(regexp = "^[0-9]+$", message = "Secret ID must be numeric") String secretId) {
 

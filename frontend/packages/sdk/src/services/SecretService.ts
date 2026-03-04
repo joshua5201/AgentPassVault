@@ -11,6 +11,7 @@ export class SecretService {
     value: string,
     metadata: Metadata,
     masterKeys: MasterKeys,
+    schema?: Record<string, unknown>,
   ): Promise<Partial<Secret>> {
     const encryptedValue = await CryptoService.encryptSymmetric(
       value,
@@ -22,6 +23,7 @@ export class SecretService {
       name,
       encryptedValue,
       metadata,
+      schema,
     };
   }
 
