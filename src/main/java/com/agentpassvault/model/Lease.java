@@ -15,6 +15,8 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Data
 @Entity
@@ -24,10 +26,12 @@ public class Lease extends BaseEntity {
 
   @ManyToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = "secret_id", nullable = false)
+  @OnDelete(action = OnDeleteAction.CASCADE)
   private Secret secret;
 
   @ManyToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = "agent_id", nullable = false)
+  @OnDelete(action = OnDeleteAction.CASCADE)
   private User agent;
 
   @Column(name = "public_key", columnDefinition = "TEXT", nullable = false)

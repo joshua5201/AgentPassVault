@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.annotations.Type;
 
 @Data
@@ -33,6 +35,7 @@ public class Request extends BaseEntity {
 
   @ManyToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = "requester_id", nullable = false)
+  @OnDelete(action = OnDeleteAction.CASCADE)
   private User requester;
 
   @Enumerated(EnumType.STRING)

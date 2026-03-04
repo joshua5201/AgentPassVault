@@ -11,8 +11,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.agentpassvault.BaseIntegrationTest;
+import com.agentpassvault.dto.AgentLoginRequest;
 import com.agentpassvault.dto.CreateAgentRequest;
+import com.agentpassvault.dto.CreateRequestRequest;
 import com.agentpassvault.dto.UserLoginRequest;
+import com.agentpassvault.model.RequestType;
 import com.agentpassvault.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +33,21 @@ class AgentControllerTest extends BaseIntegrationTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         objectMapper.writeValueAsString(new UserLoginRequest(username, password))))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readTree(loginResponse).get("accessToken").asText();
+  }
+
+  private String getAgentAuthToken(String tenantId, String appToken) throws Exception {
+    String loginResponse =
+        mockMvc
+            .perform(
+                post("/api/v1/auth/login/agent")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        objectMapper.writeValueAsString(new AgentLoginRequest(tenantId, appToken))))
             .andExpect(status().isOk())
             .andReturn()
             .getResponse()
@@ -123,5 +141,44 @@ class AgentControllerTest extends BaseIntegrationTest {
         .perform(get("/api/v1/agents").header("Authorization", "Bearer " + token))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$", hasSize(0)));
+  }
+
+  @Test
+  void deleteAgent_CascadesToRequests() throws Exception {
+    Long tenantId = createTenant();
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
+    String adminToken = getAuthToken("admin@example.com", "password");
+
+    String createAgentResponse =
+        mockMvc
+            .perform(
+                post("/api/v1/agents")
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(new CreateAgentRequest("Agent 1"))))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    String agentId = objectMapper.readTree(createAgentResponse).get("agentId").asText();
+    String appToken = objectMapper.readTree(createAgentResponse).get("appToken").asText();
+
+    String agentToken = getAgentAuthToken(tenantId.toString(), appToken);
+    CreateRequestRequest createRequest =
+        new CreateRequestRequest("Need secret", "context", null, null, RequestType.CREATE, null);
+    mockMvc
+        .perform(
+            post("/api/v1/requests")
+                .header("Authorization", "Bearer " + agentToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createRequest)))
+        .andExpect(status().isOk());
+
+    mockMvc
+        .perform(
+            delete("/api/v1/agents/" + agentId).header("Authorization", "Bearer " + adminToken))
+        .andExpect(status().isOk());
+
+    org.assertj.core.api.Assertions.assertThat(requestRepository.count()).isZero();
   }
 }

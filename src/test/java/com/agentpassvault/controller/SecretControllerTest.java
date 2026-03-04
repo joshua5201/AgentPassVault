@@ -106,6 +106,40 @@ class SecretControllerTest extends BaseIntegrationTest {
   }
 
   @Test
+  void deleteSecret_CascadesToLeases() throws Exception {
+    Long tenantId = createTenant();
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
+    String adminToken = getAuthToken("admin@example.com", "password");
+
+    String secretId = createSecret(adminToken, "Delete with leases");
+    AgentTokenResponse agentResp = agentService.createAgent(tenantId, "agent-1");
+
+    CreateLeaseRequest leaseReq =
+        new CreateLeaseRequest(
+            agentResp.agentId(), "pubkey", "encdata", java.time.Instant.now().plusSeconds(3600));
+    mockMvc
+        .perform(
+            post("/api/v1/secrets/" + secretId + "/leases")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(leaseReq)))
+        .andExpect(status().isOk());
+
+    org.assertj.core.api.Assertions.assertThat(
+            leaseRepository.findBySecret_Id(Long.valueOf(secretId)))
+        .hasSize(1);
+
+    mockMvc
+        .perform(
+            delete("/api/v1/secrets/" + secretId).header("Authorization", "Bearer " + adminToken))
+        .andExpect(status().isOk());
+
+    org.assertj.core.api.Assertions.assertThat(
+            leaseRepository.findBySecret_Id(Long.valueOf(secretId)))
+        .isEmpty();
+  }
+
+  @Test
   void searchSecrets_Success() throws Exception {
     Long tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin@example.com", "password");
