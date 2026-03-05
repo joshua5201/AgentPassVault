@@ -113,7 +113,10 @@ class MissingSecretFlowTest extends BaseIntegrationTest {
     // 5a. Create Secret
     CreateSecretRequest createSecretReq =
         new CreateSecretRequest(
-            "Prod DB Credentials", "owner-enc-pass", Map.of("service", "db", "env", "prod"));
+            "Prod DB Credentials",
+            "owner-enc-pass",
+            Map.of("service", "db", "env", "prod"),
+            Map.of("template", "legacy", "version", 1));
     String secretResp =
         mockMvc
             .perform(

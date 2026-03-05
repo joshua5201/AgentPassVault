@@ -95,7 +95,11 @@ class RequestControllerTest extends BaseIntegrationTest {
 
     // 2. Create Secret
     CreateSecretRequest createSecretReq =
-        new CreateSecretRequest("AWS Secret", "ownerEncVal", Map.of("env", "prod"));
+        new CreateSecretRequest(
+            "AWS Secret",
+            "ownerEncVal",
+            Map.of("env", "prod"),
+            Map.of("template", "legacy", "version", 1));
     String secretResp =
         mockMvc
             .perform(
@@ -201,7 +205,9 @@ class RequestControllerTest extends BaseIntegrationTest {
     String adminToken = getAuthToken("admin@example.com", "password");
 
     // 1. Create a secret
-    CreateSecretRequest createSecretReq = new CreateSecretRequest("Test Secret", "val", null);
+    CreateSecretRequest createSecretReq =
+        new CreateSecretRequest(
+            "Test Secret", "val", null, Map.of("template", "legacy", "version", 1));
     String secretResp =
         mockMvc
             .perform(

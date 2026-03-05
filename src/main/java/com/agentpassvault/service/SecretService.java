@@ -83,10 +83,8 @@ public class SecretService {
       validateMetadataSize(request.metadata());
       secret.setMetadata(request.metadata());
     }
-    if (request.schema() != null) {
-      validateSchema(request.schema());
-      secret.setSchema(request.schema());
-    }
+    validateSchema(request.schema());
+    secret.setSchema(request.schema());
 
     if (request.updatedLeases() != null) {
       for (UpdateSecretRequest.LeaseUpdateRequest leaseUpdate : request.updatedLeases()) {
@@ -331,8 +329,11 @@ public class SecretService {
   }
 
   private void validateSchema(Map<String, Object> schema) {
-    if (schema == null || schema.isEmpty()) {
-      return;
+    if (schema == null) {
+      throw new IllegalArgumentException("Schema is required");
+    }
+    if (schema.isEmpty()) {
+      throw new IllegalArgumentException("Schema cannot be empty");
     }
     try {
       objectMapper.writeValueAsString(schema);

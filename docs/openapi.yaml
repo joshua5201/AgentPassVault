@@ -578,9 +578,14 @@ components:
           type: object
           additionalProperties:
             type: object
+        schema:
+          type: object
+          additionalProperties:
+            type: object
       required:
       - encryptedValue
       - name
+      - schema
     SecretMetadataResponse:
       type: object
       properties:
@@ -589,6 +594,10 @@ components:
         name:
           type: string
         metadata:
+          type: object
+          additionalProperties:
+            type: object
+        schema:
           type: object
           additionalProperties:
             type: object
@@ -859,10 +868,16 @@ components:
           type: object
           additionalProperties:
             type: object
+        schema:
+          type: object
+          additionalProperties:
+            type: object
         updatedLeases:
           type: array
           items:
             $ref: "#/components/schemas/LeaseUpdateRequest"
+      required:
+      - schema
     UpdateRequestRequest:
       type: object
       properties:
@@ -902,6 +917,10 @@ components:
         name:
           type: string
         metadata:
+          type: object
+          additionalProperties:
+            type: object
+        schema:
           type: object
           additionalProperties:
             type: object
@@ -947,6 +966,10 @@ components:
         encryptedValue:
           type: string
         metadata:
+          type: object
+          additionalProperties:
+            type: object
+        schema:
           type: object
           additionalProperties:
             type: object

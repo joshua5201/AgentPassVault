@@ -51,7 +51,10 @@ class SecretControllerSearchTest extends BaseIntegrationTest {
             .content(
                 objectMapper.writeValueAsString(
                     new com.agentpassvault.dto.CreateSecretRequest(
-                        "S1", "v1", Map.of("env", "prod", "app", "web")))));
+                        "S1",
+                        "v1",
+                        Map.of("env", "prod", "app", "web"),
+                        Map.of("template", "legacy", "version", 1)))));
 
     // Search for env=prod
     SearchSecretRequest searchProd = new SearchSecretRequest(null, Map.of("env", "prod"));

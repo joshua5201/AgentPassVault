@@ -47,7 +47,8 @@ class SecretControllerTest extends BaseIntegrationTest {
 
     // Create
     CreateSecretRequest createReq =
-        new CreateSecretRequest("DB Pass", "encrypted-secret-123", Map.of("env", "prod"));
+        new CreateSecretRequest(
+            "DB Pass", "encrypted-secret-123", Map.of("env", "prod"), defaultSchema());
 
     String createResponse =
         mockMvc
@@ -81,7 +82,8 @@ class SecretControllerTest extends BaseIntegrationTest {
     userService.createAdminUser(tenantId, "admin@example.com", "password");
     String token = getAuthToken("admin@example.com", "password");
 
-    CreateSecretRequest createReq = new CreateSecretRequest("Delete Me", "val", null);
+    CreateSecretRequest createReq =
+        new CreateSecretRequest("Delete Me", "val", null, defaultSchema());
     String createResponse =
         mockMvc
             .perform(
@@ -152,7 +154,8 @@ class SecretControllerTest extends BaseIntegrationTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(
                 objectMapper.writeValueAsString(
-                    new CreateSecretRequest("S1", "v1", Map.of("env", "prod", "app", "web")))));
+                    new CreateSecretRequest(
+                        "S1", "v1", Map.of("env", "prod", "app", "web"), defaultSchema()))));
 
     mockMvc.perform(
         post("/api/v1/secrets")
@@ -160,13 +163,16 @@ class SecretControllerTest extends BaseIntegrationTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(
                 objectMapper.writeValueAsString(
-                    new CreateSecretRequest("S2", "v2", Map.of("env", "dev", "app", "web")))));
+                    new CreateSecretRequest(
+                        "S2", "v2", Map.of("env", "dev", "app", "web"), defaultSchema()))));
 
     mockMvc.perform(
         post("/api/v1/secrets")
             .header("Authorization", "Bearer " + token)
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(new CreateSecretRequest("S3", "v3", null))));
+            .content(
+                objectMapper.writeValueAsString(
+                    new CreateSecretRequest("S3", "v3", null, defaultSchema()))));
 
     // Search for env=prod
     SearchSecretRequest searchProd = new SearchSecretRequest(null, Map.of("env", "prod"));
@@ -265,7 +271,8 @@ class SecretControllerTest extends BaseIntegrationTest {
     String tokenB = getAuthToken("adminB@example.com", "pass");
 
     // A creates secret
-    CreateSecretRequest createReq = new CreateSecretRequest("Secret A", "valA", null);
+    CreateSecretRequest createReq =
+        new CreateSecretRequest("Secret A", "valA", null, defaultSchema());
     String response =
         mockMvc
             .perform(
@@ -385,7 +392,7 @@ class SecretControllerTest extends BaseIntegrationTest {
 
     // Update name and metadata
     UpdateSecretRequest updateReq =
-        new UpdateSecretRequest("Updated Name", null, Map.of("new", "meta"), null);
+        new UpdateSecretRequest("Updated Name", null, Map.of("new", "meta"), defaultSchema(), null);
 
     mockMvc
         .perform(
@@ -396,6 +403,29 @@ class SecretControllerTest extends BaseIntegrationTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.name").value("Updated Name"))
         .andExpect(jsonPath("$.metadata.new").value("meta"));
+  }
+
+  @Test
+  void updateSecret_WithoutSchema_BadRequest() throws Exception {
+    Long tenantId = createTenant();
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
+    String token = getAuthToken("admin@example.com", "password");
+
+    String secretId = createSecret(token, "Needs Schema");
+
+    String payload = """
+        {
+          "name": "Updated"
+        }
+        """;
+
+    mockMvc
+        .perform(
+            patch("/api/v1/secrets/" + secretId)
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isBadRequest());
   }
 
   @Test
@@ -479,7 +509,7 @@ class SecretControllerTest extends BaseIntegrationTest {
 
     // Update secret encrypted value
     UpdateSecretRequest updateReq =
-        new UpdateSecretRequest(null, "new-encrypted-value", null, null);
+        new UpdateSecretRequest(null, "new-encrypted-value", null, defaultSchema(), null);
 
     mockMvc
         .perform(
@@ -615,6 +645,29 @@ class SecretControllerTest extends BaseIntegrationTest {
   }
 
   @Test
+  void createSecret_WithoutSchema_BadRequest() throws Exception {
+    Long tenantId = createTenant();
+    userService.createAdminUser(tenantId, "admin@example.com", "password");
+    String token = getAuthToken("admin@example.com", "password");
+
+    String payload =
+        """
+        {
+          "name": "No Schema",
+          "encryptedValue": "encrypted"
+        }
+        """;
+
+    mockMvc
+        .perform(
+            post("/api/v1/secrets")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
   void updateSecret_WithSchema_RoundTripSuccess() throws Exception {
     Long tenantId = createTenant();
     userService.createAdminUser(tenantId, "admin@example.com", "password");
@@ -646,8 +699,13 @@ class SecretControllerTest extends BaseIntegrationTest {
   }
 
   // Helper methods
+  private Map<String, Object> defaultSchema() {
+    return Map.of("template", "legacy", "version", 1);
+  }
+
   private String createSecret(String token, String name) throws Exception {
-    CreateSecretRequest createReq = new CreateSecretRequest(name, "secret_value", null);
+    CreateSecretRequest createReq =
+        new CreateSecretRequest(name, "secret_value", null, defaultSchema());
     String createResponse =
         mockMvc
             .perform(
