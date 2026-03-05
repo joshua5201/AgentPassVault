@@ -413,8 +413,7 @@ class SecretControllerTest extends BaseIntegrationTest {
 
     String secretId = createSecret(token, "Needs Schema");
 
-    String payload =
-        """
+    String payload = """
         {
           "name": "Updated"
         }
