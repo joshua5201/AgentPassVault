@@ -10,7 +10,7 @@ A short reference for automated agents to request and retrieve secrets securely 
 
 ## CLI Setup and Execution
 
-For most users/agents, use the prebuilt release binary instead of building from source.
+Agents should perform CLI installation/setup themselves before running the secret workflow. For most users/agents, use the prebuilt release binary instead of building from source.
 
 ### Option A (recommended): download prebuilt binary
 
@@ -41,23 +41,29 @@ This produces a standalone executable you can run directly.
 - `TENANT_ID` — numeric tenant id
 - `AGENT_ID` — numeric agent id
 - `APP_TOKEN` — agent app token
+- `AGENTPASSVAULT_CONFIG_PATH` — directory for config + keys (recommended persistent path: `/home/node/.openclaw/workspace/config/agentpassvault`)
 
 ## Quick agent flow
 
-0. **Prefer reuse before requesting new secrets:**
+0. **Initialize Agent (one-shot setup, keygen, registration):**
 ```bash
-agentpassvault secret list
-agentpassvault secret search --name "GitHub PAT"
-```
-If a suitable secret already exists, reuse it with `secret get` instead of creating a new request.
-
-1. **Initialize Agent (One-shot Setup, Key Gen, & Registration):**
-```bash
+export AGENTPASSVAULT_CONFIG_PATH="/home/node/.openclaw/workspace/config/agentpassvault"
 agentpassvault identity init --api-url <URL> --tenant-id <TENANT_ID> --agent-id <AGENT_ID> --app-token <TOKEN>
 ```
-*(This sets up your configuration in `~/.config/agentpassvault/config.json`, generates a 4096-bit RSA keypair in `~/.config/agentpassvault/keys/`, and registers your public key with the server).*
+*(This sets up your configuration in `$AGENTPASSVAULT_CONFIG_PATH/config.json`, generates a 4096-bit RSA keypair under `$AGENTPASSVAULT_CONFIG_PATH/keys/`, and registers your public key with the server).*
 
-2. **Create request (Ask a human):**
+1. **Request access to an existing secret (preferred):**
+```bash
+# Discover what already exists
+agentpassvault secret list
+agentpassvault secret search --name "GitHub PAT"
+
+# If found, retrieve/decrypt directly by secretId
+agentpassvault secret get <secretId>
+```
+Use this flow when the secret already exists and your agent already has access.
+
+2. **If missing (or no access), create a request for human fulfillment:**
 ```bash
 agentpassvault request create "some-account" --context "Need CI token for release workflow"
 ```
@@ -80,6 +86,30 @@ agentpassvault request get <requestId>
 agentpassvault secret get <secretId>
 ```
 → The CLI securely fetches the encrypted payload and decrypts it locally using your private key, outputting the secret as JSON. Do not forward the plaintext.
+
+### Access a specific field (without exposing the full value)
+Use `--field` with dot-path notation:
+
+```bash
+# top-level field
+agentpassvault secret get <secretId> --field password
+
+# nested field
+agentpassvault secret get <secretId> --field extra.token
+```
+
+### View secret schema
+`secret get` output includes a top-level `schema` object. Inspect it directly:
+
+```bash
+agentpassvault secret get <secretId>
+```
+
+Or extract only the schema with `jq`:
+
+```bash
+agentpassvault secret get <secretId> | jq '.schema'
+```
 
 5. **(Optional) List available secrets:**
 ```bash
