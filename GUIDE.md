@@ -10,7 +10,7 @@ A short reference for automated agents to request and retrieve secrets securely 
 
 ## CLI Setup and Execution
 
-For most users/agents, use the prebuilt release binary instead of building from source.
+Agents should perform CLI installation/setup themselves before running the secret workflow. For most users/agents, use the prebuilt release binary instead of building from source.
 
 ### Option A (recommended): download prebuilt binary
 
