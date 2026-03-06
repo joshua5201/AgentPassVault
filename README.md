@@ -10,6 +10,77 @@
 *   **Asynchronous Approval:** Agents can request secrets they don't have. Humans fulfill these requests via a secure UI.
 *   **Zero Knowledge:** The server never sees your plaintext secrets. Everything is encrypted/decrypted on the client side.
 
+## Quick Start (Install & Use)
+
+> This section is the end-user path. Development setup is in [Development Guide](#development-guide).
+
+Assumption: Web UI is available at `https://agentpassvault.com`.
+
+### 1) Register and create an Agent
+1. Sign up / log in at `https://agentpassvault.com`.
+2. Go to **Agents** and create an agent.
+3. Copy the generated agent config values (`apiUrl`, `tenantId`, `agentId`, `appToken`).
+
+### 2) Install CLI and configure environment
+Download a prebuilt release binary (recommended):
+
+```bash
+curl -fL -o agentpassvault-linux \
+  https://github.com/joshua5201/AgentPassVault/releases/download/v0.3.4/agentpassvault-linux-v0.3.4
+chmod +x agentpassvault-linux
+sudo mv agentpassvault-linux /usr/local/bin/agentpassvault
+```
+
+Set env vars (example):
+
+```bash
+export AGENTPASSVAULT_API_URL="https://api.agentpassvault.com"
+export TENANT_ID="<tenantId>"
+export AGENT_ID="<agentId>"
+export APP_TOKEN="<appToken>"
+```
+
+Then initialize identity (config + keys + public key registration):
+
+```bash
+agentpassvault identity init \
+  --api-url "$AGENTPASSVAULT_API_URL" \
+  --tenant-id "$TENANT_ID" \
+  --agent-id "$AGENT_ID" \
+  --app-token "$APP_TOKEN"
+```
+
+### 3) Let your agent follow GUIDE.md
+Point your OpenClaw agent to [`GUIDE.md`](GUIDE.md) so it uses the safe request/retrieve workflow.
+
+**Short prompt (copy/paste):**
+```text
+Read the latest GUIDE.md from the AgentPassVault repo and strictly follow its workflow for secret handling.
+Always prefer reusing existing secrets first (list/search/get). Only create a new request when the secret is missing or access is not available.
+Never print plaintext secrets in chat/logs.
+```
+
+### 4) Minimal examples the agent can run
+
+```bash
+# Create a request (when secret is missing)
+agentpassvault request create "github-pat" --context "Need token for CI release"
+
+# Check request status
+agentpassvault request get <requestId>
+
+# Read existing secret (if already accessible)
+agentpassvault secret list
+agentpassvault secret get <secretId>
+```
+
+### 5) Fulfillment (human side)
+1. Click the fulfillment link sent by the agent.
+2. Log in to AgentPassVault Web UI.
+3. Approve existing secret access or create a new secret, then approve.
+
+After approval, the agent can call `request get` and `secret get` to retrieve and decrypt locally.
+
 ## How It Works
 
 ### 1. The "Ask" Pattern (Missing Secret)
@@ -31,7 +102,9 @@ AgentPassVault uses a **Zero-Knowledge Architecture**:
 *   **Agent-Specific Encryption:** When a lease is created, the Web UI decrypts the secret and re-encrypts it with the agent's public key.
 *   **No Plaintext on Server:** The database only stores data that the server itself cannot decrypt. Even if the server is compromised, your secrets remain safe.
 
-## Quick Start (Local Dev)
+## Development Guide
+
+### Quick Start (Local Dev)
 
 ### Prerequisites
 *   Docker & Docker Compose

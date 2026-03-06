@@ -44,20 +44,24 @@ This produces a standalone executable you can run directly.
 
 ## Quick agent flow
 
-0. **Prefer reuse before requesting new secrets:**
-```bash
-agentpassvault secret list
-agentpassvault secret search --name "GitHub PAT"
-```
-If a suitable secret already exists, reuse it with `secret get` instead of creating a new request.
-
-1. **Initialize Agent (One-shot Setup, Key Gen, & Registration):**
+0. **Initialize Agent (one-shot setup, keygen, registration):**
 ```bash
 agentpassvault identity init --api-url <URL> --tenant-id <TENANT_ID> --agent-id <AGENT_ID> --app-token <TOKEN>
 ```
 *(This sets up your configuration in `~/.config/agentpassvault/config.json`, generates a 4096-bit RSA keypair in `~/.config/agentpassvault/keys/`, and registers your public key with the server).*
 
-2. **Create request (Ask a human):**
+1. **Request access to an existing secret (preferred):**
+```bash
+# Discover what already exists
+agentpassvault secret list
+agentpassvault secret search --name "GitHub PAT"
+
+# If found, retrieve/decrypt directly by secretId
+agentpassvault secret get <secretId>
+```
+Use this flow when the secret already exists and your agent already has access.
+
+2. **If missing (or no access), create a request for human fulfillment:**
 ```bash
 agentpassvault request create "some-account" --context "Need CI token for release workflow"
 ```
