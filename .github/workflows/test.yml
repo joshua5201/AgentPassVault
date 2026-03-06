@@ -3,8 +3,32 @@ name: Test Java and E2E
 on:
   push:
     branches: ["master"]
+    paths:
+      - "src/**"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradle/**"
+      - "gradlew"
+      - "gradlew.bat"
+      - "docker-compose.yml"
+      - "scripts/**"
+      - "frontend/packages/api-client/**"
+      - "src/main/resources/static/openapi.yaml"
+      - ".github/workflows/test.yml"
   pull_request:
     branches: ["master"]
+    paths:
+      - "src/**"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradle/**"
+      - "gradlew"
+      - "gradlew.bat"
+      - "docker-compose.yml"
+      - "scripts/**"
+      - "frontend/packages/api-client/**"
+      - "src/main/resources/static/openapi.yaml"
+      - ".github/workflows/test.yml"
 
 jobs:
   build:

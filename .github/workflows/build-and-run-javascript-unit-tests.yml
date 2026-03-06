@@ -3,8 +3,14 @@ name: Build and Run Javascript Unit Tests
 on:
   push:
     branches: ["master"]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/build-and-run-javascript-unit-tests.yml"
   pull_request:
     branches: ["master"]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/build-and-run-javascript-unit-tests.yml"
 
 jobs:
   build:
