@@ -41,14 +41,16 @@ This produces a standalone executable you can run directly.
 - `TENANT_ID` — numeric tenant id
 - `AGENT_ID` — numeric agent id
 - `APP_TOKEN` — agent app token
+- `AGENTPASSVAULT_CONFIG_PATH` — directory for config + keys (recommended persistent path: `/home/node/.openclaw/workspace/config/agentpassvault`)
 
 ## Quick agent flow
 
 0. **Initialize Agent (one-shot setup, keygen, registration):**
 ```bash
+export AGENTPASSVAULT_CONFIG_PATH="/home/node/.openclaw/workspace/config/agentpassvault"
 agentpassvault identity init --api-url <URL> --tenant-id <TENANT_ID> --agent-id <AGENT_ID> --app-token <TOKEN>
 ```
-*(This sets up your configuration in `~/.config/agentpassvault/config.json`, generates a 4096-bit RSA keypair in `~/.config/agentpassvault/keys/`, and registers your public key with the server).*
+*(This sets up your configuration in `$AGENTPASSVAULT_CONFIG_PATH/config.json`, generates a 4096-bit RSA keypair under `$AGENTPASSVAULT_CONFIG_PATH/keys/`, and registers your public key with the server).*
 
 1. **Request access to an existing secret (preferred):**
 ```bash

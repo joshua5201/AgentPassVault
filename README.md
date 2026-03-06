@@ -21,17 +21,25 @@ Assumption: Web UI is available at `https://agentpassvault.com`.
 2. Go to **Agents** and create an agent.
 3. Copy the generated agent config values (`apiUrl`, `tenantId`, `agentId`, `appToken`).
 
-### 2) Give your agent one short instruction
+### 2) Prepare persistent config path (human setup)
+Before agent init, choose a persistent workspace path and set:
+
+```bash
+export AGENTPASSVAULT_CONFIG_PATH="/home/node/.openclaw/workspace/config/agentpassvault"
+```
+
+### 3) Give your agent one short instruction
 Use this prompt in OpenClaw:
 
 ```text
 Fetch the latest GUIDE.md from the AgentPassVault repository and follow it strictly.
+Use AGENTPASSVAULT_CONFIG_PATH=/home/node/.openclaw/workspace/config/agentpassvault for init/config/key storage.
 Do CLI installation/setup yourself, then use the documented secret workflow.
 Prefer existing secrets first (list/search/get), and only create requests when missing or no access.
 Never print plaintext secrets in chat/logs.
 ```
 
-### 3) Fulfillment (human side)
+### 4) Fulfillment (human side)
 1. Click the fulfillment link sent by the agent.
 2. Log in to AgentPassVault Web UI.
 3. Approve existing secret access or create a new secret, then approve.
