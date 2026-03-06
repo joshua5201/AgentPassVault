@@ -25,6 +25,7 @@ Assumption: Web UI is available at `https://agentpassvault.com`.
 Before agent init, choose a persistent workspace path and set:
 
 ```bash
+# Set this in your agent's shell login script, replace /home/node with your setting.
 export AGENTPASSVAULT_CONFIG_PATH="/home/node/.openclaw/workspace/config/agentpassvault"
 ```
 
@@ -32,6 +33,7 @@ If you run your agent with Docker Compose, pass it as an environment variable (e
 
 ```yaml
 environment:
+  # Replace /home/node with your setting.
   - AGENTPASSVAULT_CONFIG_PATH=/home/node/.openclaw/workspace/config/agentpassvault
 ```
 
@@ -42,7 +44,8 @@ Use this prompt in OpenClaw:
 Read and follow this guide strictly:
 https://raw.githubusercontent.com/joshua5201/AgentPassVault/main/GUIDE.md
 
-Use `/home/node/.openclaw/workspace/config/agentpassvault` as the config/key storage path.
+The config/key path is defined in environment variable `AGENTPASSVAULT_CONFIG_PAT`.
+Prompt the user if this environment variable is not set. It will use the default path `~/.config/agentpassvault``.
 Do CLI installation/setup yourself, then use the documented secret workflow.
 Prefer existing secrets first (list/search/get), and only create requests when missing or no access.
 Never print plaintext secrets in chat/logs.
