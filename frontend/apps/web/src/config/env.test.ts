@@ -45,4 +45,17 @@ describe("env config", () => {
 
     expect(error).toBeNull();
   });
+
+  it("defaults eruda to disabled unless explicitly enabled", () => {
+    const disabled = readAppEnv({
+      DEV: true,
+    });
+    const enabled = readAppEnv({
+      DEV: true,
+      VITE_ERUDA_ENABLED: "true",
+    });
+
+    expect(disabled.erudaEnabled).toBe(false);
+    expect(enabled.erudaEnabled).toBe(true);
+  });
 });
