@@ -42,7 +42,7 @@ Use this prompt in OpenClaw:
 Read and follow this guide strictly:
 https://raw.githubusercontent.com/joshua5201/AgentPassVault/main/GUIDE.md
 
-Use AGENTPASSVAULT_CONFIG_PATH=/home/node/.openclaw/workspace/config/agentpassvault for init/config/key storage.
+Use `/home/node/.openclaw/workspace/config/agentpassvault` as the config/key storage path.
 Do CLI installation/setup yourself, then use the documented secret workflow.
 Prefer existing secrets first (list/search/get), and only create requests when missing or no access.
 Never print plaintext secrets in chat/logs.
