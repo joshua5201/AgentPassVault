@@ -4,6 +4,7 @@ interface AppEnv {
   apiMockingEnabled: boolean;
   apiClientFallbackEnabled: boolean;
   apiProxyEnabled: boolean;
+  erudaEnabled: boolean;
 }
 
 type AppRuntimeEnv = {
@@ -12,6 +13,7 @@ type AppRuntimeEnv = {
   VITE_API_PROXY?: string;
   VITE_API_CLIENT_FALLBACK?: string;
   VITE_API_URL?: string;
+  VITE_ERUDA_ENABLED?: string;
   AGENTPASSVAULT_API_URL?: string;
 };
 
@@ -92,6 +94,7 @@ export function readAppEnv(runtimeEnv: AppRuntimeEnv = readRuntimeEnv()): AppEnv
   const apiClientFallbackEnabled =
     runtimeEnv.DEV && apiMockingEnabled && parseBoolean(runtimeEnv.VITE_API_CLIENT_FALLBACK);
   const configuredApiUrl = resolveConfiguredApiUrl(runtimeEnv);
+  const erudaEnabled = parseBoolean(runtimeEnv.VITE_ERUDA_ENABLED);
   const sameOriginUrl = typeof window !== "undefined" ? window.location.origin : configuredApiUrl ?? "";
   const resolvedApiUrl = configuredApiUrl ? resolveDevApiUrl(configuredApiUrl, runtimeEnv.DEV) : "";
 
@@ -101,6 +104,7 @@ export function readAppEnv(runtimeEnv: AppRuntimeEnv = readRuntimeEnv()): AppEnv
     apiMockingEnabled,
     apiClientFallbackEnabled,
     apiProxyEnabled,
+    erudaEnabled,
   };
 }
 

@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
-import { readStartupConfigError } from "./config/env";
+import { readAppEnv, readStartupConfigError } from "./config/env";
 
 async function enableMocking() {
   if (import.meta.env.DEV && import.meta.env.VITE_API_MOCKING === "true") {
@@ -13,10 +13,24 @@ async function enableMocking() {
   }
 }
 
+async function enableEruda() {
+  if (!readAppEnv().erudaEnabled) {
+    return;
+  }
+
+  const { default: eruda } = await import("eruda");
+  eruda.init();
+}
+
 void enableMocking()
   .catch((error) => {
     console.error("MSW bootstrap failed; continuing without mocks.", error);
   })
+  .then(() =>
+    enableEruda().catch((error) => {
+      console.error("Eruda bootstrap failed; continuing without debug console.", error);
+    }),
+  )
   .finally(() => {
     const startupConfigError = readStartupConfigError();
     if (startupConfigError) {
