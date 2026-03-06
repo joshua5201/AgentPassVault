@@ -87,6 +87,30 @@ agentpassvault secret get <secretId>
 ```
 → The CLI securely fetches the encrypted payload and decrypts it locally using your private key, outputting the secret as JSON. Do not forward the plaintext.
 
+### Access a specific field (without exposing the full value)
+Use `--field` with dot-path notation:
+
+```bash
+# top-level field
+agentpassvault secret get <secretId> --field password
+
+# nested field
+agentpassvault secret get <secretId> --field extra.token
+```
+
+### View secret schema
+`secret get` output includes a top-level `schema` object. Inspect it directly:
+
+```bash
+agentpassvault secret get <secretId>
+```
+
+Or extract only the schema with `jq`:
+
+```bash
+agentpassvault secret get <secretId> | jq '.schema'
+```
+
 5. **(Optional) List available secrets:**
 ```bash
 agentpassvault secret list
