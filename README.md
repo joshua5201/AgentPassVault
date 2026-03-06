@@ -28,6 +28,13 @@ Before agent init, choose a persistent workspace path and set:
 export AGENTPASSVAULT_CONFIG_PATH="/home/node/.openclaw/workspace/config/agentpassvault"
 ```
 
+If you run your agent with Docker Compose, pass it as an environment variable (example):
+
+```yaml
+environment:
+  - AGENTPASSVAULT_CONFIG_PATH=/home/node/.openclaw/workspace/config/agentpassvault
+```
+
 ### 3) Give your agent one short instruction
 Use this prompt in OpenClaw:
 
