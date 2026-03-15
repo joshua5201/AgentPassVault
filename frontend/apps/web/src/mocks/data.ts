@@ -27,6 +27,7 @@ export const mockRequests: RequestResponse[] = [
     agentId: "agent-finance-sync",
     status: "pending" satisfies RequestResponseStatusEnum,
     type: "LEASE" satisfies RequestResponseTypeEnum,
+    secretId: "sec-002",
     name: "GCP Billing Service Account",
     context: "Finance export integration cannot authenticate.",
     requiredMetadata: { service: { value: "gcp" }, team: { value: "finance" } },

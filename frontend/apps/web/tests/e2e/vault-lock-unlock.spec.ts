@@ -14,6 +14,6 @@ test("manual lock requires unlock password and restores session", async ({ page 
   await page.getByLabel("Master Password").fill(TEST_PASSWORD);
   await page.getByRole("button", { name: "Unlock Vault" }).click();
 
-  await expect(page.getByRole("heading", { name: "Pending Requests" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Requests" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Vault Locked" })).not.toBeVisible();
 });

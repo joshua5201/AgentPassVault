@@ -10,6 +10,20 @@ import type {
 } from "@agentpassvault/sdk";
 import { mockAgents, mockRequests, mockSecrets } from "./data";
 
+const initialMockRequests = structuredClone(mockRequests);
+const initialMockSecrets = structuredClone(mockSecrets);
+const initialMockAgents = structuredClone(mockAgents);
+
+let requestStore = structuredClone(initialMockRequests);
+let secretStore = structuredClone(initialMockSecrets);
+let agentStore = structuredClone(initialMockAgents);
+
+function resetMockState() {
+  requestStore = structuredClone(initialMockRequests);
+  secretStore = structuredClone(initialMockSecrets);
+  agentStore = structuredClone(initialMockAgents);
+}
+
 function maybeErrorFrom(request: Request): Response | null {
   const forcedError = request.headers.get("x-mock-error") ?? request.url.includes("mockError=")
     ? new URL(request.url).searchParams.get("mockError")
@@ -28,6 +42,11 @@ function maybeErrorFrom(request: Request): Response | null {
 }
 
 export const handlers = [
+  http.post("*/api/v1/mock/reset", () => {
+    resetMockState();
+    return new HttpResponse(null, { status: 204 });
+  }),
+
   http.post("*/api/v1/auth/login/user", async ({ request }) => {
     const forcedError = maybeErrorFrom(request);
     if (forcedError) {
@@ -78,7 +97,7 @@ export const handlers = [
       return forcedError;
     }
 
-    return HttpResponse.json(mockRequests);
+    return HttpResponse.json(requestStore);
   }),
 
   http.get("*/api/v1/requests/:id", ({ params, request }) => {
@@ -87,7 +106,7 @@ export const handlers = [
       return forcedError;
     }
 
-    const item = mockRequests.find((entry) => entry.requestId === params.id);
+    const item = requestStore.find((entry) => entry.requestId === params.id);
     if (!item) {
       return HttpResponse.json({ message: "Request not found" }, { status: 404 });
     }
@@ -102,17 +121,17 @@ export const handlers = [
     }
 
     const payload = (await request.json()) as UpdateRequestRequest;
-    const index = mockRequests.findIndex((entry) => entry.requestId === params.id);
+    const index = requestStore.findIndex((entry) => entry.requestId === params.id);
     if (index < 0) {
       return HttpResponse.json({ message: "Request not found" }, { status: 404 });
     }
 
     const updated: RequestResponse = {
-      ...mockRequests[index],
+      ...requestStore[index],
       ...payload,
       updatedAt: new Date(),
     };
-    mockRequests[index] = updated;
+    requestStore[index] = updated;
 
     return HttpResponse.json(updated);
   }),
@@ -123,7 +142,7 @@ export const handlers = [
       return forcedError;
     }
 
-    return HttpResponse.json(mockSecrets);
+    return HttpResponse.json(secretStore);
   }),
 
   http.get("*/api/v1/secrets/:id", ({ params, request }) => {
@@ -132,7 +151,7 @@ export const handlers = [
       return forcedError;
     }
 
-    const item = mockSecrets.find((entry) => entry.secretId === params.id);
+    const item = secretStore.find((entry) => entry.secretId === params.id);
     if (!item) {
       return HttpResponse.json({ message: "Secret not found" }, { status: 404 });
     }
@@ -151,11 +170,11 @@ export const handlers = [
 
     const payload = (await request.json()) as SearchSecretRequest;
     if (!payload.name) {
-      return HttpResponse.json(mockSecrets);
+      return HttpResponse.json(secretStore);
     }
 
     const lowered = payload.name.toLowerCase();
-    return HttpResponse.json(mockSecrets.filter((item) => (item.name ?? "").toLowerCase().includes(lowered)));
+    return HttpResponse.json(secretStore.filter((item) => (item.name ?? "").toLowerCase().includes(lowered)));
   }),
 
   http.post("*/api/v1/secrets", async ({ request }) => {
@@ -170,14 +189,14 @@ export const handlers = [
     }
 
     const created = {
-      secretId: `sec-${String(mockSecrets.length + 1).padStart(3, "0")}`,
+      secretId: `sec-${String(secretStore.length + 1).padStart(3, "0")}`,
       name: payload.name,
       metadata: payload.metadata ?? {},
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
-    mockSecrets.unshift(created);
+    secretStore.unshift(created);
 
     return HttpResponse.json(created, { status: 201 });
   }),
@@ -188,7 +207,7 @@ export const handlers = [
       return forcedError;
     }
 
-    return HttpResponse.json(mockAgents);
+    return HttpResponse.json(agentStore);
   }),
 
   http.post("*/api/v1/secrets/:secretId/leases", async ({ request, params }) => {
@@ -202,7 +221,7 @@ export const handlers = [
       return HttpResponse.json({ message: "agentId and encryptedData are required" }, { status: 422 });
     }
 
-    const secret = mockSecrets.find((item) => item.secretId === params.secretId);
+    const secret = secretStore.find((item) => item.secretId === params.secretId);
     if (!secret) {
       return HttpResponse.json({ message: "Secret not found" }, { status: 404 });
     }

@@ -51,22 +51,32 @@ export async function setupRequestCapture(page: Page) {
 
 export async function login(page: Page, username = TEST_USERNAME, password = TEST_PASSWORD) {
   await page.goto("/");
+  if (!integrationMode) {
+    await page.evaluate(async () => {
+      await fetch("/api/v1/mock/reset", { method: "POST" });
+    });
+    await page.goto("/");
+  }
   await page.getByLabel("Username").fill(username);
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign In" }).click();
   await expect(page.getByRole("button", { name: "Requests" })).toBeVisible();
-  await expect(
-    page
-      .getByRole("heading", { name: "Pending Requests" })
-      .or(page.getByRole("heading", { name: "No matching requests" })),
-  ).toBeVisible();
+  await page.getByRole("button", { name: "Requests" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Requests" })).toBeVisible();
 }
 
 export async function openRequestByName(page: Page, requestName: string) {
   const row = page.locator("tr").filter({ hasText: requestName });
   await expect(row).toBeVisible();
-  await row.getByRole("button", { name: "Open" }).click();
+  await row.getByRole("button", { name: "View" }).click();
   await expect(page.getByRole("heading", { name: requestName })).toBeVisible();
+}
+
+export async function openFulfillmentByName(page: Page, requestName: string) {
+  const row = page.locator("tr").filter({ hasText: requestName });
+  await expect(row).toBeVisible();
+  await row.getByRole("link", { name: "Fulfill" }).click();
+  await expect(page.getByRole("heading", { name: "Fulfillment" })).toBeVisible();
 }
 
 export async function getCapturedRequests(

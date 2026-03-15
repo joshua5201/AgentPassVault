@@ -1,24 +1,24 @@
 import { expect, test } from "@playwright/test";
-import { login, openRequestByName } from "./helpers";
+import { login, openFulfillmentByName } from "./helpers";
 
 test("creates encrypted secret then fulfills request", async ({ page }) => {
   await login(page);
-  await openRequestByName(page, "GCP Billing Service Account");
+  await openFulfillmentByName(page, "AWS Production Credentials");
 
+  await page.getByRole("button", { name: "Create New" }).click();
   await page.getByLabel("Secret Value (Plaintext)").fill("gcp-service-account-json");
-  await page.getByRole("button", { name: "Encrypt + Create + Fulfill" }).click();
+  await page.getByRole("button", { name: "Create Secret & Fulfill" }).click();
 
   await expect(page.getByText("Request fulfilled with new encrypted secret.")).toBeVisible();
   await expect(page.getByText("fulfilled", { exact: true })).toBeVisible();
 });
 
-test("rejects request with a reason", async ({ page }) => {
+test("approves lease request", async ({ page }) => {
   await login(page);
-  await openRequestByName(page, "AWS Production Credentials");
+  await openFulfillmentByName(page, "GCP Billing Service Account");
 
-  await page.getByLabel("Rejection Reason").fill("Secret lifecycle policy blocks this request.");
-  await page.getByRole("button", { name: "Reject Request" }).click();
+  await page.getByRole("button", { name: "Approve Lease" }).click();
 
-  await expect(page.getByText("Request rejected.")).toBeVisible();
-  await expect(page.getByText("rejected", { exact: true })).toBeVisible();
+  await expect(page.getByText("Lease request approved.")).toBeVisible();
+  await expect(page.getByText("fulfilled", { exact: true })).toBeVisible();
 });
