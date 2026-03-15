@@ -210,6 +210,20 @@ export const handlers = [
     return HttpResponse.json(agentStore);
   }),
 
+  http.get("*/api/v1/agents/:id", ({ params, request }) => {
+    const forcedError = maybeErrorFrom(request);
+    if (forcedError) {
+      return forcedError;
+    }
+
+    const agent = agentStore.find((item) => item.agentId === params.id);
+    if (!agent) {
+      return HttpResponse.json({ message: "Agent not found" }, { status: 404 });
+    }
+
+    return HttpResponse.json(agent);
+  }),
+
   http.post("*/api/v1/secrets/:secretId/leases", async ({ request, params }) => {
     const forcedError = maybeErrorFrom(request);
     if (forcedError) {
@@ -217,8 +231,8 @@ export const handlers = [
     }
 
     const payload = (await request.json()) as CreateLeaseRequest;
-    if (!payload.agentId || !payload.encryptedData) {
-      return HttpResponse.json({ message: "agentId and encryptedData are required" }, { status: 422 });
+    if (!payload.agentId || !payload.encryptedData || !payload.publicKey) {
+      return HttpResponse.json({ message: "agentId, publicKey, and encryptedData are required" }, { status: 422 });
     }
 
     const secret = secretStore.find((item) => item.secretId === params.secretId);

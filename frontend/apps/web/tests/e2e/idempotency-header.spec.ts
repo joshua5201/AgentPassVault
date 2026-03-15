@@ -9,7 +9,7 @@ function readIdempotencyHeader(headers: Record<string, string>): string | undefi
   );
 }
 
-test("POST and PATCH requests include idempotency key", async ({ page }) => {
+test("POST/PATCH include idempotency key and fulfillment posts lease before request update", async ({ page }) => {
   await setupRequestCapture(page);
   await login(page);
 
@@ -39,9 +39,38 @@ test("POST and PATCH requests include idempotency key", async ({ page }) => {
       entry.url.includes("/api/v1/requests/") &&
       entry.method.toUpperCase() === "PATCH",
   );
+  const leaseRequest = requests.find(
+    (entry) =>
+      entry.url.includes("/api/v1/secrets/") &&
+      entry.url.includes("/leases") &&
+      entry.method.toUpperCase() === "POST",
+  );
+  const leaseRequestIndex = requests.findIndex(
+    (entry) =>
+      entry.url.includes("/api/v1/secrets/") &&
+      entry.url.includes("/leases") &&
+      entry.method.toUpperCase() === "POST",
+  );
+  const patchRequestIndex = requests.findIndex(
+    (entry) =>
+      entry.url.includes("/api/v1/requests/") &&
+      entry.method.toUpperCase() === "PATCH",
+  );
 
   expect(postSecrets).toBeTruthy();
   expect(patchRequest).toBeTruthy();
+  expect(leaseRequest).toBeTruthy();
   expect(readIdempotencyHeader(postSecrets!.headers)).toBeTruthy();
   expect(readIdempotencyHeader(patchRequest!.headers)).toBeTruthy();
+  expect(readIdempotencyHeader(leaseRequest!.headers)).toBeTruthy();
+  expect(leaseRequestIndex).toBeGreaterThanOrEqual(0);
+  expect(patchRequestIndex).toBeGreaterThanOrEqual(0);
+  expect(leaseRequestIndex).toBeLessThan(patchRequestIndex);
+
+  const leasePayload = JSON.parse(leaseRequest!.body ?? "{}");
+  expect(leasePayload.agentId).toBeTruthy();
+  expect(leasePayload.publicKey).toBeTruthy();
+  expect(leasePayload.publicKey).not.toBe("mock-agent-public-key");
+  expect(leasePayload.encryptedData).toBeTruthy();
+  expect(leasePayload.encryptedData).not.toBe("mock-encrypted-lease-payload");
 });

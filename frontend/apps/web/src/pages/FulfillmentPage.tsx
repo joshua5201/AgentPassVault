@@ -16,6 +16,7 @@ import { appApiClient } from "../api/client";
 import { LoginPage } from "./LoginPage";
 import { VaultUnlockPage } from "./VaultUnlockPage";
 import { SecretCryptoAdapter } from "../security";
+import { readAppEnv } from "../config/env";
 
 interface FulfillmentPageProps {
   requestId: string;
@@ -102,6 +103,7 @@ export function FulfillmentPage({
   onUnlock,
   onLogout,
 }: FulfillmentPageProps) {
+  const env = readAppEnv();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ tone: "info" | "success" | "error"; message: string } | null>(null);
@@ -177,6 +179,67 @@ export function FulfillmentPage({
     return true;
   };
 
+  const getLeaseAgentKey = async (agentId: string): Promise<string> => {
+    const agentResult = await appApiClient.getAgent(agentId);
+    if (!agentResult.ok) {
+      throw new Error(`Failed to load agent: ${agentResult.error.message}`);
+    }
+
+    if (!agentResult.data.publicKey) {
+      throw new Error("Agent has not registered a public key.");
+    }
+
+    return agentResult.data.publicKey;
+  };
+
+  const createLeaseForPlaintext = async (
+    secretId: string,
+    agentId: string,
+    plaintext: string,
+    expiry?: Date,
+  ) => {
+    const agentPublicKey = await getLeaseAgentKey(agentId);
+    const encryptedData = await SecretCryptoAdapter.encryptForAgent(plaintext, agentPublicKey);
+
+    return appApiClient.createLease(secretId, {
+      agentId,
+      publicKey: agentPublicKey,
+      encryptedData,
+      expiry,
+    });
+  };
+
+  const createLeaseForExistingSecret = async (
+    secretId: string,
+    agentId: string,
+    masterKeysForLease: MasterKeys,
+    expiry?: Date,
+  ) => {
+    const secretResult = await appApiClient.getSecret(secretId);
+    if (!secretResult.ok) {
+      throw new Error(`Failed to load source secret: ${secretResult.error.message}`);
+    }
+
+    if (!secretResult.data.encryptedValue) {
+      throw new Error("Source secret does not contain encrypted value.");
+    }
+
+    let plaintext: string;
+    try {
+      plaintext = await SecretCryptoAdapter.decryptSecret(secretResult.data.encryptedValue, masterKeysForLease);
+    } catch (error) {
+      if (!env.apiMockingEnabled) {
+        throw new Error(
+          error instanceof Error ? `Failed to decrypt source secret: ${error.message}` : "Failed to decrypt source secret.",
+        );
+      }
+
+      plaintext = secretResult.data.encryptedValue;
+    }
+
+    return createLeaseForPlaintext(secretId, agentId, plaintext, expiry);
+  };
+
   const resolveLeaseExpiry = () => {
     if (isPermanentLease || !leaseExpiry) {
       return undefined;
@@ -191,7 +254,7 @@ export function FulfillmentPage({
   };
 
   const submitLeaseApproval = async () => {
-    if (!request?.requestId || !request.agentId) {
+    if (!request?.requestId || !request.agentId || !masterKeys) {
       return;
     }
 
@@ -220,12 +283,17 @@ export function FulfillmentPage({
       return;
     }
 
-    const leaseResult = await appApiClient.createLease(leaseSecretId, {
-      agentId: request.agentId,
-      publicKey: "mock-agent-public-key",
-      encryptedData: "mock-encrypted-lease-payload",
-      expiry,
-    });
+    let leaseResult;
+    try {
+      leaseResult = await createLeaseForExistingSecret(leaseSecretId, request.agentId, masterKeys, expiry);
+    } catch (leaseError) {
+      setSubmitting(false);
+      setNotice({
+        tone: "error",
+        message: leaseError instanceof Error ? leaseError.message : "Lease creation failed.",
+      });
+      return;
+    }
     if (!leaseResult.ok) {
       setSubmitting(false);
       setNotice({ tone: "error", message: `Lease creation failed: ${leaseResult.error.message}` });
@@ -247,7 +315,7 @@ export function FulfillmentPage({
   };
 
   const submitMapExisting = async () => {
-    if (!request?.requestId || !request.agentId || !selectedSecretId) {
+    if (!request?.requestId || !request.agentId || !selectedSecretId || !masterKeys) {
       return;
     }
 
@@ -258,11 +326,17 @@ export function FulfillmentPage({
     setSubmitting(true);
     setNotice(null);
 
-    const leaseResult = await appApiClient.createLease(selectedSecretId, {
-      agentId: request.agentId,
-      publicKey: "mock-agent-public-key",
-      encryptedData: "mock-encrypted-lease-payload",
-    });
+    let leaseResult;
+    try {
+      leaseResult = await createLeaseForExistingSecret(selectedSecretId, request.agentId, masterKeys);
+    } catch (leaseError) {
+      setSubmitting(false);
+      setNotice({
+        tone: "error",
+        message: leaseError instanceof Error ? leaseError.message : "Lease creation failed.",
+      });
+      return;
+    }
     if (!leaseResult.ok) {
       setSubmitting(false);
       setNotice({ tone: "error", message: `Lease creation failed: ${leaseResult.error.message}` });
@@ -331,11 +405,17 @@ export function FulfillmentPage({
     }
 
     const createdSecretId = createResult.data.secretId;
-    const leaseResult = await appApiClient.createLease(createdSecretId, {
-      agentId: request.agentId,
-      publicKey: "mock-agent-public-key",
-      encryptedData: "mock-encrypted-lease-payload",
-    });
+    let leaseResult;
+    try {
+      leaseResult = await createLeaseForPlaintext(createdSecretId, request.agentId, newSecretPlaintext);
+    } catch (leaseError) {
+      setSubmitting(false);
+      setNotice({
+        tone: "error",
+        message: leaseError instanceof Error ? leaseError.message : "Lease creation failed.",
+      });
+      return;
+    }
     if (!leaseResult.ok) {
       setSubmitting(false);
       setNotice({ tone: "error", message: `Lease creation failed: ${leaseResult.error.message}` });
