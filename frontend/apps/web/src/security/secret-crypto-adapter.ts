@@ -1,4 +1,4 @@
-import { SecretService, type MasterKeys } from "@agentpassvault/sdk";
+import { CryptoService, SecretService, type MasterKeys } from "@agentpassvault/sdk";
 
 export class SecretCryptoAdapter {
   static async encryptPlaintextSecret(
@@ -29,5 +29,14 @@ export class SecretCryptoAdapter {
       encryptedValue: prepared.encryptedValue,
       metadata: (prepared.metadata ?? {}) as Record<string, string>,
     };
+  }
+
+  static async decryptSecret(encryptedValue: string, masterKeys: MasterKeys): Promise<string> {
+    return CryptoService.decryptSymmetric(encryptedValue, masterKeys.encKey, masterKeys.macKey);
+  }
+
+  static async encryptForAgent(plaintext: string, agentPublicKey: string): Promise<string> {
+    const importedAgentKey = await CryptoService.importPublicKey(agentPublicKey);
+    return CryptoService.encryptAsymmetric(plaintext, importedAgentKey);
   }
 }

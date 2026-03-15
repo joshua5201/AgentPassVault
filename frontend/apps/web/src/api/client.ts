@@ -172,6 +172,10 @@ export class AppApiClient {
     return this.safeCall(() => this.client.listAgents());
   }
 
+  async getAgent(agentId: string): Promise<ApiResult<AgentResponse>> {
+    return this.safeCall(() => this.client.getAgent(agentId));
+  }
+
   async createLease(
     secretId: string,
     payload: CreateLeasePayloadInput,
