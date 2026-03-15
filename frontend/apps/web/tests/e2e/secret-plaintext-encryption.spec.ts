@@ -8,13 +8,13 @@ test("plaintext secret is encrypted before submit and hidden by default", async 
   await login(page);
 
   await page.getByRole("button", { name: "Secrets" }).click();
-  await expect(page.getByRole("heading", { name: "Secrets" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Secrets" })).toBeVisible();
 
   await page.getByLabel("Name").fill("E2E Secret");
   await page.getByLabel("Secret Value (Plaintext)").fill(plaintext);
   await page.getByRole("button", { name: "Encrypt & Submit" }).click();
 
-  await expect(page.getByText("Secret encrypted locally and submitted in mock mode.")).toBeVisible();
+  await expect(page.getByText("Secret encrypted locally and submitted successfully.")).toBeVisible();
 
   const requests = await getCapturedRequests(page);
   const createSecretRequest = requests.find((entry) =>
@@ -30,11 +30,11 @@ test("plaintext secret is encrypted before submit and hidden by default", async 
   expect(payload.encryptedValue.includes(plaintext)).toBe(false);
 
   const row = page.locator("tr").filter({ hasText: "E2E Secret" });
-  await expect(row.getByText("••••••••••••")).toBeVisible();
+  await expect(row.getByText("••••••••••••").first()).toBeVisible();
 
   await row.getByRole("button", { name: "Show" }).click();
   await expect(row.getByText(plaintext)).toBeVisible();
 
   await row.getByRole("button", { name: "Hide" }).click();
-  await expect(row.getByText("••••••••••••")).toBeVisible();
+  await expect(row.getByText("••••••••••••").first()).toBeVisible();
 });
