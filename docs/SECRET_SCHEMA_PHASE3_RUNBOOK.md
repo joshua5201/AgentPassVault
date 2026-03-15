@@ -26,6 +26,12 @@ ORDER BY id
 LIMIT 100;
 ```
 
+Or run the bundled audit script:
+
+```bash
+mysql < scripts/database/secret_schema_audit.sql
+```
+
 ## Backfill strategy
 Any row with `secret_schema IS NULL` is backfilled to:
 
