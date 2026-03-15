@@ -59,8 +59,30 @@ export async function login(page: Page, username = TEST_USERNAME, password = TES
   }
   await page.getByLabel("Username").fill(username);
   await page.getByLabel("Password").fill(password);
+  const loginResponsePromise = page.waitForResponse(
+    (response) =>
+      response.url().includes("/api/v1/auth/login/user") &&
+      response.request().method().toUpperCase() === "POST",
+    { timeout: 20000 },
+  );
   await page.getByRole("button", { name: "Sign In" }).click();
-  await expect(page.getByRole("button", { name: "Requests" })).toBeVisible();
+  const loginResponse = await loginResponsePromise.catch(() => null);
+  if (!loginResponse) {
+    throw new Error("Login request was not observed within timeout.");
+  }
+  if (!loginResponse.ok()) {
+    const body = await loginResponse.text().catch(() => "");
+    throw new Error(`Login request failed: HTTP ${loginResponse.status()} ${body}`.trim());
+  }
+
+  const requestsButton = page.getByRole("button", { name: "Requests" });
+  const loginError = page.getByRole("alert");
+  const loggedIn = await requestsButton.isVisible({ timeout: 20000 }).catch(() => false);
+  if (!loggedIn) {
+    const errorText = (await loginError.textContent().catch(() => null))?.trim();
+    throw new Error(`Login did not complete. ${errorText ? `UI error: ${errorText}` : "No UI error message found."}`);
+  }
+
   await page.getByRole("button", { name: "Requests" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Requests" })).toBeVisible();
 }
