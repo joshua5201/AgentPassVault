@@ -36,11 +36,32 @@ Agents working on this project must adhere to the specifications and workflows d
 
 ## Frontend Implementation Context
 - **Directory:** `frontend/`
-- **Git Restriction:** **NEVER push to origin.** All changes must remain local.
+- **Git Restriction (Conditional):**
+  - Default: avoid pushing to origin unless the user asks.
+  - If the user explicitly confirms that application token auth is available and PR review is enabled for this repo, pushing feature branches and creating PRs is allowed.
+  - Never push `master`/`main` directly; use feature branches and PR flow only.
 - **License:** **GPLv3**. We may refer to Bitwarden's GPL-licensed logic for encryption/decryption and formats.
 - **Bitwarden Restriction:** **NEVER** refer to or use code from `bitwarden_license/` (Commercial Modules). This is enforced via `.geminiignore`.
 - **Architecture:** Monorepo using Turborepo + PNPM.
 - **Frontend Plan:** The initial implementation plan has been completed. Do not rely on a separate plan document unless explicitly provided for new work.
+
+## WebUI Dev Context (Saved)
+- **Single dev entry script:** `frontend/start_vite.sh`
+  - Mock mode: `cd frontend && ./start_vite.sh mocked`
+  - Real backend mode: `cd frontend && ./start_vite.sh real`
+- **Canonical API env var:** `AGENTPASSVAULT_API_URL` (preferred over `VITE_API_URL`).
+- **Run mode defaults:**
+  - `mocked`: mock enabled, no backend dependency.
+  - `real`: mock disabled, proxy enabled, default API `https://api-staging.agentpassvault.com`.
+- **HTTPS dev default:** enabled by default in start script; disable only when needed with `VITE_DEV_HTTPS=false`.
+- **Integration backend local example:** `AGENTPASSVAULT_API_URL=http://localhost:58080 ./start_vite.sh real`
+- **Web E2E commands:**
+  - Mocked UI suite: `cd frontend/apps/web && pnpm test:e2e`
+  - Integration smoke: `cd frontend && pnpm test:integration:web`
+- **Playwright integration expectations:**
+  - Runs against `PW_API_MOCKING=false` and Vite proxy mode.
+  - Login helper waits for `/api/v1/auth/login/user` response before asserting post-login UI.
+  - If login fails, helper reports HTTP status/body for faster CI diagnosis.
 
 ## DTO Generation
 - **NEVER** manually create or modify TypeScript DTOs in `frontend/packages/sdk/src/api/generated`.
