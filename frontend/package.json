@@ -28,6 +28,5 @@
   },
   "packageManager": "pnpm@8.15.1",
   "dependencies": {
-    "pnpm": "^10.29.3"
   }
 }
