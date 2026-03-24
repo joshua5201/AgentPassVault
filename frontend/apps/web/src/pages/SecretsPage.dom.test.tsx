@@ -1,28 +1,17 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { SecretsPage } from "./SecretsPage";
 
-function deferred<T>() {
-  let resolve!: (value: T) => void;
-  let reject!: (reason?: unknown) => void;
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-
-  return { promise, resolve, reject };
-}
-
-const { appApiClientMock } = vi.hoisted(() => ({
-  appApiClientMock: {
-    listSecrets: vi.fn(),
-    createSecret: vi.fn(),
-  },
-}));
-
-vi.mock("../api/client", () => ({
-  appApiClient: appApiClientMock,
+vi.mock("../config/env", () => ({
+  readAppEnv: () => ({
+    apiUrl: "https://localhost:5173",
+    configuredApiUrl: null,
+    apiMockingEnabled: true,
+    apiClientFallbackEnabled: false,
+    apiProxyEnabled: false,
+    erudaEnabled: false,
+  }),
 }));
 
 describe("SecretsPage component", () => {
@@ -30,69 +19,83 @@ describe("SecretsPage component", () => {
     vi.clearAllMocks();
   });
 
-  it("updates the UI when secrets query resolves", async () => {
-    const pending = deferred<{ ok: true; data: Array<{ secretId: string; name: string; createdAt: string }> }>();
-    appApiClientMock.listSecrets.mockReturnValueOnce(pending.promise);
+  it("renders the lo-fi secret catalog and detail panel", async () => {
+    render(
+      <SecretsPage
+        isVaultLocked={false}
+        masterKeys={{} as never}
+      />,
+    );
 
-    render(<SecretsPage isVaultLocked={true} masterKeys={null} onOpenSecret={vi.fn()} />);
-
-    expect(screen.getByText("Loading secrets...")).toBeInTheDocument();
-
-    pending.resolve({
-      ok: true,
-      data: [
-        {
-          secretId: "sec-prod-db",
-          name: "Production DB Credentials",
-          createdAt: "2026-03-02T11:12:13.000Z",
-        },
-      ],
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText("Production DB Credentials")).toBeInTheDocument();
-    });
-
-    expect(screen.queryByText("Loading secrets...")).not.toBeInTheDocument();
+    expect(screen.getByText("Secrets")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Create Secret" }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("AWS Deploy Key")).toHaveLength(2);
+    expect(screen.getByText("Value preview")).toBeInTheDocument();
   });
 
-  it("shows an error toast when response mapping throws unexpectedly", async () => {
-    const invalidSecret = {
-      secretId: "sec-bad",
-      get name() {
-        throw new Error("boom");
+  it("blocks quick reveal when the vault is locked", async () => {
+    render(
+      <SecretsPage
+        isVaultLocked={true}
+        masterKeys={null}
+      />,
+    );
+
+    await userEvent.click(screen.getAllByRole("button", { name: "Reveal" })[0]);
+
+    expect(
+      screen.getByText(
+        "Vault is locked. Unlock before revealing secret values.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("reveals the secret value inline when unlocked", async () => {
+    render(
+      <SecretsPage
+        isVaultLocked={false}
+        masterKeys={{} as never}
+      />,
+    );
+
+    await userEvent.click(screen.getAllByRole("button", { name: "Reveal" })[0]);
+
+    expect(screen.getAllByText(/AKIA\.\.\.F5M0/)).toHaveLength(2);
+    expect(
+      screen.getByRole("button", { name: "Hide value" }),
+    ).toBeInTheDocument();
+  });
+
+  it("creates a secret in mocked mode", async () => {
+    render(
+      <SecretsPage
+        isVaultLocked={false}
+        masterKeys={{} as never}
+      />,
+    );
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Create Secret" }),
+    );
+    await userEvent.type(screen.getByLabelText("Secret name"), "Manual Secret");
+    await userEvent.type(
+      screen.getByLabelText("Plaintext secret value"),
+      "super-secret-value",
+    );
+    const metadataField = screen.getAllByRole("textbox")[3];
+    fireEvent.change(metadataField, {
+      target: {
+        value: '{"service":"manual","environment":"prod","owner":"Ops"}',
       },
-      createdAt: "2026-03-02T11:12:13.000Z",
-    };
-
-    appApiClientMock.listSecrets.mockResolvedValueOnce({
-      ok: true,
-      data: [invalidSecret],
     });
 
-    render(<SecretsPage isVaultLocked={true} masterKeys={null} onOpenSecret={vi.fn()} />);
+    await userEvent.click(
+      screen.getAllByRole("button", { name: "Create Secret" })[1],
+    );
 
-    await waitFor(() => {
-      expect(screen.getByText("Load secrets failed: boom")).toBeInTheDocument();
-    });
-  });
-
-  it("opens secret detail when clicking view action", async () => {
-    const openSecret = vi.fn();
-    appApiClientMock.listSecrets.mockResolvedValueOnce({
-      ok: true,
-      data: [
-        {
-          secretId: "sec-1",
-          name: "Production DB Credentials",
-          createdAt: "2026-03-02T11:12:13.000Z",
-        },
-      ],
-    });
-
-    render(<SecretsPage isVaultLocked={true} masterKeys={null} onOpenSecret={openSecret} />);
-    await screen.findByText("Production DB Credentials");
-    await userEvent.click(screen.getByRole("button", { name: "View" }));
-    expect(openSecret).toHaveBeenCalledWith("sec-1");
+    expect(screen.getAllByText("Manual Secret")).toHaveLength(2);
+    expect(screen.getByText("Secret created.")).toBeInTheDocument();
   });
 });

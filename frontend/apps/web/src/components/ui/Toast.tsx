@@ -11,14 +11,26 @@ interface ToastProps {
 }
 
 const toneClass: Record<ToastTone, string> = {
-  info: "border-sky-200 bg-sky-50 text-sky-900",
-  success: "border-emerald-200 bg-emerald-50 text-emerald-900",
-  error: "border-rose-200 bg-rose-50 text-rose-900",
+  info: "border-[var(--color-border)] bg-[var(--color-primary-soft)] text-[var(--color-text)]",
+  success:
+    "border-[var(--color-border)] bg-[var(--color-success-soft)] text-[var(--color-text)]",
+  error:
+    "border-[var(--color-border)] bg-[var(--color-danger-soft)] text-[var(--color-text)]",
 };
 
-export function Toast({ tone = "info", title, children, onDismiss }: ToastProps) {
+export function Toast({
+  tone = "info",
+  title,
+  children,
+  onDismiss,
+}: ToastProps) {
   return (
-    <div className={cn("rounded-lg border px-4 py-3", toneClass[tone])}>
+    <div
+      className={cn(
+        "rounded-[var(--radius-panel)] border px-4 py-3 shadow-sm",
+        toneClass[tone],
+      )}
+    >
       <div className="flex items-start justify-between gap-3">
         <p className="text-sm font-semibold">{title}</p>
         {onDismiss ? (
@@ -32,7 +44,11 @@ export function Toast({ tone = "info", title, children, onDismiss }: ToastProps)
           </button>
         ) : null}
       </div>
-      {children ? <div className="mt-1 text-sm opacity-90">{children}</div> : null}
+      {children ? (
+        <div className="mt-1 text-sm text-[var(--color-text-muted)]">
+          {children}
+        </div>
+      ) : null}
     </div>
   );
 }

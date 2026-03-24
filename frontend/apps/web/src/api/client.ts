@@ -1,11 +1,13 @@
 import {
   type CreateLeaseRequest,
+  type CreateAgentRequest,
   type CreateSecretRequest,
   type LoginResponse,
   type RequestResponse,
   type SecretResponse,
   type SecretDetailsResponse,
   type SecretMetadataResponse,
+  type AgentTokenResponse,
   type TwoFactorLoginRequest,
   type UpdateRequestRequest,
   type UserLoginRequest,
@@ -55,7 +57,9 @@ export class AppApiClient {
     }
   }
 
-  private shouldUseMockFallback<T>(result: ApiResult<T>): result is { ok: false; error: AppApiError } {
+  private shouldUseMockFallback<T>(
+    result: ApiResult<T>,
+  ): result is { ok: false; error: AppApiError } {
     if (!this.apiClientFallbackEnabled || result.ok) {
       return false;
     }
@@ -99,7 +103,9 @@ export class AppApiClient {
     };
   }
 
-  async loginWith2fa(input: TwoFactorLoginRequest): Promise<ApiResult<LoginResponse>> {
+  async loginWith2fa(
+    input: TwoFactorLoginRequest,
+  ): Promise<ApiResult<LoginResponse>> {
     return this.safeCall(() => this.client.userLoginWith2fa(input));
   }
 
@@ -116,14 +122,18 @@ export class AppApiClient {
     payload: UpdateRequestRequest,
     idempotencyKey: string = createIdempotencyKey(),
   ): Promise<ApiResult<RequestResponse>> {
-    return this.safeCall(() => this.client.updateRequest(requestId, payload, idempotencyKey));
+    return this.safeCall(() =>
+      this.client.updateRequest(requestId, payload, idempotencyKey),
+    );
   }
 
   async createSecret(
     payload: CreateSecretRequest,
     idempotencyKey: string = createIdempotencyKey(),
   ): Promise<ApiResult<SecretMetadataResponse>> {
-    const result = await this.safeCall(() => this.client.createSecret(payload, idempotencyKey));
+    const result = await this.safeCall(() =>
+      this.client.createSecret(payload, idempotencyKey),
+    );
     if (!this.shouldUseMockFallback(result)) {
       return result;
     }
@@ -151,8 +161,8 @@ export class AppApiClient {
   }
 
   async listSecrets(): Promise<ApiResult<SecretDetailsResponse[]>> {
-    const result = await this.safeCall(() =>
-      (this.client.listSecrets() as Promise<unknown>),
+    const result = await this.safeCall(
+      () => this.client.listSecrets() as Promise<unknown>,
     );
     if (!result.ok) {
       return result;
@@ -176,18 +186,52 @@ export class AppApiClient {
     return this.safeCall(() => this.client.getAgent(agentId));
   }
 
+  async createAgent(
+    payload: CreateAgentRequest,
+    idempotencyKey: string = createIdempotencyKey(),
+  ): Promise<ApiResult<AgentTokenResponse>> {
+    const result = await this.safeCall(() =>
+      this.client.createAgent(payload, idempotencyKey),
+    );
+    if (!this.shouldUseMockFallback(result)) {
+      return result;
+    }
+
+    if (!payload.name?.trim()) {
+      return {
+        ok: false,
+        error: {
+          status: 422,
+          message: "name is required",
+        },
+      };
+    }
+
+    return {
+      ok: true,
+      data: {
+        agentId: `agent-mock-${Date.now()}`,
+        appToken: `mock-app-token-${Math.random().toString(36).slice(2, 10)}`,
+      },
+    };
+  }
+
   async createLease(
     secretId: string,
     payload: CreateLeasePayloadInput,
     idempotencyKey: string = createIdempotencyKey(),
   ): Promise<ApiResult<void>> {
-    const resolvedExpiry = payload.expiry ?? new Date(Date.now() + DEFAULT_LEASE_EXPIRY_MINUTES * 60_000);
+    const resolvedExpiry =
+      payload.expiry ??
+      new Date(Date.now() + DEFAULT_LEASE_EXPIRY_MINUTES * 60_000);
     const requestPayload: CreateLeaseRequest = {
       ...payload,
       expiry: resolvedExpiry,
     };
 
-    return this.safeCall(() => this.client.createLease(secretId, requestPayload, idempotencyKey));
+    return this.safeCall(() =>
+      this.client.createLease(secretId, requestPayload, idempotencyKey),
+    );
   }
 }
 

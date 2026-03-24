@@ -11,14 +11,16 @@ const mockMasterKeys = {
   macKey: {} as CryptoKey,
 } satisfies MasterKeys;
 
-const { appApiClientMock, createMockDevSessionMock, navigateMock } = vi.hoisted(() => ({
-  appApiClientMock: {
-    setAccessToken: vi.fn(),
-    login: vi.fn(),
-  },
-  createMockDevSessionMock: vi.fn(),
-  navigateMock: vi.fn(),
-}));
+const { appApiClientMock, createMockDevSessionMock, navigateMock } = vi.hoisted(
+  () => ({
+    appApiClientMock: {
+      setAccessToken: vi.fn(),
+      login: vi.fn(),
+    },
+    createMockDevSessionMock: vi.fn(),
+    navigateMock: vi.fn(),
+  }),
+);
 
 vi.mock("./api/client", () => ({
   appApiClient: appApiClientMock,
@@ -78,12 +80,12 @@ vi.mock("./pages/LoginPage", () => ({
   LoginPage: () => <div>Login</div>,
 }));
 
-vi.mock("./pages/RequestDetailPage", () => ({
-  RequestDetailPage: () => <div>Request Detail</div>,
+vi.mock("./pages/AgentsPage", () => ({
+  AgentsPage: () => <div>Agents</div>,
 }));
 
-vi.mock("./pages/SecretDetailPage", () => ({
-  SecretDetailPage: () => <div>Secret Detail</div>,
+vi.mock("./pages/AuditLogPage", () => ({
+  AuditLogPage: () => <div>Audit Log</div>,
 }));
 
 vi.mock("./pages/SecretsPage", () => ({
@@ -142,14 +144,20 @@ describe("App mocked dev bootstrap", () => {
   it("bootstraps a mock session without calling the login API path", async () => {
     render(<App />);
 
-    await screen.findByText("Signed in as vault-admin+mock@agentpassvault.local");
+    await screen.findByText(
+      "Signed in as vault-admin+mock@agentpassvault.local",
+    );
     await screen.findByRole("heading", { name: "Requests" });
 
     expect(createMockDevSessionMock).toHaveBeenCalledTimes(1);
     expect(appApiClientMock.login).not.toHaveBeenCalled();
-    expect(appApiClientMock.setAccessToken).toHaveBeenCalledWith("mock-access-token");
+    expect(appApiClientMock.setAccessToken).toHaveBeenCalledWith(
+      "mock-access-token",
+    );
     expect(useSessionStore.getState().isAuthenticated).toBe(true);
-    expect(useSessionStore.getState().adminName).toBe("vault-admin+mock@agentpassvault.local");
+    expect(useSessionStore.getState().adminName).toBe(
+      "vault-admin+mock@agentpassvault.local",
+    );
     expect(useVaultKeyStore.getState().loginHash).toBe("mock-login-hash");
     expect(useVaultKeyStore.getState().masterKeys).toEqual(mockMasterKeys);
   });
@@ -157,7 +165,9 @@ describe("App mocked dev bootstrap", () => {
   it("keeps logout on the mock bootstrap path", async () => {
     render(<App />);
 
-    await screen.findByText("Signed in as vault-admin+mock@agentpassvault.local");
+    await screen.findByText(
+      "Signed in as vault-admin+mock@agentpassvault.local",
+    );
     await screen.getByRole("button", { name: "Logout" }).click();
 
     await waitFor(() => {
