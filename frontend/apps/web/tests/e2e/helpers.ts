@@ -56,7 +56,12 @@ export async function login(page: Page, username = TEST_USERNAME, password = TES
       await fetch("/api/v1/mock/reset", { method: "POST" });
     });
     await page.goto("/");
+    await expect(page.getByRole("heading", { level: 1, name: "Requests" })).toBeVisible({
+      timeout: 20000,
+    });
+    return;
   }
+
   await page.getByLabel("Username").fill(username);
   await page.getByLabel("Password").fill(password);
   const loginResponsePromise = page.waitForResponse(

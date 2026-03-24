@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
-import { getCapturedRequests, login, setupRequestCapture, TEST_PASSWORD } from "./helpers";
+import { getCapturedRequests, login, setupRequestCapture } from "./helpers";
 
-test("login sends derived hash, not raw password", async ({ page }) => {
+test("mocked dev mode bypasses the login request", async ({ page }) => {
   await setupRequestCapture(page);
   await login(page);
 
@@ -10,11 +10,5 @@ test("login sends derived hash, not raw password", async ({ page }) => {
     entry.url.includes("/api/v1/auth/login/user") && entry.method.toUpperCase() === "POST",
   );
 
-  expect(loginRequest).toBeTruthy();
-  expect(loginRequest?.body).toBeTruthy();
-
-  const payload = JSON.parse(loginRequest!.body!);
-  expect(payload.username).toBeDefined();
-  expect(payload.password).toBeDefined();
-  expect(payload.password).not.toBe(TEST_PASSWORD);
+  expect(loginRequest).toBeUndefined();
 });

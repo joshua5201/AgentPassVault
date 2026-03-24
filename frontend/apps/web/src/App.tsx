@@ -17,6 +17,17 @@ import { useVaultLockManager } from "./hooks/use-vault-lock-manager";
 import { AuthCryptoOrchestrator, useVaultKeyStore } from "./security";
 import { useSessionStore } from "./state/session-store";
 import { readAppEnv } from "./config/env";
+import { createMockDevSession } from "./security/mock-dev-session";
+import type { LoginResponse, MasterKeys } from "@agentpassvault/sdk";
+
+async function applyMockDevSession(
+  setLoginSession: (username: string, loginResponse: LoginResponse) => void,
+  setVaultSession: (masterKeys: MasterKeys, loginHash: string) => void,
+) {
+  const session = await createMockDevSession();
+  setLoginSession(session.username, session.loginResponse);
+  setVaultSession(session.masterKeys, session.loginHash);
+}
 
 function App() {
   const { match, navigate } = useHashRouter();
@@ -35,10 +46,31 @@ function App() {
     vaultUnlockedAt,
   } = useVaultKeyStore();
   const pageStateKey = `${isLocked ? "locked" : "unlocked"}-${vaultUnlockedAt ?? 0}`;
+  const mockBootstrapNeeded = env.apiMockingEnabled && (!isAuthenticated || (!loginHash && !masterKeys));
 
   useEffect(() => {
     appApiClient.setAccessToken(accessToken);
   }, [accessToken]);
+
+  useEffect(() => {
+    if (!mockBootstrapNeeded) {
+      return;
+    }
+
+    let active = true;
+
+    void applyMockDevSession(setLoginSession, setVaultSession).catch((error) => {
+      if (!active) {
+        return;
+      }
+
+      console.error("Mock auth bootstrap failed.", error);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [mockBootstrapNeeded, setLoginSession, setVaultSession]);
 
   useVaultLockManager({
     enabled: isAuthenticated,
@@ -50,6 +82,10 @@ function App() {
   });
 
   useEffect(() => {
+    if (mockBootstrapNeeded) {
+      return;
+    }
+
     if (!isAuthenticated && match.route !== "login" && match.route !== "fulfillment") {
       navigate("/login");
       return;
@@ -58,7 +94,7 @@ function App() {
     if (isAuthenticated && match.route === "login") {
       navigate(DEFAULT_AUTH_ROUTE);
     }
-  }, [isAuthenticated, match.route, navigate]);
+  }, [isAuthenticated, match.route, mockBootstrapNeeded, navigate]);
 
   useEffect(() => {
     if (!env.apiMockingEnabled && match.route === "ui-lab") {
@@ -71,6 +107,11 @@ function App() {
   }, [pageStateKey]);
 
   const handleLogin = async (username: string, password: string) => {
+    if (env.apiMockingEnabled) {
+      await applyMockDevSession(setLoginSession, setVaultSession);
+      return;
+    }
+
     const derived = await AuthCryptoOrchestrator.deriveForLogin(username, password);
 
     const result = await appApiClient.login({
@@ -86,6 +127,11 @@ function App() {
   };
 
   const handleUnlock = async (password: string) => {
+    if (env.apiMockingEnabled) {
+      await applyMockDevSession(setLoginSession, setVaultSession);
+      return;
+    }
+
     if (!loginHash) {
       const derived = await AuthCryptoOrchestrator.deriveForLogin(adminName, password);
       const reloginResult = await appApiClient.login({
@@ -111,6 +157,14 @@ function App() {
   };
 
   if (match.route === "fulfillment") {
+    if (mockBootstrapNeeded) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-[var(--color-app-bg)] px-4 text-[var(--color-text-muted)]">
+          Preparing mock session...
+        </div>
+      );
+    }
+
     return (
       <FulfillmentPage
         key={`fulfillment-${match.params.requestId ?? "unknown"}-${pageStateKey}`}
@@ -121,11 +175,25 @@ function App() {
         masterKeys={masterKeys}
         onLogin={handleLogin}
         onUnlock={handleUnlock}
-        onLogout={() => {
-          clearVaultSession();
-          logout();
-        }}
+        onLogout={
+          env.apiMockingEnabled
+            ? () => {
+                void applyMockDevSession(setLoginSession, setVaultSession);
+              }
+            : () => {
+                clearVaultSession();
+                logout();
+              }
+        }
       />
+    );
+  }
+
+  if (mockBootstrapNeeded) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[var(--color-app-bg)] px-4 text-[var(--color-text-muted)]">
+        Preparing mock session...
+      </div>
     );
   }
 
@@ -167,11 +235,17 @@ function App() {
       navItems={navItems}
       onNavigate={navigate}
       onLockVault={lockVault}
-      onLogout={() => {
-        clearVaultSession();
-        logout();
-        navigate("/login");
-      }}
+      onLogout={
+        env.apiMockingEnabled
+          ? () => {
+            void applyMockDevSession(setLoginSession, setVaultSession);
+          }
+          : () => {
+              clearVaultSession();
+              logout();
+              navigate("/login");
+            }
+      }
     >
       {notice ? (
         <Toast tone={notice.tone} title="Notification" onDismiss={() => setNotice(null)}>
